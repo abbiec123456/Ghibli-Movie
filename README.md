@@ -29,11 +29,12 @@ Each team should fill in the blanks <<>> and add additional content that the tea
 Our product will be delivered using an Agile methodology that embraces the DevOps culture. Please note that our culture embraces change and these documents are treated as living, breathing artefacts that will be continuously updated.
 
 # Scrum Master
-<<list week number, student name>>
 Rotating scrum master so that everyone gets to experience the role once.
+Week 08/12 Gianluca - created Jira Project and set up access to team members - Quick Jira demo
 
 # Product Owner
-<<List name>> (Permanent)
+Week 08/12 Gianluca - created main epics, initial product backlog
+Week 15/12 Abeey - started grooming some of the user stories
 
 # Rockstars
 <<list team member names here>>
