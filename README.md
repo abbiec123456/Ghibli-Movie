@@ -1,5 +1,5 @@
 # Name of Project
-
+Group 1: Studio Ghibli’s Movie Maker
 
 # Table of Contents
 Preamble
