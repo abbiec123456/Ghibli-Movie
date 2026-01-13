@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Floating clouds -->
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Your Dashboard</h1>
+        <p>Welcome {{ personal_details.name }}! Here are your details and courses.</p>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+        <h2>Personal Details</h2>
+        <p><strong>Name:</strong> {{ personal_details.name }}</p>
+        <p><strong>Email:</strong> {{ personal_details.email }}</p>
+        <p><strong>Phone:</strong> {{ personal_details.phone }}</p>
+
+        <h2>Subscribed Courses</h2>
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="booking">
+                    <strong>{{ booking.course }}</strong><br>
+                    <form method="POST" style="margin-top:10px;">
+                        <label>Extra requests:</label><br>
+                        <input type="text" name="extra" value="{{ booking.extra }}" style="width: 90%; padding:5px; margin-top:5px;">
+                        <input type="hidden" name="course" value="{{ booking.course }}">
+                        <button type="submit" style="margin-top:5px;">Update</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>You are not subscribed to any courses yet.</p>
+        {% endif %}
+
+        <a href="/logout">Logout</a>
+    </div>
+
+</body>
+</html>

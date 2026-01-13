@@ -1,0 +1,152 @@
+/* -------- GENERAL -------- */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to bottom, #cdeffd, #fefae0);
+    color: #3a3a3a;
+    overflow-x: hidden;
+}
+
+/* -------- FLOATING CLOUDS -------- */
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.6;
+    animation: float 60s linear infinite;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    top: -30px;
+}
+
+.cloud::before {
+    left: 10px;
+}
+
+.cloud::after {
+    left: 40px;
+}
+
+.cloud.small {
+    width: 80px;
+    height: 40px;
+    top: 100px;
+    left: -100px;
+    animation-duration: 50s;
+}
+
+.cloud.large {
+    width: 140px;
+    height: 60px;
+    top: 200px;
+    left: -200px;
+    animation-duration: 80s;
+}
+
+@keyframes float {
+    from {
+        transform: translateX(-200px);
+    }
+    to {
+        transform: translateX(120vw);
+    }
+}
+
+/* -------- HEADER BANNER -------- */
+.header {
+    text-align: center;
+    padding: 50px 20px 30px;
+}
+
+.header h1 {
+    font-size: 2.8em;
+    color: #4a7c59;
+    margin-bottom: 10px;
+}
+
+.header p {
+    font-size: 1.2em;
+    color: #5f7c6e;
+}
+
+/* -------- LOGIN CARD -------- */
+.container {
+    width: 420px;
+    margin: 60px auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 2;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 10px;
+    border: 1px solid #bbb;
+    font-size: 1em;
+}
+
+/* -------- BUTTON ANIMATION -------- */
+button {
+    width: 100%;
+    margin-top: 25px;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background-color: #88bdbc;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
+}
+
+button:hover {
+    background-color: #6daaa8;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* -------- DASHBOARD -------- */
+.dashboard {
+    width: 600px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 2;
+}
+
+.booking {
+    background: #f1faee;
+    padding: 15px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+}
+
+a {
+    display: block;
+    text-align: center;
+    margin-top: 25px;
+    color: #4a7c59;
+    text-decoration: none;
+    font-weight: bold;
+}
