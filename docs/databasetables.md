@@ -1,0 +1,69 @@
+Password for user ghibli_adm:
+psql (16.11 (Ubuntu 16.11-0ubuntu0.24.04.1))
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off)
+Type "help" for help.
+
+ghibli_booking=> CREATE TYPE booking_status AS ENUM ('pending', 'approved', 'cancelled');
+CREATE TYPE admin_role AS ENUM ('admin', 'editor', 'viewer');
+CREATE TYPE
+CREATE TYPE
+ghibli_booking=> CREATE TABLE customers (
+  customer_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  first_name  TEXT NOT NULL,
+  last_name   TEXT NOT NULL,
+  email       TEXT NOT NULL UNIQUE,
+  phone       TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE
+ghibli_booking=> CREATE TABLE admins (
+  admin_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name     TEXT NOT NULL,
+  email    TEXT NOT NULL,
+  role     TEXT NOT NULL
+);
+CREATE TABLE
+ghibli_booking=> CREATE TABLE courses (
+  course_id    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  course_name  TEXT NOT NULL UNIQUE,
+  description  TEXT NOT NULL,
+  active       BOOLEAN NOT NULL DEFAULT true,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE
+ghibli_booking=> CREATE TABLE course_modules (
+  module_id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  course_id          BIGINT NOT NULL,
+  module_name        TEXT NOT NULL,
+  module_description TEXT,
+  module_order       INTEGER,
+  active             BOOLEAN NOT NULL DEFAULT true,
+  CONSTRAINT fk_course_modules_course
+    FOREIGN KEY (course_id) REFERENCES courses(course_id)
+);
+CREATE TABLE
+ghibli_booking=> CREATE TABLE bookings (
+  booking_id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  customer_id            BIGINT NOT NULL,
+  course_id              BIGINT NOT NULL,
+  nice_to_have_requests  TEXT,
+  status                 TEXT NOT NULL,
+  locked                 BOOLEAN NOT NULL DEFAULT false,
+  submitted_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT fk_bookings_customer
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id),
+  CONSTRAINT fk_bookings_course
+    FOREIGN KEY (course_id) REFERENCES courses(course_id)
+);
+CREATE TABLE
+ghibli_booking=> CREATE TABLE booking_modules (
+  booking_id BIGINT NOT NULL,
+  module_id  BIGINT NOT NULL,
+  PRIMARY KEY (booking_id, module_id),
+  CONSTRAINT fk_booking_modules_booking
+    FOREIGN KEY (booking_id) REFERENCES bookings(booking_id),
+  CONSTRAINT fk_booking_modules_module
+    FOREIGN KEY (module_id) REFERENCES course_modules(module_id)
+);
+CREATE TABLE
