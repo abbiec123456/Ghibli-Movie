@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course Booking</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Floating clouds -->
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Book a Course</h1>
+        <p>Moving Castle Creations – 3D Animation Workshop</p>
+    </div>
+
+    <!-- Booking Form -->
+    <div class="dashboard">
+        <h2 class="booking">Booking Form</h2>
+
+        <form method="POST">
+
+            <h3>Customer Details</h3>
+
+            <p>
+                <label for="first_name"><strong>First Name *</strong></label><br>
+                <input type="text" name="first_name" required>
+            </p>
+
+            <p>
+                <label for="last_name"><strong>Last Name *</strong></label><br>
+                <input type="text" name="last_name" required>
+            </p>
+
+            <p>
+                <label for="email"><strong>Email Address *</strong></label><br>
+                <input type="email" name="email" required>
+            </p>
+
+            <p>
+                <label for="phone"><strong>Phone Number *</strong></label><br>
+                <input type="tel" name="phone" required>
+            </p>
+
+            <h3>Course Modules *</h3>
+
+            <p>
+                <label>
+                    <input type="checkbox" name="modules[]" value="module1">
+                    Module 1: Introduction to 3D Animation
+                </label>
+            </p>
+
+            <p>
+                <label>
+                    <input type="checkbox" name="modules[]" value="module2">
+                    Module 2: Character Design Basics
+                </label>
+            </p>
+
+            <p>
+                <label>
+                    <input type="checkbox" name="modules[]" value="module3">
+                    Module 3: Environmental Modelling
+                </label>
+            </p>
+
+            <p>
+                <label for="extra"><strong>Special Requests (Optional)</strong></label><br>
+                <textarea placeholder="Additional requests or requirements" name="extra" rows="7" cols="84"></textarea>
+            </p>
+
+            <button type="submit">Submit Booking</button>
+
+        </form>
+    </div>
+
+</body>
+
+</html>

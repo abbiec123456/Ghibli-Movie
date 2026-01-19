@@ -150,3 +150,13 @@ a {
     text-decoration: none;
     font-weight: bold;
 }
+
+input,
+textarea {
+    box-sizing: border-box;
+}
+
+.booking{
+    justify-content: center;
+    text-align: center;
+}
