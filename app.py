@@ -85,7 +85,7 @@ def customer_dashboard():
 
     Returns:
         str: Rendered template or redirect to login if unauthorized.
-    """    
+    """
     if session.get('role') != 'customer':
         return redirect(url_for('customer_login'))
 
@@ -126,7 +126,7 @@ def logout():
 
     Returns:
         Response: Redirect to customer login page.
-    """    
+    """
     session.clear()
     return redirect(url_for('customer_login'))
 
