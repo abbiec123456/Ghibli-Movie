@@ -130,9 +130,12 @@ def logout():
     session.clear()
     return redirect(url_for("customer_login"))
 
+
+# ---------- LOGOUT ----------
 @app.route('/book')
 def booking():
     return render_template("booking.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
