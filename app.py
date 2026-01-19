@@ -26,6 +26,7 @@ BOOKINGS = [
     }
 ]
 
+
 # ---------- CUSTOMER LOGIN ----------
 @app.route('/', methods=['GET', 'POST'])
 def customer_login():
