@@ -30,11 +30,15 @@ Our product will be delivered using an Agile methodology that embraces the DevOp
 
 # Scrum Master
 Rotating scrum master so that everyone gets to experience the role once.
-Week 08/12 Gianluca - created Jira Project and set up access to team members - Quick Jira demo
+Week 08/12 Gianluca - created Jira Project and set up access to team members - Quick Jira demo.
+Week 16/12 Gianluca - assigned user stories to team members.
+Week 23/12 Ana - Discussed the DB we will be using.
+Week 13/01 Abbie - Created UI samples from wireframes.
 
 # Product Owner
-Week 08/12 Gianluca - created main epics, initial product backlog
-Week 15/12 Abeey - started grooming some of the user stories
+Week 08/12 Gianluca - created main epics, initial product backlog.
+Week 15/12 Abbie - started grooming some of the user stories.
+
 
 # Rockstars
 <<list team member names here>>
@@ -58,7 +62,7 @@ Regex for cleansing and validation of data before sending it to the database.
 
 # Useful Links
  - Project Slack: https://atudevops.slack.com
- - GitHub: <<staff member's GitHub repo for the student project>>
+ - GitHub: https://github.com/abbiec123456/Ghibli-Movie
 
 # More Information
 For more information, visit our other sections

@@ -1,9 +1,27 @@
+"""
+Ghibli Movie Booking System
+
+This Flask application provides a simple web interface for customers to log in,
+view their personal details and bookings, and update extra requests for courses.
+It uses in-memory storage for demonstration purposes.
+
+Features:
+- Customer login with shared password authentication
+- Dashboard to view personal details and bookings
+- Ability to update extra requests for bookings
+- Session-based authentication
+
+Note: This is a basic implementation with temporary in-memory data.
+In a production environment, use a proper database and secure password handling.
+"""
+
 from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = "ghibli_secret_key"
 
-# Temporary in-memory storage
+# ---------- TEMPORARY IN-MEMORY STORAGE ----------
+
 CUSTOMERS = {
     "abbie": {
         "password": "group1",
@@ -26,68 +44,95 @@ BOOKINGS = [
     }
 ]
 
-# ---------- CUSTOMER LOGIN ----------
-@app.route('/', methods=['GET', 'POST'])
-def customer_login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+SHARED_PASSWORD = "group1"
 
-        if username in CUSTOMERS and CUSTOMERS[username]['password'] == password:
-            session['user'] = username
-            session['name'] = CUSTOMERS[username]['name']
-            session['email'] = CUSTOMERS[username]['email']
-            session['phone'] = CUSTOMERS[username]['phone']
-            session['role'] = 'customer'
-            return redirect(url_for('customer_dashboard'))
+
+# ---------- CUSTOMER LOGIN ----------
+
+@app.route("/", methods=["GET", "POST"])
+def customer_login():
+    """
+    Handle customer login page.
+
+    GET: Render the login form.
+    POST: Validate password and create session.
+    """
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if password == SHARED_PASSWORD:
+            session["user"] = username
+            session["role"] = "customer"
+
+            # Load predefined user or create demo user
+            if username in CUSTOMERS:
+                session["name"] = CUSTOMERS[username]["name"]
+                session["email"] = CUSTOMERS[username]["email"]
+                session["phone"] = CUSTOMERS[username]["phone"]
+            else:
+                session["name"] = username.title()
+                session["email"] = f"{username}@example.com"
+                session["phone"] = "N/A"
+
+            return redirect(url_for("customer_dashboard"))
 
         return "Invalid login credentials"
 
-    return render_template('customer_login.html')
+    return render_template("customer_login.html")
 
 
 # ---------- CUSTOMER DASHBOARD ----------
-@app.route('/dashboard', methods=['GET', 'POST'])
+
+@app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
-    if session.get('role') != 'customer':
-        return redirect(url_for('customer_login'))
+    """
+    Display customer dashboard.
 
-    user_email = session.get('email')
+    Shows personal details and subscribed courses.
+    Allows updating extra requests only.
+    """
+    if session.get("role") != "customer":
+        return redirect(url_for("customer_login"))
 
-    # Update extra requests if form submitted
-    if request.method == 'POST':
-        course_to_update = request.form['course']
-        new_extra = request.form['extra']
-        # Find the booking and update it
+    user_email = session.get("email")
+
+    # Update extra requests
+    if request.method == "POST":
+        course_to_update = request.form["course"]
+        new_extra = request.form["extra"]
+
         for booking in BOOKINGS:
-            if booking['email'] == user_email and booking['course'] == course_to_update:
-                booking['extra'] = new_extra
+            if booking["email"] == user_email and booking["course"] == course_to_update:
+                booking["extra"] = new_extra
                 break
 
     personal_details = {
-        "name": session.get('name'),
-        "email": session.get('email'),
-        "phone": session.get('phone')
+        "name": session.get("name"),
+        "email": session.get("email"),
+        "phone": session.get("phone"),
     }
 
-    user_bookings = [b for b in BOOKINGS if b['email'] == user_email]
+    user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
 
     return render_template(
-        'customer_dashboard.html',
+        "customer_dashboard.html",
         personal_details=personal_details,
-        bookings=user_bookings
+        bookings=user_bookings,
     )
 
 
 # ---------- LOGOUT ----------
-@app.route('/logout')
+
+@app.route("/logout")
 def logout():
+    """Clear user session and log out."""
     session.clear()
-    return redirect(url_for('customer_login'))
+    return redirect(url_for("customer_login"))
 
 @app.route('/book')
 def booking():
     return render_template("booking.html")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
