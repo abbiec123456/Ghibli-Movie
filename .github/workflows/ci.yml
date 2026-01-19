@@ -151,3 +151,41 @@ jobs:
       
       outputs:
         image_tag: ${{ steps.export.outputs.image_tag }}
+
+    deploy:
+      name: Deploy to Staging Server
+      needs: buildimage
+      runs-on: ubuntu-latest
+      steps:
+        - name: Deploy via SSH
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.STAGING_SERVER_IP }}
+            username: ${{ secrets.STAGING_SERVER_USER }}
+            password: ${{ secrets.STAGING_SERVER_PASSWORD }}
+            port: 22
+            script: |
+              # 1. Login to GHCR on the remote server
+              echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+              # 2. Pull the specific version built in the previous job
+              IMAGE_NAME="${{ needs.buildimage.outputs.image_tag }}"
+              echo "Deploying version: $IMAGE_NAME"
+              docker pull $IMAGE_NAME
+
+              # 3. Stop and remove the existing container
+              # The '|| true' ensures the script continues even if the container doesn't exist yet
+              docker stop ghibli-app || true
+              docker rm ghibli-app || true
+
+              # 4. Run the new container
+              # Using -d for detached mode and --restart to ensure it stays up
+              docker run -d \
+                --name ghibli-app \
+                -p 80:80 \
+                --restart unless-stopped \
+                $IMAGE_NAME
+
+              # 5. Cleanup: Remove unused images and layers to save disk space
+              # This removes all dangling images and any image not used by at least one container
+              docker image prune -af
