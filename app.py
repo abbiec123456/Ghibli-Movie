@@ -131,7 +131,7 @@ def logout():
     return redirect(url_for("customer_login"))
 
 
-# ---------- LOGOUT ----------
+# ---------- Book ----------
 @app.route('/book')
 def booking():
     return render_template("booking.html")
