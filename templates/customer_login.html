@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Floating clouds -->
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <!-- Header banner -->
+    <div class="header">
+        <h1>Studio Ghibli Movie Maker</h1>
+        <p>Create magical stories through animation</p>
+    </div>
+
+    <!-- Login box -->
+    <div class="container">
+        <form method="POST">
+            <input name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Enter the Studio</button>
+        </form>
+    </div>
+
+</body>
+</html>
