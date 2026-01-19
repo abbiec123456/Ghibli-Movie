@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && \
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_APP=App.py \
+    FLASK_APP=app.py \
     # Staging often mirrors production security
     FLASK_DEBUG=0 
 
@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 ENV PATH="/home/myuser/.local/bin:${PATH}"
 
-COPY --chown=myuser:myuser App.py .
+COPY --chown=myuser:myuser app.py .
 
 # Verify the app is running
 HEALTHCHECK --interval=1m --timeout=3s \
@@ -28,4 +28,4 @@ HEALTHCHECK --interval=1m --timeout=3s \
 
 EXPOSE 80
 
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "4", "--log-level", "debug", "App:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "4", "--log-level", "debug", "app:app"]
