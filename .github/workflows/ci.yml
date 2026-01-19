@@ -91,6 +91,4 @@ jobs:
               uses: sonarsource/sonarcloud-github-action@v2
               env:
                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              with:
-                projectKey: https://github.com/abbiec123456/Ghibli-Movie
-                organization: iumy
+
