@@ -6,7 +6,7 @@ view their personal details and bookings, and update extra requests for courses.
 It uses in-memory storage for demonstration purposes.
 
 Features:
-- Customer login with username and password
+- Customer login with shared password authentication
 - Dashboard to view personal details and bookings
 - Ability to update extra requests for bookings
 - Session-based authentication
@@ -20,7 +20,8 @@ from flask import Flask, render_template, request, redirect, url_for, session
 app = Flask(__name__)
 app.secret_key = "ghibli_secret_key"
 
-# Temporary in-memory storage
+# ---------- TEMPORARY IN-MEMORY STORAGE ----------
+
 CUSTOMERS = {
     "abbie": {
         "password": "group1",
@@ -43,93 +44,92 @@ BOOKINGS = [
     }
 ]
 
+SHARED_PASSWORD = "group1"
+
 
 # ---------- CUSTOMER LOGIN ----------
-@app.route('/', methods=['GET', 'POST'])
+
+@app.route("/", methods=["GET", "POST"])
 def customer_login():
     """
     Handle customer login page.
 
     GET: Render the login form.
-    POST: Validate username and password, set session if valid, redirect to dashboard.
-          If invalid, return error message.
-
-    Returns:
-        str: Rendered template or error message.
+    POST: Validate password and create session.
     """
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
 
-        if username in CUSTOMERS and CUSTOMERS[username]['password'] == password:
-            session['user'] = username
-            session['name'] = CUSTOMERS[username]['name']
-            session['email'] = CUSTOMERS[username]['email']
-            session['phone'] = CUSTOMERS[username]['phone']
-            session['role'] = 'customer'
-            return redirect(url_for('customer_dashboard'))
+        if password == SHARED_PASSWORD:
+            session["user"] = username
+            session["role"] = "customer"
+
+            # Load predefined user or create demo user
+            if username in CUSTOMERS:
+                session["name"] = CUSTOMERS[username]["name"]
+                session["email"] = CUSTOMERS[username]["email"]
+                session["phone"] = CUSTOMERS[username]["phone"]
+            else:
+                session["name"] = username.title()
+                session["email"] = f"{username}@example.com"
+                session["phone"] = "N/A"
+
+            return redirect(url_for("customer_dashboard"))
 
         return "Invalid login credentials"
 
-    return render_template('customer_login.html')
+    return render_template("customer_login.html")
 
 
 # ---------- CUSTOMER DASHBOARD ----------
-@app.route('/dashboard', methods=['GET', 'POST'])
+
+@app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
     """
-    Handle customer dashboard page.
+    Display customer dashboard.
 
-    Requires customer role in session. Displays personal details and bookings.
-    POST: Update extra requests for a specific booking.
-
-    Returns:
-        str: Rendered template or redirect to login if unauthorized.
+    Shows personal details and subscribed courses.
+    Allows updating extra requests only.
     """
-    if session.get('role') != 'customer':
-        return redirect(url_for('customer_login'))
+    if session.get("role") != "customer":
+        return redirect(url_for("customer_login"))
 
-    user_email = session.get('email')
+    user_email = session.get("email")
 
-    # Update extra requests if form submitted
-    if request.method == 'POST':
-        course_to_update = request.form['course']
-        new_extra = request.form['extra']
-        # Find the booking and update it
+    # Update extra requests
+    if request.method == "POST":
+        course_to_update = request.form["course"]
+        new_extra = request.form["extra"]
+
         for booking in BOOKINGS:
-            if booking['email'] == user_email and booking['course'] == course_to_update:
-                booking['extra'] = new_extra
+            if booking["email"] == user_email and booking["course"] == course_to_update:
+                booking["extra"] = new_extra
                 break
 
     personal_details = {
-        "name": session.get('name'),
-        "email": session.get('email'),
-        "phone": session.get('phone')
+        "name": session.get("name"),
+        "email": session.get("email"),
+        "phone": session.get("phone"),
     }
 
-    user_bookings = [b for b in BOOKINGS if b['email'] == user_email]
+    user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
 
     return render_template(
-        'customer_dashboard.html',
+        "customer_dashboard.html",
         personal_details=personal_details,
-        bookings=user_bookings
+        bookings=user_bookings,
     )
 
 
 # ---------- LOGOUT ----------
-@app.route('/logout')
+
+@app.route("/logout")
 def logout():
-    """
-    Handle user logout.
-
-    Clear the session and redirect to login page.
-
-    Returns:
-        Response: Redirect to customer login page.
-    """
+    """Clear user session and log out."""
     session.clear()
-    return redirect(url_for('customer_login'))
+    return redirect(url_for("customer_login"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
