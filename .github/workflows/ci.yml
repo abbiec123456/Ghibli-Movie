@@ -160,9 +160,9 @@ jobs:
         - name: Deploy via SSH
           uses: appleboy/ssh-action@master
           with:
-            host: ${{ secrets.STAGING_SERVER_IP }}
-            username: ${{ secrets.STAGING_SERVER_USER }}
-            password: ${{ secrets.STAGING_SERVER_PASSWORD }}
+            host: ${{ secrets.VPS_HOST }}
+            username: ${{ secrets.VPS_USER }}
+            password: ${{ secrets.VPS_KEY }}
             port: 22
             script: |
               # 1. Login to GHCR on the remote server
