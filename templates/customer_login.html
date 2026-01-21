@@ -19,11 +19,15 @@
     <!-- Login box -->
     <div class="container">
         <form method="POST">
-            <input name="username" placeholder="Username" required>
+            <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Enter the Studio</button>
         </form>
     </div>
+<p class="auth-switch">
+  Don’t have an account?
+  <a href="{{ url_for('register') }}">Register</a>
+</p>
 
 </body>
 </html>

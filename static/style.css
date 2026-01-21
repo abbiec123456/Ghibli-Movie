@@ -160,3 +160,130 @@ textarea {
     justify-content: center;
     text-align: center;
 }
+/* ---------- GLOBAL ---------- */
+body.landing {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #dff5ff, #fef9e7);
+}
+
+/* ---------- NAVBAR ---------- */
+.navbar {
+  padding: 1rem 2rem;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-weight: 600;
+  color: #4f7f67;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #4f7f67;
+  padding: 0.5rem 1rem;
+}
+
+.nav-button {
+  background-color: #8ec7c3;
+  color: #1f3d35;
+  text-decoration: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: 999px;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  color: #4f7f67;
+}
+
+.hero p {
+  margin-top: 1rem;
+  color: #5f7f75;
+}
+
+.hero-buttons {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.primary-btn {
+  background-color: #8ec7c3;
+  color: #1f3d35;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+.secondary-btn {
+  border: 1px solid #8ec7c3;
+  color: #4f7f67;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.navbar, .nav-links a {
+  position: relative;
+  z-index: 10;
+}
+.auth-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.auth-card h2 {
+  margin-bottom: 1.5rem;
+  color: #4f7f67;
+  text-align: center;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.auth-switch {
+  margin-top: 1rem;
+  text-align: center;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-totoro {
+  width: 100px;   /* Bigger size */
+  height: auto;
+}
