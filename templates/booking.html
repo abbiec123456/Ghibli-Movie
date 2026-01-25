@@ -25,44 +25,39 @@
             <h3>Customer Details</h3>
 
             <p>
-                <label for="first_name"><strong>First Name *</strong></label><br>
-                <input type="text" name="first_name" required>
+                <label for="name"><strong>Name</strong></label><br>
+                <input type="text" name="name" value="{{ user.name }}" disabled>
             </p>
 
             <p>
-                <label for="last_name"><strong>Last Name *</strong></label><br>
-                <input type="text" name="last_name" required>
-            </p>
-
-            <p>
-                <label for="email"><strong>Email Address *</strong></label><br>
-                <input type="email" name="email" required>
+                <label for="email"><strong>Email</strong></label><br>
+                <input type="email" name = "email" value="{{ user.email }}" disabled>
             </p>
 
             <p>
                 <label for="phone"><strong>Phone Number *</strong></label><br>
-                <input type="tel" name="phone" required>
+                <input type="tel" name="phone" value="{{user.phone}}" disabled>
             </p>
 
             <h3>Course Modules *</h3>
 
             <p>
                 <label>
-                    <input type="checkbox" name="modules[]" value="module1">
+                    <input type="checkbox" name="modules" value="module1">
                     Module 1: Introduction to 3D Animation
                 </label>
             </p>
 
             <p>
                 <label>
-                    <input type="checkbox" name="modules[]" value="module2">
+                    <input type="checkbox" name="modules" value="module2">
                     Module 2: Character Design Basics
                 </label>
             </p>
 
             <p>
                 <label>
-                    <input type="checkbox" name="modules[]" value="module3">
+                    <input type="checkbox" name="modules" value="module3">
                     Module 3: Environmental Modelling
                 </label>
             </p>

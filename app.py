@@ -129,12 +129,35 @@ def logout():
     return redirect(url_for("customer_login"))
 
 
-# ---------- Book ----------
-
-
-@app.route('/book')
+# ---------- BOOKING PAGE ----------
+@app.route("/book", methods=["GET","POST"])
 def booking():
-    return render_template("booking.html")
+    if session.get("role") != "customer":
+        return redirect(url_for("customer_login"))
+
+    if request.method == "POST":
+        selected_modules = request.form.getlist("modules")
+        extra = request.form.get("extra", "")
+
+        BOOKINGS.append({
+            "email": session.get("email"),
+            "course": "Moving Castle Creations - 3D Animation",
+            "modules": selected_modules,
+            "extra": extra
+        })
+
+        return redirect(url_for("customer_dashboard"))
+
+    return render_template(
+        "booking.html",
+        user={
+            "name":session.get("name"),
+            "email": session.get("email"),
+            "phone": session.get("phone")
+        }
+    )
+
+
 
 
 # ---------- ADMIN ----------
