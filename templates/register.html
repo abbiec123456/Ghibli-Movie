@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="landing">
+     <!-- Floating clouds -->
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo">
+  <img src="{{ url_for('static', filename='totoro.png') }}" alt="Totoro" class="logo-totoro">
+   Studio Ghibli's Movie Maker</div>
+      <div class="nav-links">
+        <a href="{{ url_for('customer_login') }}" class="nav-link">Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- REGISTER FORM -->
+  <main class="hero">
+    <div class="auth-card">
+      <h2>Create an Account</h2>
+
+      <form method="POST" action="{{ url_for('register') }}">
+        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+        <button type="submit" class="primary-btn">Create Account</button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account?
+        <a href="{{ url_for('customer_login') }}">Login</a>
+      </p>
+    </div>
+  </main>
+
+</body>
+</html>

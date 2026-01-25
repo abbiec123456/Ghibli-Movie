@@ -3,16 +3,8 @@ Ghibli Movie Booking System
 
 This Flask application provides a simple web interface for customers to log in,
 view their personal details and bookings, and update extra requests for courses.
-It uses in-memory storage for demonstration purposes.
-
-Features:
-- Customer login with shared password authentication
-- Dashboard to view personal details and bookings
-- Ability to update extra requests for bookings
-- Session-based authentication
 
 Note: This is a basic implementation with temporary in-memory data.
-In a production environment, use a proper database and secure password handling.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, session
@@ -21,9 +13,8 @@ app = Flask(__name__)
 app.secret_key = "ghibli_secret_key"
 
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
-
 CUSTOMERS = {
-    "abbie": {
+    "abbie@example.com": {
         "password": "group1",
         "name": "Abbie Smith",
         "email": "abbie@example.com",
@@ -44,36 +35,27 @@ BOOKINGS = [
     }
 ]
 
-SHARED_PASSWORD = "group1"
+
+# ---------- LANDING PAGE ----------
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
 # ---------- CUSTOMER LOGIN ----------
-
-@app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def customer_login():
-    """
-    Handle customer login page.
-
-    GET: Render the login form.
-    POST: Validate password and create session.
-    """
     if request.method == "POST":
-        username = request.form["username"]
+        email = request.form["email"]
         password = request.form["password"]
 
-        if password == SHARED_PASSWORD:
-            session["user"] = username
+        # Check if user exists and password matches
+        if email in CUSTOMERS and CUSTOMERS[email]["password"] == password:
+            session["user"] = email
             session["role"] = "customer"
-
-            # Load predefined user or create demo user
-            if username in CUSTOMERS:
-                session["name"] = CUSTOMERS[username]["name"]
-                session["email"] = CUSTOMERS[username]["email"]
-                session["phone"] = CUSTOMERS[username]["phone"]
-            else:
-                session["name"] = username.title()
-                session["email"] = f"{username}@example.com"
-                session["phone"] = "N/A"
+            session["name"] = CUSTOMERS[email]["name"]
+            session["email"] = CUSTOMERS[email]["email"]
+            session["phone"] = CUSTOMERS[email]["phone"]
 
             return redirect(url_for("customer_dashboard"))
 
@@ -82,22 +64,40 @@ def customer_login():
     return render_template("customer_login.html")
 
 
-# ---------- CUSTOMER DASHBOARD ----------
+# ---------- REGISTER ----------
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
 
+        # Check passwords match
+        if password != confirm_password:
+            return "Passwords do not match"
+
+        # Save new user
+        CUSTOMERS[email] = {
+            "password": password,
+            "name": name,
+            "email": email,
+            "phone": "N/A"
+        }
+
+        return redirect(url_for("customer_login"))
+
+    return render_template("register.html")
+
+
+# ---------- CUSTOMER DASHBOARD ----------
 @app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
-    """
-    Display customer dashboard.
-
-    Shows personal details and subscribed courses.
-    Allows updating extra requests only.
-    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
     user_email = session.get("email")
 
-    # Update extra requests
     if request.method == "POST":
         course_to_update = request.form["course"]
         new_extra = request.form["extra"]
@@ -123,10 +123,8 @@ def customer_dashboard():
 
 
 # ---------- LOGOUT ----------
-
 @app.route("/logout")
 def logout():
-    """Clear user session and log out."""
     session.clear()
     return redirect(url_for("customer_login"))
 
