@@ -17,4 +17,5 @@ venv/
 
 # Test artifacts
 .pytest_cache/
-.coverage
+.coverage.venv/
+.venv/

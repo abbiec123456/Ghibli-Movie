@@ -135,6 +135,17 @@ def logout():
 @app.route('/book')
 def booking():
     return render_template("booking.html")
+# ---------- ADMIN ----------
+
+@app.route("/admin")
+def admin_dashboard():
+    return render_template("admin_dashboard.html")
+
+@app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
+def edit_booking(booking_id):
+    if request.method == "POST":
+        return redirect(url_for("admin_dashboard"))
+    return render_template("edit_booking.html")
 
 
 if __name__ == "__main__":

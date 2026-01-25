@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="cloud small"></div>
+  <div class="cloud large"></div>
+
+  <div class="header">
+    <h1>Admin Dashboard</h1>
+    <p>Manage bookings</p>
+  </div>
+
+  <div class="dashboard">
+    <h2>Bookings</h2>
+
+    <div class="booking">
+      <p><strong>Name:</strong> Lola</p>
+      <p><strong>Course:</strong> Character Design Basics</p>
+      <a href="/admin/bookings/1/edit">Edit booking</a>
+    </div>
+
+    <div class="booking">
+      <p><strong>Name:</strong> Abbie</p>
+      <p><strong>Course:</strong> Castle Environment Design</p>
+      <a href="/admin/bookings/2/edit">Edit booking</a>
+    </div>
+
+    <a href="/">Back</a>
+  </div>
+
+</body>
+</html>
