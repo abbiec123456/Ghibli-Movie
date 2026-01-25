@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Booking</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="cloud small"></div>
+  <div class="cloud large"></div>
+
+  <div class="header">
+    <h1>Edit Booking</h1>
+    <p>Update booking detail </p>
+  </div>
+
+  <div class="dashboard">
+    <form method="POST">
+      <p>
+        <label><strong>Name</strong></label><br>
+        <input type="text" name="name" value="Lola">
+      </p>
+
+      <p>
+        <label><strong>Course</strong></label><br>
+        <input type="text" name="course" value="Character Design Basics">
+      </p>
+
+      <button type="submit">Save changes</button>
+    </form>
+
+    <a href="/admin">Back to dashboard</a>
+  </div>
+
+</body>
+</html>
