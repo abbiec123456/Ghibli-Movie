@@ -130,7 +130,7 @@ def logout():
 
 
 # ---------- BOOKING PAGE ----------
-@app.route("/book", methods=["GET","POST"])
+@app.route("/book", methods=["GET", "POST"])
 def booking():
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
@@ -151,13 +151,11 @@ def booking():
     return render_template(
         "booking.html",
         user={
-            "name":session.get("name"),
+            "name": session.get("name"),
             "email": session.get("email"),
             "phone": session.get("phone")
         }
     )
-
-
 
 
 # ---------- ADMIN ----------
