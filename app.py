@@ -41,7 +41,7 @@ BOOKINGS = [
 def index():
     """
     Render the landing page.
-    
+
     Returns:
         str: Rendered HTML template for the index page
     """
@@ -53,10 +53,10 @@ def index():
 def customer_login():
     """
     Handle customer login.
-    
+
     GET: Display the login form
     POST: Process login credentials and create session
-    
+
     Returns:
         str: Rendered login template or redirect to dashboard
     """
@@ -84,10 +84,10 @@ def customer_login():
 def register():
     """
     Handle customer registration.
-    
+
     GET: Display the registration form
     POST: Process registration and create new customer account
-    
+
     Returns:
         str: Rendered registration template or redirect to login
     """
@@ -119,10 +119,10 @@ def register():
 def customer_dashboard():
     """
     Display customer dashboard with personal details and bookings.
-    
+
     Allows customers to view their information and update booking extras.
     Requires authentication.
-    
+
     Returns:
         str: Rendered dashboard template or redirect to login
     """
@@ -160,7 +160,7 @@ def customer_dashboard():
 def logout():
     """
     Log out the current user by clearing the session.
-    
+
     Returns:
         werkzeug.wrappers.Response: Redirect to login page
     """
@@ -173,10 +173,10 @@ def logout():
 def booking():
     """
     Handle course booking.
-    
+
     GET: Display the booking form
     POST: Process booking submission and store booking data
-    
+
     Returns:
         str: Rendered booking template or redirect to confirmation
     """
@@ -214,10 +214,10 @@ def booking():
 def booking_submitted():
     """
     Display booking confirmation page.
-    
+
     Shows the details of the most recently submitted booking.
     Requires authentication.
-    
+
     Returns:
         str: Rendered booking confirmation template or redirect
     """
@@ -238,31 +238,30 @@ def booking_submitted():
 def admin_dashboard():
     """
     Display admin dashboard.
-    
+
     Returns:
         str: Rendered admin dashboard template
     """
     return render_template("admin_dashboard.html")
 
 
-
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
     """
     Handle editing of bookings in admin panel.
-    
+
     GET: Display the edit booking form
     POST: Process booking updates
-    
+
     Args:
         booking_id (int): The ID of the booking to edit
-    
+
     Returns:
         str: Rendered edit template or redirect to admin dashboard
     """
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
-    
+
     return render_template("edit_booking.html")
 
 
