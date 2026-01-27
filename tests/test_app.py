@@ -37,16 +37,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Reset test data
         CUSTOMERS.clear()
-        CUSTOMERS.update(
-            {
-               "abbie@example.com": {
-                   "password": "group1",
-                   "name": "Abbie Smith",
-                   "email": "abbie@example.com",
-                   "phone": "123-456-7890"
-               }
-           }
-        )
+        CUSTOMERS.update({
+            "abbie@example.com": {
+                "password": "group1",
+                "name": "Abbie Smith",
+                "email": "abbie@example.com",
+                "phone": "123-456-7890"
+            }
+        })
 
         BOOKINGS.clear()
         BOOKINGS.extend([
