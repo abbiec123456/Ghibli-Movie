@@ -135,9 +135,9 @@ def customer_dashboard():
         course_to_update = request.form["course"]
         new_extra = request.form["extra"]
 
-        for booking in BOOKINGS:
-            if booking["email"] == user_email and booking["course"] == course_to_update:
-                booking["extra"] = new_extra
+        for booking_item in BOOKINGS:
+            if booking_item["email"] == user_email and booking_item["course"] == course_to_update:
+                booking_item["extra"] = new_extra
                 break
 
     personal_details = {
@@ -187,15 +187,15 @@ def booking():
         selected_modules = request.form.getlist("modules")
         extra = request.form.get("extra", "")
 
-        booking = {
+        booking_data = {
             "email": session.get("email"),
             "course": "Moving Castle Creations - 3D Animation",
             "modules": selected_modules,
             "extra": extra,
         }
 
-        BOOKINGS.append(booking)
-        session["last_booking"] = booking
+        BOOKINGS.append(booking_data)
+        session["last_booking"] = booking_data
 
         return redirect(url_for("booking_submitted"))
 
@@ -224,12 +224,12 @@ def booking_submitted():
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
-    booking = session.get("last_booking")
+    booking_data = session.get("last_booking")
 
-    if not booking:
+    if not booking_data:
         return redirect(url_for("booking"))
 
-    return render_template("booking_submitted.html", booking=booking)
+    return render_template("booking_submitted.html", booking=booking_data)
 
 
 # ---------- ADMIN ----------
@@ -262,7 +262,7 @@ def edit_booking(booking_id):
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
 
-    return render_template("edit_booking.html")
+    return render_template("edit_booking.html", booking_id=booking_id)
 
 
 if __name__ == "__main__":
