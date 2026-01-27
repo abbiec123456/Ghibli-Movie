@@ -65,7 +65,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
         CUSTOMERS.clear()
         BOOKINGS.clear()
 
-
     # ---------- LANDING PAGE TESTS ----------
 
     def test_index_page_loads(self):
