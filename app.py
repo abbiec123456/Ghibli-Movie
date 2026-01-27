@@ -11,25 +11,26 @@ from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
 app.secret_key = "ghibli_secret_key"
-
+ABBIE_EMAIL = "abbie@example.com"
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
+
 CUSTOMERS = {
-    "abbie@example.com": {
+    ABBIE_EMAIL: {
         "password": "group1",
         "name": "Abbie Smith",
-        "email": "abbie@example.com",
+        "email": ABBIE_EMAIL,
         "phone": "123-456-7890",
     }
 }
 
 BOOKINGS = [
     {
-        "email": "abbie@example.com",
+        "email": ABBIE_EMAIL,
         "course": "Moving Castle Creations – 3D Animation",
         "extra": "Beginner friendly tools",
     },
     {
-        "email": "abbie@example.com",
+        "email": ABBIE_EMAIL,
         "course": "Totoro Character Design",
         "extra": ""
     }
