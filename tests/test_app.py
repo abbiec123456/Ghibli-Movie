@@ -4,14 +4,25 @@ Unit Tests for Ghibli Movie Booking System
 This test suite provides comprehensive coverage for the Flask application,
 testing all routes, authentication, booking functionality, and edge cases.
 """
-
+import sys
+import os
 import unittest
 
 
-# Import the Flask app
-# Assuming the main file is named 'app.py'
-# If your file has a different name, adjust the import accordingly
-from app import app, CUSTOMERS, BOOKINGS
+# Add the parent directory to the Python path to allow imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+
+try:
+    from app import app, CUSTOMERS, BOOKINGS
+except ImportError:
+    # Try alternative import paths
+    try:
+        from main import app, CUSTOMERS, BOOKINGS
+    except ImportError:
+        # If running from tests directory
+        sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+        from app import app, CUSTOMERS, BOOKINGS
 
 
 class GhibliBookingSystemTests(unittest.TestCase):
