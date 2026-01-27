@@ -6,7 +6,6 @@ testing all routes, authentication, booking functionality, and edge cases.
 """
 
 import unittest
-from flask import session
 
 
 # Import the Flask app
