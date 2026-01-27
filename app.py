@@ -18,7 +18,7 @@ CUSTOMERS = {
         "password": "group1",
         "name": "Abbie Smith",
         "email": "abbie@example.com",
-        "phone": "123-456-7890"
+        "phone": "123-456-7890",
     }
 }
 
@@ -26,7 +26,7 @@ BOOKINGS = [
     {
         "email": "abbie@example.com",
         "course": "Moving Castle Creations – 3D Animation",
-        "extra": "Beginner friendly tools"
+        "extra": "Beginner friendly tools",
     },
     {
         "email": "abbie@example.com",
@@ -39,12 +39,27 @@ BOOKINGS = [
 # ---------- LANDING PAGE ----------
 @app.route("/")
 def index():
+    """
+    Render the landing page.
+    
+    Returns:
+        str: Rendered HTML template for the index page
+    """
     return render_template("index.html")
 
 
 # ---------- CUSTOMER LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
+    """
+    Handle customer login.
+    
+    GET: Display the login form
+    POST: Process login credentials and create session
+    
+    Returns:
+        str: Rendered login template or redirect to dashboard
+    """
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -67,6 +82,15 @@ def customer_login():
 # ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """
+    Handle customer registration.
+    
+    GET: Display the registration form
+    POST: Process registration and create new customer account
+    
+    Returns:
+        str: Rendered registration template or redirect to login
+    """
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
@@ -82,7 +106,7 @@ def register():
             "password": password,
             "name": name,
             "email": email,
-            "phone": "N/A"
+            "phone": "N/A",
         }
 
         return redirect(url_for("customer_login"))
@@ -93,6 +117,15 @@ def register():
 # ---------- CUSTOMER DASHBOARD ----------
 @app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
+    """
+    Display customer dashboard with personal details and bookings.
+    
+    Allows customers to view their information and update booking extras.
+    Requires authentication.
+    
+    Returns:
+        str: Rendered dashboard template or redirect to login
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
@@ -125,6 +158,12 @@ def customer_dashboard():
 # ---------- LOGOUT ----------
 @app.route("/logout")
 def logout():
+    """
+    Log out the current user by clearing the session.
+    
+    Returns:
+        werkzeug.wrappers.Response: Redirect to login page
+    """
     session.clear()
     return redirect(url_for("customer_login"))
 
@@ -132,6 +171,15 @@ def logout():
 # ---------- BOOKING PAGE ----------
 @app.route("/book", methods=["GET", "POST"])
 def booking():
+    """
+    Handle course booking.
+    
+    GET: Display the booking form
+    POST: Process booking submission and store booking data
+    
+    Returns:
+        str: Rendered booking template or redirect to confirmation
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
@@ -143,7 +191,7 @@ def booking():
             "email": session.get("email"),
             "course": "Moving Castle Creations - 3D Animation",
             "modules": selected_modules,
-            "extra": extra
+            "extra": extra,
         }
 
         BOOKINGS.append(booking)
@@ -156,7 +204,7 @@ def booking():
         user={
             "name": session.get("name"),
             "email": session.get("email"),
-            "phone": session.get("phone")
+            "phone": session.get("phone"),
         }
     )
 
@@ -164,6 +212,15 @@ def booking():
 # ---------- BOOKING SUBMITTED ----------
 @app.route("/booking-submitted")
 def booking_submitted():
+    """
+    Display booking confirmation page.
+    
+    Shows the details of the most recently submitted booking.
+    Requires authentication.
+    
+    Returns:
+        str: Rendered booking confirmation template or redirect
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
@@ -179,13 +236,33 @@ def booking_submitted():
 
 @app.route("/admin")
 def admin_dashboard():
+    """
+    Display admin dashboard.
+    
+    Returns:
+        str: Rendered admin dashboard template
+    """
     return render_template("admin_dashboard.html")
+
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
+    """
+    Handle editing of bookings in admin panel.
+    
+    GET: Display the edit booking form
+    POST: Process booking updates
+    
+    Args:
+        booking_id (int): The ID of the booking to edit
+    
+    Returns:
+        str: Rendered edit template or redirect to admin dashboard
+    """
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
+    
     return render_template("edit_booking.html")
 
 
