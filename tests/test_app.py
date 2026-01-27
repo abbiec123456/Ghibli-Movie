@@ -4,13 +4,13 @@ Unit Tests for Ghibli Movie Booking System
 This test suite provides comprehensive coverage for the Flask application,
 testing all routes, authentication, booking functionality, and edge cases.
 """
+
 import sys
 import os
 import unittest
 
-
 # Add the parent directory to the Python path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 try:
@@ -31,8 +31,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def setUp(self):
         """Set up test client and reset data before each test"""
         self.app = app
-        self.app.config['TESTING'] = True
-        self.app.config['WTF_CSRF_ENABLED'] = False
+        self.app.config["TESTING"] = True
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
         # Reset test data
@@ -62,7 +62,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after each test"""
-        pass
+        CUSTOMERS.clear()
+        BOOKINGS.clear()
 
     # ---------- LANDING PAGE TESTS ----------
 
