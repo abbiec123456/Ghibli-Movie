@@ -139,14 +139,17 @@ def booking():
         selected_modules = request.form.getlist("modules")
         extra = request.form.get("extra", "")
 
-        BOOKINGS.append({
+        booking = {
             "email": session.get("email"),
             "course": "Moving Castle Creations - 3D Animation",
             "modules": selected_modules,
             "extra": extra
-        })
+        }
 
-        return redirect(url_for("customer_dashboard"))
+        BOOKINGS.append(booking)
+        session["last_booking"] = booking
+
+        return redirect(url_for("booking_submitted"))
 
     return render_template(
         "booking.html",
@@ -156,6 +159,22 @@ def booking():
             "phone": session.get("phone")
         }
     )
+
+
+# ---------- BOOKING SUBMITTED ----------
+@app.route("/booking-submitted")
+def booking_submitted():
+    if session.get("role") != "customer":
+        return redirect(url_for("customer_login"))
+    
+    booking = session.get("last_booking")
+    
+    if not booking:
+        return redirect(url_for("booking"))
+    
+    return render_template("booking_submitted.html",
+                            booking=booking
+                            )
 
 
 # ---------- ADMIN ----------

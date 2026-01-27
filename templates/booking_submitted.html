@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Submitted</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <div class="header">
+        <h1>Booking Confirmed </h1>
+        <p>Thanks {{ session.name }} — your place has been reserved.</p>
+    </div>
+
+    <div class="dashboard">
+    <p>You’ve successfully booked:</p>
+        <strong>Moving Castle Creations – 3D Animation</strong>
+
+        <a href="{{ url_for('customer_dashboard') }}">Go to Dashboard</a>
+    </div>
+
+</body>
+</html>
