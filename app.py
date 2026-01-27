@@ -166,15 +166,13 @@ def booking():
 def booking_submitted():
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
-    
+
     booking = session.get("last_booking")
-    
+
     if not booking:
         return redirect(url_for("booking"))
-    
-    return render_template("booking_submitted.html",
-                            booking=booking
-                            )
+
+    return render_template("booking_submitted.html", booking=booking)
 
 
 # ---------- ADMIN ----------
