@@ -96,6 +96,9 @@ jobs:
               uses: sonarsource/sonarcloud-github-action@v2
               env:
                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                args: >
+                  -Dsonar.python.coverage.reportPaths=coverage.xml
 
     buildimage:
       name: Build Docker Image
