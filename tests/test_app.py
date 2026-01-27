@@ -62,7 +62,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after each test"""
-        pass
+        CUSTOMERS.clear()
+        BOOKINGS.clear()
+
 
     # ---------- LANDING PAGE TESTS ----------
 
