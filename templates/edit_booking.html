@@ -16,6 +16,7 @@
 
   <div class="dashboard">
     <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <p>
         <label><strong>Name</strong></label><br>
         <input type="text" name="name" value="Lola">

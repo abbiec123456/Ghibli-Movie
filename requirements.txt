@@ -2,3 +2,4 @@ flask
 pytest
 pytest-cov
 gunicorn
+Flask-WTF
