@@ -7,10 +7,24 @@ view their personal details and bookings, and update extra requests for courses.
 Note: This is a basic implementation with temporary in-memory data.
 """
 
+import os
 from flask import Flask, render_template, request, redirect, url_for, session
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.secret_key = "ghibli_secret_key"
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ghibli_secret_key')
+
+if app.config['SECRET_KEY'] == 'ghibli_secret_key' and not app.debug:
+    raise ValueError("No SECRET_KEY set !")
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_DEBUG', '1') == '0'
+
+csrf = CSRFProtect(app)
+
 ABBIE_EMAIL = "abbie@example.com"
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
 

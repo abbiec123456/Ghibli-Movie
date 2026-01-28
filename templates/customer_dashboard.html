@@ -29,6 +29,7 @@
                 <div class="booking">
                     <strong>{{ booking.course }}</strong><br>
                     <form method="POST" style="margin-top:10px;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <label>Extra requests:</label><br>
                         <input type="text" name="extra" value="{{ booking.extra }}" style="width: 90%; padding:5px; margin-top:5px;">
                         <input type="hidden" name="course" value="{{ booking.course }}">
