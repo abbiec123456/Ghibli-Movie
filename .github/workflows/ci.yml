@@ -103,6 +103,40 @@ jobs:
                 args: >
                   -Dsonar.python.coverage.reportPaths=coverage.xml
 
+    docs:
+      name: Build Documentation
+      runs-on: ubuntu-latest
+      needs: sonarqube
+
+      steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install documentation dependencies
+        run: |
+          pip install mkdocs mkdocs-material mkdocstrings[python]
+          pip install pylint graphviz
+
+      - name: Generate UML diagrams (Pyreverse)
+        run: |
+          mkdir -p docs/images
+          pyreverse -o png -p flask_app app.py
+          mv *.png docs/images/
+
+      - name: Build MkDocs site
+        run: mkdocs build
+
+      - name: Deploy documentation to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site
+
     buildimage:
       name: Build Docker Image
       runs-on: ubuntu-latest
