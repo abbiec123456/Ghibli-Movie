@@ -116,11 +116,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
 
       - name: Install documentation dependencies
         run: |
           pip install mkdocs mkdocs-material mkdocstrings[python]
-          pip install pylint graphviz
+          pip install pylint 
 
       - name: Generate UML diagrams (Pyreverse)
         run: |

@@ -12,16 +12,16 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'ghibli_secret_key')
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 
-if app.config['SECRET_KEY'] == 'ghibli_secret_key' and not app.debug:
+if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
     raise ValueError("No SECRET_KEY set !")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SAMESITE="Lax",
 )
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_DEBUG', '1') == '0'
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
 
@@ -43,11 +43,7 @@ BOOKINGS = [
         "course": "Moving Castle Creations – 3D Animation",
         "extra": "Beginner friendly tools",
     },
-    {
-        "email": ABBIE_EMAIL,
-        "course": "Totoro Character Design",
-        "extra": ""
-    }
+    {"email": ABBIE_EMAIL, "course": "Totoro Character Design", "extra": ""},
 ]
 
 
@@ -151,7 +147,10 @@ def customer_dashboard():
         new_extra = request.form["extra"]
 
         for booking_item in BOOKINGS:
-            if booking_item["email"] == user_email and booking_item["course"] == course_to_update:
+            if (
+                booking_item["email"] == user_email
+                and booking_item["course"] == course_to_update
+            ):
                 booking_item["extra"] = new_extra
                 break
 
@@ -220,7 +219,7 @@ def booking():
             "name": session.get("name"),
             "email": session.get("email"),
             "phone": session.get("phone"),
-        }
+        },
     )
 
 
@@ -248,6 +247,7 @@ def booking_submitted():
 
 
 # ---------- ADMIN ----------
+
 
 @app.route("/admin")
 def admin_dashboard():
