@@ -8,19 +8,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FLASK_APP=app.py \
     # Staging often mirrors production security
-    FLASK_DEBUG=0 
+    FLASK_DEBUG=1 \
+    PATH="/home/myuser/.local/bin:${PATH}"
 
 WORKDIR /app
 
 RUN useradd -m myuser
 USER myuser
 
-COPY --chown=myuser:myuser requirements.txt .
+COPY --chown=myuser:myuser --chmod=440 requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-ENV PATH="/home/myuser/.local/bin:${PATH}"
-
-COPY --chown=myuser:myuser app.py .
+COPY --chown=myuser:myuser --chmod=440 app.py .
 
 # Verify the app is running
 HEALTHCHECK --interval=1m --timeout=3s \
