@@ -210,7 +210,7 @@ jobs:
             username: ${{ secrets.VPS_USER }}
             key: ${{ secrets.VPS_KEY }}
             port: 22
-            envs: SECRET_KEY
+            envs: SECRET_KEY, NEW_RELIC_LICENSE_KEY, NEW_RELIC_APP_NAME
             script: |
               # 1. Login to GHCR on the remote server
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -232,6 +232,8 @@ jobs:
                 -p 80:80 \
                 --restart unless-stopped \
                 -e SECRET_KEY="$SECRET_KEY" \
+                -e NEW_RELIC_LICENSE_KEY="$NEW_RELIC_LICENSE_KEY" \
+                -e NEW_RELIC_APPNAME="$NEW_RELIC_APP_NAME" \
                 $IMAGE_NAME
 
               # 5. Cleanup: Remove unused images and layers to save disk space
@@ -239,4 +241,6 @@ jobs:
               docker image prune -af
 
           env:
-            SECRET_KEY: ${{ secrets.SECRET_KEY }}          
+            SECRET_KEY: ${{ secrets.SECRET_KEY }}        
+            NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }} 
+            NEW_RELIC_APPNAME: ${{ secrets.NEW_RELIC_APP_NAME }} 
