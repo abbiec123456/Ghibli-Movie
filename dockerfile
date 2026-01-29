@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=myuser:myuser --chmod=440 app.py .
 
+COPY --chown=myuser:myuser templates/ ./templates/
+COPY --chown=myuser:myuser static/ ./static/
+
 # Verify the app is running
 HEALTHCHECK --interval=1m --timeout=3s \
   CMD curl -f http://localhost:80/ || exit 1
