@@ -10,6 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # Staging often mirrors production security
     FLASK_DEBUG=1 \
     PATH="/home/myuser/.local/bin:${PATH}"
+    NEW_RELIC_LOG="stdout" \
+    NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 
 WORKDIR /app
 
@@ -27,4 +29,4 @@ HEALTHCHECK --interval=1m --timeout=3s \
 
 EXPOSE 80
 
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "4", "--log-level", "debug", "app:app"]
+CMD ["newrelic-admin", "run-program", "gunicorn", "--bind", "0.0.0.0:80", "--workers", "4", "--log-level", "debug", "app:app"]
