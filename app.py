@@ -14,8 +14,8 @@ from flask_wtf.csrf import CSRFProtect
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 
-if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
-    raise ValueError("No SECRET_KEY set !")
+##if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
+   ## raise ValueError("No SECRET_KEY set !")
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
