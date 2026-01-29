@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_APP=app.py \
     # Staging often mirrors production security
     FLASK_DEBUG=1 \
-    PATH="/home/myuser/.local/bin:${PATH}"
+    PATH="/home/myuser/.local/bin:${PATH}" \
     NEW_RELIC_LOG="stdout" \
     NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 
