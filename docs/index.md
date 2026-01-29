@@ -1,9 +1,17 @@
-# Flask Application Documentation
+# Ghibli Movie Application
 
-Welcome to the project documentation.
+## Architecture Overview
 
-## Architecture
+Below is the automatically generated class diagram:
+
 ![Class Diagram](images/classes_flask_app.png)
 
-## API
-See the Swagger UI for interactive API documentation.
+Below is the package-level overview:
+
+![Package Diagram](images/packages_flask_app.png)
+
+---
+
+## Application Code Reference
+
+::: app
