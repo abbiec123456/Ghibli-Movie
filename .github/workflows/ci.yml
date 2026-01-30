@@ -283,7 +283,7 @@ jobs:
             echo "ZAP rules file found"
 
         - name: OWASP ZAP Baseline Scan
-          uses: zaproxy/action-baseline@v0.11.0
+          uses: zaproxy/action-baseline@v0.15.0
           with:
             target: ${{ steps.normalize.outputs.target }}
             rules_file_name: ".zap/rules.tsv"
