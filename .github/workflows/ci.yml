@@ -276,7 +276,7 @@ jobs:
         - name: OWASP ZAP Baseline Scan
           uses: zaproxy/action-baseline@v0.11.0
           with:
-            target: ${{ secrets.VPS_HOST }}
+            target: ${{ env.ZAP_TARGET }}
             rules_file_name: ".zap/rules.tsv"
             fail_action: false
 
