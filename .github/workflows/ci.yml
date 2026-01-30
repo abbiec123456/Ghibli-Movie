@@ -290,6 +290,7 @@ jobs:
             fail_action: false
             allow_issue_writing: false
             cmd_options: "-a"
+            artifact_name: ""
 
         - name: Upload ZAP report
           if: always()
