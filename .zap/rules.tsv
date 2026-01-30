@@ -1,0 +1,30 @@
+# rule_id  action   comment
+
+# ---- Headers (common Flask defaults) ----
+10021     WARN     # X-Content-Type-Options missing
+10038     WARN     # X-Frame-Options missing
+10016     WARN     # Web Browser XSS Protection not set
+10020     WARN     # X-XSS-Protection missing
+10035     WARN     # Strict-Transport-Security missing (only if HTTPS)
+
+# ---- Cookies (often not relevant for APIs) ----
+10010     IGNORE   # Cookie without HttpOnly flag
+10011     IGNORE   # Cookie without Secure flag
+
+# ---- CORS (APIs often allow broad access intentionally) ----
+40012     WARN     # CORS misconfiguration
+
+# ---- Information disclosure (keep visible but non-blocking) ----
+10024     WARN     # Information Disclosure - Sensitive Info in URL
+10026     WARN     # HTTP Parameter Override
+10027     WARN     # Information Disclosure - Debug Error Messages
+
+# ---- Path / method probing ----
+10028     WARN     # Open Redirect
+10095     WARN     # Backup file disclosure
+
+# ---- Only fail CI on real risk ----
+90033     FAIL     # Loosely Scoped Cookie
+40018     FAIL     # SQL Injection (very rare in baseline)
+40019     FAIL     # SQL Injection (MySQL)
+40020     FAIL     # SQL Injection (PostgreSQL)
