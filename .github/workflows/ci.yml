@@ -244,3 +244,61 @@ jobs:
             SECRET_KEY: ${{ secrets.SECRET_KEY }}        
             NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }} 
             NEW_RELIC_APP_NAME: ${{ secrets.NEW_RELIC_APP_NAME }} 
+
+    zap_dast:
+      name: OWASP ZAP DAST Scan
+      runs-on: ubuntu-latest
+      needs: deploy
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Prepare workspace for ZAP
+          run: chmod -R 777  ${{ github.workspace }}
+        
+        - name: Normalize ZAP target URL
+          id: normalize
+          shell: bash
+          run: |
+            TARGET="$(echo "${{ secrets.VPS_HOST }}" | xargs)"
+
+            if [ -z "$TARGET" ]; then
+              echo "VPS_HOST secret is empty"
+              exit 1
+            fi
+
+            if [[ "$TARGET" =~ ^https?:// ]]; then
+              echo "target=$TARGET" >> $GITHUB_OUTPUT
+            else
+              echo "target=http://$TARGET" >> $GITHUB_OUTPUT
+            fi
+
+        - name: Validate ZAP rules file
+          run: |
+            if [ ! -f ".zap/rules.tsv" ]; then
+              echo ".zap/rules.tsv not found"
+              exit 1
+            fi
+            echo "ZAP rules file found"
+
+        - name: OWASP ZAP Baseline Scan
+          uses: zaproxy/action-baseline@v0.15.0
+          with:
+            target: ${{ steps.normalize.outputs.target }}
+            rules_file_name: ".zap/rules.tsv"
+            fail_action: false
+            allow_issue_writing: false
+            cmd_options: "-a"
+            artifact_name: ""
+
+        - name: Upload ZAP report
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: zap-report
+            path: |
+              report_html.html
+              report_json.json
+              report_md.md
+
