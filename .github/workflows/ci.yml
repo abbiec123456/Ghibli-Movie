@@ -257,14 +257,20 @@ jobs:
         - name: Normalize ZAP target URL
           shell: bash
           run: |
-            TARGET="${{ secrets.VPS_HOST }}"
+            TARGET="$(echo "${{ secrets.VPS_HOST }}" | xargs)"
 
-            if [[ "$TARGET" =~ ^http?:// ]]; then
-              echo "ZAP_TARGET=$TARGET" >> $GITHUB_ENV
-            else
-              echo "ZAP_TARGET=http://$TARGET" >> $GITHUB_ENV
+            if [ -z "$TARGET" ]; then
+              echo "VPS_HOST secret is empty"
+              exit 1
             fi
 
+            if [[ "$TARGET" =~ ^https?:// ]]; then
+              ZAP_TARGET="$TARGET"
+            else
+              ZAP_TARGET="http://$TARGET"
+            fi
+
+            echo "ZAP_TARGET=$ZAP_TARGET" >> $GITHUB_ENV
             echo "ZAP target normalized"
 
         - name: OWASP ZAP Baseline Scan
