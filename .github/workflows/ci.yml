@@ -255,6 +255,7 @@ jobs:
           uses: actions/checkout@v4
         
         - name: Normalize ZAP target URL
+          id: normalize
           shell: bash
           run: |
             TARGET="$(echo "${{ secrets.VPS_HOST }}" | xargs)"
@@ -265,18 +266,23 @@ jobs:
             fi
 
             if [[ "$TARGET" =~ ^https?:// ]]; then
-              ZAP_TARGET="$TARGET"
+              echo "target=$TARGET" >> $GITHUB_OUTPUT
             else
-              ZAP_TARGET="http://$TARGET"
+              echo "target=http://$TARGET" >> $GITHUB_OUTPUT
             fi
 
-            echo "ZAP_TARGET=$ZAP_TARGET" >> $GITHUB_ENV
-            echo "ZAP target normalized"
+        - name: Validate ZAP rules file
+          run: |
+            if [ ! -f ".zap/rules.tsv" ]; then
+              echo ".zap/rules.tsv not found"
+              exit 1
+            fi
+            echo "ZAP rules file found"
 
         - name: OWASP ZAP Baseline Scan
           uses: zaproxy/action-baseline@v0.11.0
           with:
-            target: ${{ env.ZAP_TARGET }}
+            target: ${{ steps.normalize.outputs.target }}
             rules_file_name: ".zap/rules.tsv"
             fail_action: false
 
