@@ -243,4 +243,4 @@ jobs:
           env:
             SECRET_KEY: ${{ secrets.SECRET_KEY }}        
             NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }} 
-            NEW_RELIC_APPNAME: ${{ secrets.NEW_RELIC_APP_NAME }} 
+            NEW_RELIC_APP_NAME: ${{ secrets.NEW_RELIC_APP_NAME }} 
