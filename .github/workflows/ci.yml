@@ -307,3 +307,36 @@ jobs:
               report_json.json
               report_md.md
 
+    generate-and-upload-bom:
+      runs-on: ubuntu-latest
+      needs: zap_dast
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '20'
+
+        - name: Install cdxgen
+          run: npm install -g @cyclonedx/cdxgen
+
+        - name: Generate SBOM (Application)
+          run: |
+            # Creates the standard Software Bill of Materials
+            cdxgen -o sbom.json
+
+        - name: Generate OBOM (Operational)
+          run: |
+            # Creates the Operations Bill of Materials
+            cdxgen -t os -o obom.json
+
+        - name: Upload BOMs as Artifacts
+          uses: actions/upload-artifact@v4
+          with:
+            name: cyclone-dx-reports
+            path: |
+              sbom.json
+              obom.json
+            retention-days: 90
