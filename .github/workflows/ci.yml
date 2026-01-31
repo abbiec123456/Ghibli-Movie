@@ -40,6 +40,12 @@ jobs:
               run: |
                 pylint . || true
 
+            - name: Run Bandit Security Scan
+              continue-on-error: true
+              run: |
+                pip install bandit
+                bandit -r . -f custom -v
+
     unit-test:
         name: Unit Tests with Coverage
         runs-on: ubuntu-latest
