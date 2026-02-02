@@ -337,6 +337,7 @@ jobs:
       needs: generate-and-upload-bom
       permissions:
         security-events: write
+        contents: read
       steps:
         - name: Checkout code
           uses: actions/checkout@v4
@@ -375,17 +376,19 @@ jobs:
         - name: Scan SBOM with Grype
           uses: anchore/scan-action@v3
           id: grype-scan
+          continue-on-error: true
           with:
             sbom: "./sbom.json"
             fail-build: false
             output-format: sarif
 
         - name: Upload SBOM results
-          uses: github/codeql-action/upload-sarif@v3
+          uses: github/codeql-action/upload-sarif@v4
           if: always()
           with:
             sarif_file: ${{ steps.grype-scan.outputs.sarif }}
             category: grype-app-sbom
+            checkout_path: ${{ github.workspace }}
 
         - name: Scan OBOM with Grype
           uses: anchore/scan-action@v3
@@ -396,11 +399,12 @@ jobs:
             output-format: sarif
 
         - name: Upload OBOM results
-          uses: github/codeql-action/upload-sarif@v3
+          uses: github/codeql-action/upload-sarif@v4
           if: always()
           with:
             sarif_file: ${{ steps.grype-obom.outputs.sarif }}
             category: grype-os-obom
+            checkout_path: ${{ github.workspace }}
 
         # --- UPLOAD RESULTS ---
         - name: Upload Scan Artifacts
