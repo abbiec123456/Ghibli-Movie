@@ -15,8 +15,17 @@
     </div>
 
     <div class="dashboard">
-    <p>You’ve successfully booked:</p>
-        <strong>Moving Castle Creations – 3D Animation</strong>
+        <p>You’ve successfully booked:</p>
+        <ul>
+            {% for module in booking_data.modules %}
+                <li>{{ module_labels[module] }}</li>
+            {% endfor %}
+        </ul>
+
+        {% if booking_data.extra %}
+            <h3>Nice to have requests</h3>
+            <p>{{ booking_data.extra }}</p>
+        {% endif %}
 
         <a href="{{ url_for('customer_dashboard') }}">Go to Dashboard</a>
     </div>
