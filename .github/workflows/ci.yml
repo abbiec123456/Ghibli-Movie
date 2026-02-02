@@ -390,24 +390,24 @@ jobs:
             category: grype-app-sbom
             checkout_path: ${{ github.workspace }}
 
-        - name: Scan OBOM with Grype
-          uses: anchore/scan-action@v3
-          id: grype-obom
-          continue-on-error: true
-          with:
-            sbom: "./obom.json"
-            fail-build: false
-            output-format: sarif
+        - name: Install Grype CLI
+          run: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
-        - name: Upload OBOM results
+        - name: Scan OBOM and Fix Paths
+          run: |
+            # Run scan and save to a temporary file
+            grype sbom:./obom.json -o sarif > raw-obom.sarif || true
+            
+            sed 's|"uri": ""|"uri": "obom.json"|g' raw-obom.sarif > fixed-obom.sarif
+          
+        - name: Upload Fixed OBOM results
           uses: github/codeql-action/upload-sarif@v4
           if: always()
           with:
-            sarif_file: ${{ steps.grype-obom.outputs.sarif }}
+            sarif_file: 'fixed-obom.sarif'
             category: grype-os-obom
-            checkout_path: ${{ github.workspace }}
-
-        # --- UPLOAD RESULTS ---
+        
+         # --- UPLOAD RESULTS ---
         - name: Upload Scan Artifacts
           if: always()
           uses: actions/upload-artifact@v4
