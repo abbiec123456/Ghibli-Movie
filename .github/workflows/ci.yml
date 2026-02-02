@@ -325,12 +325,12 @@ jobs:
         - name: Generate SBOM (Application)
           run: |
             # Creates the standard Software Bill of Materials
-            cdxgen -o sbom.json
+            cdxgen --spec-version 1.5 -o sbom.json
 
         - name: Generate OBOM (Operational)
           run: |
             # Creates the Operations Bill of Materials
-            cdxgen -t os -o obom.json
+            cdxgen --spec-version 1.5 -t os -o obom.json
 
         - name: Upload BOMs as Artifacts
           uses: actions/upload-artifact@v4
