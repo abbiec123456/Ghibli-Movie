@@ -368,23 +368,22 @@ jobs:
           uses: anchore/scan-action@v3
           id: scan
           with:
-            sbom: "sbom.json"
+            sbom: "./sbom.json"
             fail-build: false
             output-format: table
 
         - name: Scan OBOM with Grype
           uses: anchore/scan-action@v3
+          id: grype-obom
           with:
-            sbom: "obom.json"
+            sbom: "./obom.json"
             fail-build: false
             output-format: sarif
-            sarif-file: grype-obom-report.sarif
 
         # --- UPLOAD RESULTS ---
         - name: Upload Scan Artifacts
           if: always()
           uses: actions/upload-artifact@v4
           with:
-            name: security-scan-reports
-            path: |
-              grype-obom-report.sarif
+            name: grype-security-report
+            path: ${{ steps.grype-obom.outputs.sarif }}
