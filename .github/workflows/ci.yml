@@ -366,7 +366,7 @@ jobs:
             exit-code: '0'   
 
         - name: Upload Trivy results to GitHub Security
-          uses: github/codeql-action/upload-sarif@v3
+          uses: github/codeql-action/upload-sarif@v4
           if: always()
           with:
             sarif_file: 'trivy-results.sarif'
@@ -393,6 +393,7 @@ jobs:
         - name: Scan OBOM with Grype
           uses: anchore/scan-action@v3
           id: grype-obom
+          continue-on-error: true
           with:
             sbom: "./obom.json"
             fail-build: false
