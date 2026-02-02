@@ -356,6 +356,15 @@ jobs:
             format: 'table' 
             exit-code: '0'   
 
+        # --- step to confirm Trivy works ---
+        - name: Scan SBOM with Trivy table output
+          uses: aquasecurity/trivy-action@master
+          with:
+            scan-type: 'fs'
+            scan-ref: '.'
+            format: 'table' 
+            exit-code: '0'  
+
         - name: Scan SBOM with Trivy sarif format for upload
           uses: aquasecurity/trivy-action@master
           with:
