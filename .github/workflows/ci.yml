@@ -340,3 +340,51 @@ jobs:
               sbom.json
               obom.json
             retention-days: 90
+
+    scan-bom:
+      name: Scan SBOM & OBOM (Trivy & Grype)
+      runs-on: ubuntu-latest
+      needs: generate-and-upload-bom
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Download BOMs
+          uses: actions/download-artifact@v4
+          with:
+            name: cyclone-dx-reports
+
+        # --- TRIVY SCAN ---
+        - name: Scan SBOM with Trivy
+          uses: aquasecurity/trivy-action@master
+          with:
+            scan-type: 'sbom'
+            scan-ref: 'sbom.json'
+            format: 'table' 
+            exit-code: '0'   
+
+        # --- GRYPE SCAN ---
+        - name: Scan SBOM with Grype
+          uses: anchore/scan-action@v3
+          id: scan
+          with:
+            sbom: "sbom.json"
+            fail-build: false
+            output-format: table
+
+        - name: Scan OBOM with Grype
+          uses: anchore/scan-action@v3
+          with:
+            sbom: "obom.json"
+            fail-build: false
+            output-format: sarif
+            sarif-file: grype-obom-report.sarif
+
+        # --- UPLOAD RESULTS ---
+        - name: Upload Scan Artifacts
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: security-scan-reports
+            path: |
+              grype-obom-report.sarif
