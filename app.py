@@ -259,7 +259,8 @@ def booking_submitted():
     if not booking_data:
         return redirect(url_for("booking"))
 
-    return render_template("booking_submitted.html", booking_data=booking_data, module_labels=MODULE_LABELS)
+    return render_template("booking_submitted.html", booking_data=booking_data,
+                           module_labels=MODULE_LABELS)
 
 
 # ---------- ADMIN ----------
