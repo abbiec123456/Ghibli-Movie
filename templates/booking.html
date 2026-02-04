@@ -36,11 +36,11 @@
             </p>
 
             <p>
-                <label for="phone"><strong>Phone Number *</strong></label><br>
+                <label for="phone"><strong>Phone Number</strong></label><br>
                 <input type="tel" name="phone" value="{{user.phone}}" disabled>
             </p>
 
-            <h3>Course Modules *</h3>
+            <h3>Course: Moving Castle Creations – 3D Animation </h3>
 
             <p>
                 <label>
@@ -69,7 +69,7 @@
             </p>
 
             <button type="submit">Submit Booking</button>
-
+            <a href="{{ url_for('customer_dashboard') }}">Go to Dashboard</a>
         </form>
     </div>
 

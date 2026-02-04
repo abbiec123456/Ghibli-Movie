@@ -47,6 +47,12 @@ BOOKINGS = [
     {"email": ABBIE_EMAIL, "course": "Totoro Character Design", "extra": ""},
 ]
 
+MODULE_LABELS = {
+    "module1": "Introduction to 3D Animation",
+    "module2": "Character Design Basics",
+    "module3": "Environmental Modelling",
+}
+
 
 # ---------- LANDING PAGE ----------
 @app.route("/")
@@ -209,6 +215,15 @@ def booking():
             "extra": extra,
         }
 
+        already_booked = any(
+            b["email"] == session["email"] and
+            b["course"] == "Moving Castle Creations - 3D Animation"
+            for b in BOOKINGS
+        )
+
+        if already_booked:
+            return redirect(url_for("customer_dashboard"))
+
         BOOKINGS.append(booking_data)
         session["last_booking"] = booking_data
 
@@ -244,7 +259,8 @@ def booking_submitted():
     if not booking_data:
         return redirect(url_for("booking"))
 
-    return render_template("booking_submitted.html", booking=booking_data)
+    return render_template("booking_submitted.html", booking_data=booking_data,
+                           module_labels=MODULE_LABELS)
 
 
 # ---------- ADMIN ----------
