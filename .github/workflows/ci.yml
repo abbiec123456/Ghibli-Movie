@@ -220,10 +220,11 @@ jobs:
               # 1. Login to GHCR on the remote server
               echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-              # 2. Set IMAGE_NAME
+              # 2. Set IMAGE_NAME and kill any docker container same name
               IMAGE_NAME="${{ needs.buildimage.outputs.image_tag }}"
               echo "Deploying version: $IMAGE_NAME"
-             
+              docker stop ghibli-app || true
+              docker rm ghibli-app || true
 
               # 3. Create / Overwrite docker-compose.yml on staging server each time and pull latest image
               cat > docker-compose.yml << EOF
