@@ -223,11 +223,7 @@ jobs:
               # 2. Set IMAGE_NAME
               IMAGE_NAME="${{ needs.buildimage.outputs.image_tag }}"
               echo "Deploying version: $IMAGE_NAME"
-              
-              # 2. Pull the specific version built in the previous job
-              # IMAGE_NAME="${{ needs.buildimage.outputs.image_tag }}"
-              # echo "Deploying version: $IMAGE_NAME"
-              # docker pull $IMAGE_NAME
+             
 
               # 3. Create / Overwrite docker-compose.yml on staging server each time and pull latest image
               cat > docker-compose.yml << EOF
@@ -246,27 +242,11 @@ jobs:
                   restart: unless-stopped
               EOF
 
-              docker-compose pull
-
-              # 3. Stop and remove the existing container
-              # The '|| true' ensures the script continues even if the container doesn't exist yet
-              # docker stop ghibli-app || true
-              # docker rm ghibli-app || true
+              docker compose pull
 
               # 4. Restart containers if running 
-              docker-compose down
-              docker-compose up -d             
-
-              # 4. Run the new container
-              # Using -d for detached mode and --restart to ensure it stays up
-              # docker run -d \
-              #  --name ghibli-app \
-              #  -p 80:80 \
-              #  --restart unless-stopped \
-              #  -e SECRET_KEY="$SECRET_KEY" \
-              #  -e NEW_RELIC_LICENSE_KEY="$NEW_RELIC_LICENSE_KEY" \
-              #  -e NEW_RELIC_APPNAME="$NEW_RELIC_APP_NAME" \
-              #  $IMAGE_NAME
+              docker compose down
+              docker compose up -d             
 
               # 5. Cleanup: Remove unused images and layers to save disk space
               # This removes all dangling images and any image not used by at least one container
