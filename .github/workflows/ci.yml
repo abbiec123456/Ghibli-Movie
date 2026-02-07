@@ -229,7 +229,7 @@ jobs:
               # docker pull $IMAGE_NAME
 
               # 3. Create / Overwrite docker-compose.yml on staging server each time and pull latest image
-              cat > docker-compose.yml << 'EOF'
+              cat > docker-compose.yml << EOF
               version: '3.8'
               
               services:
@@ -243,7 +243,8 @@ jobs:
                     - NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}
                     - NEW_RELIC_APP_NAME=${NEW_RELIC_APP_NAME}
                   restart: unless-stopped
-              EOF              
+              EOF
+
               docker-compose pull
 
               # 3. Stop and remove the existing container
