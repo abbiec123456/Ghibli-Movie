@@ -146,7 +146,7 @@ jobs:
     buildimage:
       name: Build Docker Image
       runs-on: ubuntu-latest
-      needs: [linting, unit-test, sonarqube]
+      needs: [Linting, unit-test, sonarqube]
       permissions:
         contents: read
         packages: write

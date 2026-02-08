@@ -4,3 +4,4 @@ pytest-cov
 gunicorn
 Flask-WTF
 newrelic
+psycopg2-binary
