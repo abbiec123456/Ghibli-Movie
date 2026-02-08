@@ -1,0 +1,45 @@
+1. docker compose on the docker server is connecting 2 containers
+
+ghibli-app and ghibli-db
+
+docker compose 
+------------------------
+- ghibli-app ghibli-db -
+------------------------
+
+shell each container if you needed to check python logs for instance
+docker exec -it ghibli-app sh
+or
+docker exec -it ghibli-db bash
+
+ghibli-db has bash 
+ghibli-app has sh only and very little utilities 
+
+handy to print env data eg connection data for database
+docker exec ghibli-db env | grep POSTGRES
+
+docker compose takes care of the persistance of the db data and also restarts the containers if the docker server reboots
+the main code for compose is in ci.yml in the github/workflows folder 
+
+2. Each user folder on the server has a copy of 
+interactive_db.sh
+query_db.sh
+change them as you see fit
+
+when you ssh onto the staging server you should see them 
+Why ? these are for troubleshooting the environment via the ghibli-app container 
+your code queries will use that environment so getting inside it to check stuff is necessary a lot
+
+Bascially library psycopg2 in python is makeing the connection to the DB for you 
+
+interactive_db.sh simply makes an interactive shell via psycopg2 library and python to the postgresql container ghibli-db
+query_db.sh does the same but simply takes a sql query and then teminates ( not interactive )
+
+The alternative to query directly the postgressql container is exec on to it 
+docker exec -it ghibli-db bash
+then launch the psql client to connect to the database ghibli_booking
+psql -U ghibli_adm -d ghibli_booking
+you have direct client access then 
+ghibli_booking=#
+
+
