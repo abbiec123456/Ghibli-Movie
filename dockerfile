@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Install curl for healthchecks (staging benefit)
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl libpq5 && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
