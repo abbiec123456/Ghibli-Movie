@@ -142,8 +142,8 @@ def register():
         email = request.form["email"]
         phone = request.form["phone"]
         password = request.form["password"]
-        confirm_password = request.form["confirm_password"]       
-
+        confirm_password = request.form["confirm_password"]
+        
         # Check passwords match
         if password != confirm_password:
             return "Passwords do not match"
