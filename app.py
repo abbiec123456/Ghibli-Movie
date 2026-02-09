@@ -119,7 +119,7 @@ def customer_login():
     return render_template("customer_login.html")
 
 
-# ---------- REGISTER ----------
+# ---------- REGISTER -----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """
