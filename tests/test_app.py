@@ -125,7 +125,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         """Test that the registration page loads successfully"""
         response = self.client.get("/register")
         self.assertEqual(response.status_code, 200)
-        
+
     @patch('app.get_db_connection')
     def test_successful_registration(self, mock_db):
         """Test successful new user registration"""
@@ -164,7 +164,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "/register",
             data={
                 "first_name": "Jane",
-                "last_name": "Doe",                
+                "last_name": "Doe",
                 "email": "jane@example.com",
                 "phone": "N/A",
                 "password": "password123",
@@ -374,15 +374,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
-        
         # 1. Register
         self.client.post(
             "/register",
             data={
-                "first_name" : "Test",
+                "first_name": "Test",
                 "last_name": "User",
                 "email": "test@example.com",
-                "phone" : "N/A",
+                "phone": "N/A",
                 "password": "testpass",
                 "confirm_password": "testpass",
             },
