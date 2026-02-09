@@ -139,22 +139,23 @@ def register():
 
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
+        name = first_name + " " + last_name
         email = request.form["email"]
         phone = request.form["phone"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
-        
+
         # Check passwords match
         if password != confirm_password:
             return "Passwords do not match"
 
-        # Save new user
-        # CUSTOMERS[email] = {
-        #    "password": password,
-        #    "name": name,
-        #    "email": email,
-        #    "phone": "N/A",
-        # }
+        # Save new user in memory
+        CUSTOMERS[email] = {
+            "password": password,
+            "name": name,
+            "email": email,
+            "phone": "N/A",
+         }
         # Insert into customers table
         try:
             conn = get_db_connection()

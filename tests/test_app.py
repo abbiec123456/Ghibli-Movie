@@ -130,8 +130,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/register",
             data={
-                "name": "John Doe",
+                "first_name": "John",
+                "last_name": "Doe",
                 "email": "john@example.com",
+                "phone": "N/A",
                 "password": "password123",
                 "confirm_password": "password123",
             },
@@ -149,8 +151,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/register",
             data={
-                "name": "Jane Doe",
+                "first_name": "Jane",
+                "last_name": "Doe",                
                 "email": "jane@example.com",
+                "phone": "N/A",
                 "password": "password123",
                 "confirm_password": "password456",
             },
@@ -357,7 +361,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.client.post(
             "/register",
             data={
-                "name": "Test User",
+                "first_name" : "Test",
+                "last_name": "User",
                 "email": "test@example.com",
                 "password": "testpass",
                 "confirm_password": "testpass",
