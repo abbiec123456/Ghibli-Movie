@@ -19,6 +19,7 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
     raise ValueError("No SECRET_KEY set !")
 
+
 def get_db_connection():
     """
     Parse DATABASE_URL (from Docker Compose) and connect securely.
@@ -26,10 +27,10 @@ def get_db_connection():
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         raise ValueError("DATABASE_URL environment variable is required")
-    
+
     # Parse postgresql://user:pass@host:port/dbname
     parsed = urlparse(database_url)
-    
+
     return psycopg2.connect(
         host=parsed.hostname,
         port=parsed.port or 5432,
@@ -37,6 +38,7 @@ def get_db_connection():
         user=parsed.username,
         password=parsed.password,
     )
+
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -130,29 +132,29 @@ def register():
         str: Rendered registration template or redirect to login
     """
     if request.method == "POST":
-        #name = request.form["name"]
-        #email = request.form["email"]
-        #password = request.form["password"]
-        #confirm_password = request.form["confirm_password"]
+        # name = request.form["name"]
+        # email = request.form["email"]
+        # password = request.form["password"]
+        # confirm_password = request.form["confirm_password"]
 
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
         email = request.form["email"]
         phone = request.form["phone"]
         password = request.form["password"]
-        confirm_password = request.form["confirm_password"]        
+        confirm_password = request.form["confirm_password"]       
 
         # Check passwords match
         if password != confirm_password:
             return "Passwords do not match"
 
         # Save new user
-        #CUSTOMERS[email] = {
+        # CUSTOMERS[email] = {
         #    "password": password,
         #    "name": name,
         #    "email": email,
         #    "phone": "N/A",
-        #}
+        # }
         # Insert into customers table
         try:
             conn = get_db_connection()
@@ -170,7 +172,6 @@ def register():
         except Exception as e:
             # For production, log this instead of returning raw error
             return f"Error creating account: {e}", 500
-
 
         return redirect(url_for("customer_login"))
 
