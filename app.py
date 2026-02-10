@@ -293,10 +293,9 @@ def edit_booking(booking_id):
     """
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
+        return render_template("edit_booking.html", booking_id=booking_id)
 
-    return render_template("edit_booking.html", booking_id=booking_id)
 
 if __name__ == "__main__":
     app.run(debug=True)
-    
-    
+
