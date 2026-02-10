@@ -1,10 +1,10 @@
 """
-Ghibli Movie Booking System.
+Ghibli Movie Booking System
 
 This Flask application provides a simple web interface for customers to log in,
 view their personal details and bookings, and update extra requests for courses.
 
-Note: This is a basic implementation with temporary in-memory data. 
+Note: This is a basic implementation with temporary in-memory data.
 """
 
 import os
