@@ -130,12 +130,12 @@ def customer_login():
         # success extract row data to variables
         customer_id, first_name, last_name, email_db, phone, s_password = row
         # Check if password matched else fail
-        if stored_password != password:
+        if s_password != password:
             return "Invalid login credentials"
-        # create full name varible and concantenate first and last name with space into it for in memory db
+        # create full name varible and concantenate first and last name with space for memory db
         name = f"{first_name} {last_name}"
 
-        # Set in memory array values 
+        # Set in memory array values
         CUSTOMERS[email_db] = {
             "password": s_password,
             "name": name,

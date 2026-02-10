@@ -89,17 +89,17 @@ class GhibliBookingSystemTests(unittest.TestCase):
         """Test successful customer login"""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
-        mock_get_db_connection.return_value = mock_conn
+        mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-        4,                    # customer_id (int)
-        "Abbie",              # name (first_name)
-        "Smith",              # last_name
-        "abbie@example.com",  # email
-        "123-456-7890",       # phone
-        "group1",             # password
-        )      
+            4,                    # customer_id (int)
+            "Abbie",              # name (first_name)
+            "Smith",              # last_name
+            "abbie@example.com",  # email
+            "123-456-7890",       # phone
+            "group1",             # password
+        )
         response = self.client.post(
             "/login",
             data={"email": "abbie@example.com", "password": "group1"},
