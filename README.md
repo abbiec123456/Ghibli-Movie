@@ -41,29 +41,34 @@ Week 15/12 Abbie - started grooming some of the user stories.
 
 
 # Rockstars
-<<Abbiie, Maria, Ana, Padraig, Gianluca, Stephen>>
+<<Abbie, Maria, Ana, Padraig, Gianluca, Stephen>>
 
 
 # Project Deadline
-Refer to BB for deadlines
+Due Date 10th April  @23:59
 
 # Project Specification
-Clean and simple design
+The end customer would like an online booking system for a range of movie-making courses. Their
+most popular product this December is Moving Castle Creations – a 3D animation workshop. The
+system must capture customer details and map them to the course modules, along with a single box
+for extra ‘nice to have’ requests. The system should be clean and straightforward. Your team has been
+tasked with creating the SDLC pipeline. You have also been asked to provide a simple prototype
+page(s) to test the pipeline. The system needs to account for standard security requirements. The
+administrator of the end system (Studio Ghibli member) should be able to access detailed information
+and edit as appropriate. Once the client enters details, it should not be able to be changed by the
+person applying for the course.
 User access levels (client, administrator)
 Includes at least one self-developed API and one web service
 To be run over <specify platform>
 
 # Frameworks
-We will be using MongoDB for our database
-Database persistence technology
-Define the business requirements
-Named queries and database triggers for security
-Regex for cleansing and validation of data before sending it to the database.
+We will be using PostgreSQL for our database
+
 
 # Useful Links
  - Project Slack: https://atudevops.slack.com
  - GitHub: https://github.com/abbiec123456/Ghibli-Movie
-
+ - Server http://77.42.71.196/
 # More Information
 For more information, visit our other sections
 
@@ -102,7 +107,7 @@ The code framework to be used will be <<>>, we will be programming using the IDE
     integrated and automated pipeline (commit -> test -> deploy)
 
 # Github version control:
-    branches used
+    branches used - 24 currently.
     version/release management
 
 # Agile project management methods/principles (jira)
@@ -121,10 +126,10 @@ The code framework to be used will be <<>>, we will be programming using the IDE
     Use Agile methodologies in the project at all times.
 
 # Meetings
-Stand-ups will occur Every <<day/time>> during class and <<day/time>> using an Automated bot. Two per week.
+Stand-ups will occur Every <<Tuesday/8:35pm>> after class 1 per week and 2 where needed.
 The order in which people give their updates will be << >>.
 Updates will be in the form: What I've done, Impediments, What I plan to do.
-Sprint planning will occur at <<date/time>> every week.
+Sprint planning will occur at <<Every second Tuesday>> every week.
 Please add and update items within <<issue management tool>> prior to the sprint planning session.
 Sprint retro will be at the end of our sprint on <<Date/Time>> (timebox retro for 15 minutes, to be organised by the scrum master).
 Points raised in the sprint retro will be noted and posted on the Slack channel by the Scrum Master. The Scrum Master is rotated per team member every week.
