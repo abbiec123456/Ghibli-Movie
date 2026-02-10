@@ -297,5 +297,7 @@ def edit_booking(booking_id):
     return render_template("edit_booking.html", booking_id=booking_id)
 
 
+
 if __name__ == "__main__":
     app.run(debug=True)
+    
