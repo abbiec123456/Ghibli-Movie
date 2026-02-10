@@ -338,7 +338,7 @@ def edit_booking(booking_id):
     Returns:
         str: Rendered edit template or redirect to admin dashboard
     """
-    
+
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
 
