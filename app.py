@@ -132,11 +132,6 @@ def register():
         str: Rendered registration template or redirect to login
     """
     if request.method == "POST":
-        # name = request.form["name"]
-        # email = request.form["email"]
-        # password = request.form["password"]
-        # confirm_password = request.form["confirm_password"]
-
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
         name = first_name + " " + last_name
@@ -155,7 +150,7 @@ def register():
             "name": name,
             "email": email,
             "phone": "N/A",
-         }
+        }
         # Insert into customers table
         try:
             conn = get_db_connection()
@@ -306,13 +301,14 @@ def booking_submitted():
     if not booking_data:
         return redirect(url_for("booking"))
 
-    return render_template("booking_submitted.html", booking_data=booking_data,
-                           module_labels=MODULE_LABELS)
+    return render_template(
+        "booking_submitted.html",
+        booking_data=booking_data,
+        module_labels=MODULE_LABELS,
+    )
 
 
 # ---------- ADMIN ----------
-
-
 @app.route("/admin")
 def admin_dashboard():
     """
@@ -347,5 +343,3 @@ def edit_booking(booking_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-    
