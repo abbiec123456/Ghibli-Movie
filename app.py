@@ -8,8 +8,6 @@ Note: This is a basic implementation with temporary in-memory data.
 """
 
 import os
-import psycopg2
-from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf.csrf import CSRFProtect
 
@@ -18,26 +16,6 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 
 if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
     raise ValueError("No SECRET_KEY set !")
-
-
-def get_db_connection():
-    """
-    Parse DATABASE_URL (from Docker Compose) and connect securely.
-    """
-    database_url = os.environ.get("DATABASE_URL")
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable is required")
-
-    # Parse postgresql://user:pass@host:port/dbname
-    parsed = urlparse(database_url)
-
-    return psycopg2.connect(
-        host=parsed.hostname,
-        port=parsed.port or 5432,
-        dbname=parsed.path[1:],  # Remove leading '/'
-        user=parsed.username,
-        password=parsed.password,
-    )
 
 
 app.config.update(
@@ -119,7 +97,7 @@ def customer_login():
     return render_template("customer_login.html")
 
 
-# ---------- REGISTER -----------
+# ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """
@@ -132,16 +110,8 @@ def register():
         str: Rendered registration template or redirect to login
     """
     if request.method == "POST":
-        # name = request.form["name"]
-        # email = request.form["email"]
-        # password = request.form["password"]
-        # confirm_password = request.form["confirm_password"]
-
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        name = first_name + " " + last_name
+        name = request.form["name"]
         email = request.form["email"]
-        phone = request.form["phone"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
 
@@ -149,30 +119,13 @@ def register():
         if password != confirm_password:
             return "Passwords do not match"
 
-        # Save new user in memory
+        # Save new user
         CUSTOMERS[email] = {
             "password": password,
             "name": name,
             "email": email,
             "phone": "N/A",
-         }
-        # Insert into customers table
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                INSERT INTO customers (name, last_name, email, phone, created_at, password)
-                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-                """,
-                (first_name, last_name, email, phone, password),
-            )
-            conn.commit()
-            cur.close()
-            conn.close()
-        except Exception as e:
-            # For production, log this instead of returning raw error
-            return f"Error creating account: {e}", 500
+        }
 
         return redirect(url_for("customer_login"))
 

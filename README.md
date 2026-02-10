@@ -41,7 +41,7 @@ Week 15/12 Abbie - started grooming some of the user stories.
 
 
 # Rockstars
-<<list team member names here>>
+<<Abbiie, Maria, Ana, Padraig, Gianluca, Stephen>>
 
 
 # Project Deadline
