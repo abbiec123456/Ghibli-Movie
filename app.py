@@ -1,48 +1,22 @@
 """
-Ghibli Movie Booking System
+Ghibli Movie Booking System.
 
 This Flask application provides a simple web interface for customers to log in,
 view their personal details and bookings, and update extra requests for courses.
 
-Note: This is a basic implementation with temporary in-memory data.
+Note: This is a basic implementation with temporary in-memory data. 
 """
 
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_wtf.csrf import CSRFProtect
 
-
-# =========================================================
-# Dummy DB connection (required for unit test patching)
-# =========================================================
-def get_db_connection():
-    """
-    Dummy DB connection for unit tests.
-    Required because tests patch app.get_db_connection.
-    """
-    from unittest.mock import MagicMock
-
-    class DummyConn:
-        def cursor(self):
-            return MagicMock()
-
-        def commit(self):
-            pass
-
-        def close(self):
-            pass
-
-    return DummyConn()
-
-
-# =========================================================
-# App setup
-# =========================================================
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 
 if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
     raise ValueError("No SECRET_KEY set !")
+
 
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -52,11 +26,8 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
 
-
-# =========================================================
-# In-memory data
-# =========================================================
 ABBIE_EMAIL = "abbie@example.com"
+# ---------- TEMPORARY IN-MEMORY STORAGE ----------
 
 CUSTOMERS = {
     ABBIE_EMAIL: {
@@ -83,27 +54,42 @@ MODULE_LABELS = {
 }
 
 
-# =========================================================
-# Routes
-# =========================================================
-
+# ---------- LANDING PAGE ----------
 @app.route("/")
 def index():
+    """
+    Render the landing page.
+
+    Returns:
+        str: Rendered HTML template for the index page
+    """
     return render_template("index.html")
 
 
+# ---------- CUSTOMER LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
+    """
+    Handle customer login.
+
+    GET: Display the login form
+    POST: Process login credentials and create session
+
+    Returns:
+        str: Rendered login template or redirect to dashboard
+    """
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
 
+        # Check if user exists and password matches
         if email in CUSTOMERS and CUSTOMERS[email]["password"] == password:
             session["user"] = email
             session["role"] = "customer"
             session["name"] = CUSTOMERS[email]["name"]
             session["email"] = CUSTOMERS[email]["email"]
             session["phone"] = CUSTOMERS[email]["phone"]
+
             return redirect(url_for("customer_dashboard"))
 
         return "Invalid login credentials"
@@ -111,28 +97,34 @@ def customer_login():
     return render_template("customer_login.html")
 
 
+# ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        # Accept either 'name' or first/last name
-        name = request.form.get("name")
-        if not name:
-            first = request.form.get("first_name", "")
-            last = request.form.get("last_name", "")
-            name = f"{first} {last}".strip()
+    """
+    Handle customer registration.
 
+    GET: Display the registration form
+    POST: Process registration and create new customer account
+
+    Returns:
+        str: Rendered registration template or redirect to login
+    """
+    if request.method == "POST":
+        name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
 
+        # Check passwords match
         if password != confirm_password:
             return "Passwords do not match"
 
+        # Save new user
         CUSTOMERS[email] = {
             "password": password,
             "name": name,
             "email": email,
-            "phone": request.form.get("phone", "N/A"),
+            "phone": "N/A",
         }
 
         return redirect(url_for("customer_login"))
@@ -140,8 +132,18 @@ def register():
     return render_template("register.html")
 
 
+# ---------- CUSTOMER DASHBOARD ----------
 @app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
+    """
+    Display customer dashboard with personal details and bookings.
+
+    Allows customers to view their information and update booking extras.
+    Requires authentication.
+
+    Returns:
+        str: Rendered dashboard template or redirect to login
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
@@ -152,7 +154,10 @@ def customer_dashboard():
         new_extra = request.form["extra"]
 
         for booking_item in BOOKINGS:
-            if booking_item["email"] == user_email and booking_item["course"] == course_to_update:
+            if (
+                booking_item["email"] == user_email
+                and booking_item["course"] == course_to_update
+            ):
                 booking_item["extra"] = new_extra
                 break
 
@@ -171,14 +176,31 @@ def customer_dashboard():
     )
 
 
+# ---------- LOGOUT ----------
 @app.route("/logout")
 def logout():
+    """
+    Log out the current user by clearing the session.
+
+    Returns:
+        werkzeug.wrappers.Response: Redirect to login page
+    """
     session.clear()
     return redirect(url_for("customer_login"))
 
 
+# ---------- BOOKING PAGE ----------
 @app.route("/book", methods=["GET", "POST"])
 def booking():
+    """
+    Handle course booking.
+
+    GET: Display the booking form
+    POST: Process booking submission and store booking data
+
+    Returns:
+        str: Rendered booking template or redirect to confirmation
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
@@ -194,8 +216,8 @@ def booking():
         }
 
         already_booked = any(
-            b["email"] == session["email"]
-            and b["course"] == "Moving Castle Creations - 3D Animation"
+            b["email"] == session["email"] and
+            b["course"] == "Moving Castle Creations - 3D Animation"
             for b in BOOKINGS
         )
 
@@ -204,6 +226,7 @@ def booking():
 
         BOOKINGS.append(booking_data)
         session["last_booking"] = booking_data
+
         return redirect(url_for("booking_submitted"))
 
     return render_template(
@@ -216,29 +239,58 @@ def booking():
     )
 
 
+# ---------- BOOKING SUBMITTED ----------
 @app.route("/booking-submitted")
 def booking_submitted():
+    """
+    Display booking confirmation page.
+
+    Shows the details of the most recently submitted booking.
+    Requires authentication.
+
+    Returns:
+        str: Rendered booking confirmation template or redirect
+    """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
     booking_data = session.get("last_booking")
+
     if not booking_data:
         return redirect(url_for("booking"))
 
-    return render_template(
-        "booking_submitted.html",
-        booking_data=booking_data,
-        module_labels=MODULE_LABELS,
-    )
+    return render_template("booking_submitted.html", booking_data=booking_data,
+                           module_labels=MODULE_LABELS)
+
+
+# ---------- ADMIN ----------
 
 
 @app.route("/admin")
 def admin_dashboard():
+    """
+    Display admin dashboard.
+
+    Returns:
+        str: Rendered admin dashboard template
+    """
     return render_template("admin_dashboard.html")
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
+    """
+    Handle editing of bookings in admin panel.
+
+    GET: Display the edit booking form
+    POST: Process booking updates
+
+    Args:
+        booking_id (int): The ID of the booking to edit
+
+    Returns:
+        str: Rendered edit template or redirect to admin dashboard
+    """
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
 
