@@ -4,7 +4,7 @@ Ghibli Movie Booking System
 This Flask application provides a simple web interface for customers to log in,
 view their personal details and bookings, and update extra requests for courses.
 
-Note: This is a basic implementation with temporary in-memory data.
+Note: This is a basic implementation with temporary in-memory data
 """
 
 import os
@@ -296,8 +296,7 @@ def edit_booking(booking_id):
 
     return render_template("edit_booking.html", booking_id=booking_id)
 
-
-
 if __name__ == "__main__":
     app.run(debug=True)
+    
     
