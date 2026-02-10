@@ -8,6 +8,7 @@ testing all routes, authentication, booking functionality, and edge cases.
 import sys
 import os
 import unittest
+from unittest.mock import patch, MagicMock
 
 # Add the parent directory to the Python path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -125,13 +126,22 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/register")
         self.assertEqual(response.status_code, 200)
 
-    def test_successful_registration(self):
+    @patch('app.get_db_connection')
+    def test_successful_registration(self, mock_db):
         """Test successful new user registration"""
+        # Mock the database connection and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
         response = self.client.post(
             "/register",
             data={
-                "name": "John Doe",
+                "first_name": "John",
+                "last_name": "Doe",
                 "email": "john@example.com",
+                "phone": "N/A",
                 "password": "password123",
                 "confirm_password": "password123",
             },
@@ -139,6 +149,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+        # Verify database insert was called
+        mock_cursor.execute.assert_called_once()
+        mock_conn.commit.assert_called_once()
         self.assertIn("john@example.com", CUSTOMERS)
         self.assertEqual(CUSTOMERS["john@example.com"]["name"], "John Doe")
         self.assertEqual(CUSTOMERS["john@example.com"]["password"], "password123")
@@ -149,8 +163,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/register",
             data={
-                "name": "Jane Doe",
+                "first_name": "Jane",
+                "last_name": "Doe",
                 "email": "jane@example.com",
+                "phone": "N/A",
                 "password": "password123",
                 "confirm_password": "password456",
             },
@@ -350,15 +366,22 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertTrue(response.location.endswith("/admin"))
 
     # ---------- INTEGRATION TESTS ----------
-
-    def test_full_user_journey(self):
+    @patch('app.get_db_connection')
+    def test_full_user_journey(self, mock_db):
         """Test complete user journey: register, login, book, view dashboard"""
+        # Mock the database
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
         # 1. Register
         self.client.post(
             "/register",
             data={
-                "name": "Test User",
+                "first_name": "Test",
+                "last_name": "User",
                 "email": "test@example.com",
+                "phone": "N/A",
                 "password": "testpass",
                 "confirm_password": "testpass",
             },
