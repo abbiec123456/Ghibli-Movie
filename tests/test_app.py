@@ -84,8 +84,22 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/login")
         self.assertEqual(response.status_code, 200)
 
-    def test_successful_login(self):
+    @patch('app.get_db_connection')
+    def test_successful_login(self, mock_db):
         """Test successful customer login"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (
+        4,                    # customer_id (int)
+        "Abbie",              # name (first_name)
+        "Smith",              # last_name
+        "abbie@example.com",  # email
+        "123-456-7890",       # phone
+        "group1",             # password
+        )      
         response = self.client.post(
             "/login",
             data={"email": "abbie@example.com", "password": "group1"},
@@ -100,24 +114,72 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["name"], "Abbie Smith")
             self.assertEqual(sess["email"], "abbie@example.com")
             self.assertEqual(sess["phone"], "123-456-7890")
+        # mock DB query was called with email
+        mock_cursor.execute.assert_called_once_with(
+        """
+        SELECT customer_id, name, last_name, email, phone, password
+        FROM customers
+        WHERE email = %s
+        """,
+        ("abbie@example.com",),
+        )
+        # inmemory CUSTOMERS was updated
+        self.assertIn("abbie@example.com", CUSTOMERS)
+        self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
 
-    def test_login_with_invalid_email(self):
+    @patch('app.get_db_connection')
+    def test_login_with_invalid_email(self, mock_db_connection):
         """Test login with non-existent email"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
         response = self.client.post(
             "/login", data={"email": "nonexistent@example.com", "password": "wrongpass"}
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Invalid login credentials", response.data)
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("user", sess)
 
-    def test_login_with_invalid_password(self):
+    @patch('app.get_db_connection')
+    def test_login_with_invalid_password(self, mock_get_db_connection):
         """Test login with correct email but wrong password"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (
+        4,                    # customer_id
+        "Abbie",              # name
+        "Smith",              # last_name  
+        "abbie@example.com",  # email
+        "123-456-7890",       # phone
+        "group1",             # password (CORRECT password)
+        )
+
         response = self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "wrongpassword"}
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Invalid login credentials", response.data)
+
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("user", sess)
+            self.assertNotIn("role", sess)
+        mock_cursor.execute.assert_called_once_with(
+            """
+            SELECT customer_id, name, last_name, email, phone, password
+            FROM customers
+            WHERE email = %s
+            """,
+            ("abbie@example.com",),
+        )
+        self.assertNotIn("abbie@example.com", CUSTOMERS)
 
     # ---------- REGISTRATION TESTS ----------
 
