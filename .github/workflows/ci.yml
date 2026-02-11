@@ -31,7 +31,7 @@ jobs:
 
             - name: Run flake8
               run: |
-                flake8 . --ignore=E999 --max-line-length=100 --statistics
+                flake8 . --ignore=E999,E126,E123,W503 --max-line-length=100 --statistics
             
             - name: Run Pylint
               run: |
