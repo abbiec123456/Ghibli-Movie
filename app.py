@@ -114,7 +114,7 @@ def customer_login():
                 """
                 SELECT customer_id, name, last_name, email, phone, password
                 FROM customers
-                WHERE email ILIKE %s
+                WHERE email = %s
                 """,
                 (email,),
             )

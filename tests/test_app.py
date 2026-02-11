@@ -36,6 +36,18 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
+        patcher = patch('app.get_db_connection')
+        self.addCleanup(patcher.stop)  # Cleanup after test
+        self.mock_db = patcher.start()
+
+        self.mock_conn = MagicMock()
+        self.mock_cursor = MagicMock()
+        self.mock_db.return_value = self.mock_conn
+        self.mock_conn.cursor.return_value = self.mock_cursor
+        self.mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
         # Reset test data
         CUSTOMERS.clear()
         CUSTOMERS.update(
