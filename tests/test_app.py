@@ -540,6 +540,7 @@ class SessionManagementTests(unittest.TestCase):
                 elif email == "user2@example.com":
                     return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
             return None
+
         self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect
         # Create two clients
         self.client.post(
@@ -548,16 +549,17 @@ class SessionManagementTests(unittest.TestCase):
         # Check user 1 session
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
-                    
+ 
         # Logout user 1
         self.client.get("/logout")
-        
+
         # Login user 2
         self.client.post("/login", data={"email": "user2@example.com", "password": "pass2"})
-        
+
         # Check user 2 session
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "user2@example.com")
+
 
 if __name__ == "__main__":
     # Run tests with verbose output
