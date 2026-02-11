@@ -268,6 +268,15 @@ def booking():
         return redirect(url_for("customer_login"))
 
     if request.method == "POST":
+        already_booked = any(
+            b["email"] == session["email"] and
+            b["course"] == "Moving Castle Creations - 3D Animation"
+            for b in BOOKINGS
+        )
+
+        if already_booked:
+            return redirect(url_for("customer_dashboard"))
+
         selected_modules = request.form.getlist("modules")
         extra = request.form.get("extra", "")
 
@@ -277,14 +286,6 @@ def booking():
             "modules": selected_modules,
             "extra": extra,
         }
-
-        already_booked = any(
-            b["email"] == session["email"] and
-            b["course"] == "Moving Castle Creations - 3D Animation"
-            for b in BOOKINGS
-        )
-    if already_booked:
-        return redirect(url_for("customer_dashboard"))
 
         BOOKINGS.append(booking_data)
         session["last_booking"] = booking_data
