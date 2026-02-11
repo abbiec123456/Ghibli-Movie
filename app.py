@@ -264,8 +264,8 @@ def booking():
     if request.method == "POST":
         # Check if already booked
         already_booked = any(
-            b["email"] == session["email"] and
-            b["course"] == "Moving Castle Creations - 3D Animation"
+            b["email"] == session["email"] 
+            and b["course"] == "Moving Castle Creations - 3D Animation"
             for b in BOOKINGS
         )
 
@@ -296,6 +296,7 @@ def booking():
             "phone": session.get("phone"),
         },
     )
+
 
 # ---------- BOOKING SUBMITTED ----------
 @app.route("/booking-submitted")
