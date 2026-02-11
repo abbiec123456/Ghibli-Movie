@@ -1028,7 +1028,7 @@ Requires authentication.</p>
     <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
     <span class="c1"># set query for join booking customerid against customers table</span>
     <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status </span>
+<span class="s2">    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status</span>
 <span class="s2">    FROM bookings b</span>
 <span class="s2">    JOIN customers c ON b.customer_id = c.customer_id</span>
 <span class="s2">    WHERE c.email = </span><span class="si">%s</span>
