@@ -252,7 +252,7 @@ def logout():
         return redirect(url_for("customer_login"))
 
 
-# ---------- BOOKING PAGE ----------
+# ---------- BOOKING PAGE -----------
 @app.route("/book", methods=["GET", "POST"])
 def booking():
     """
