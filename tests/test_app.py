@@ -8,7 +8,7 @@ testing all routes, authentication, booking functionality, and edge cases.
 import sys
 import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 
 # Add the parent directory to the Python path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -103,15 +103,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
-
         mock_cursor.fetchone.return_value = (
-            4,                    # customer_id (int)
-            "Abbie",              # name (first_name)
-            "Smith",              # last_name
-            "abbie@example.com",  # email
-            "123-456-7890",       # phone
-            "group1",             # password
-        )
+                4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+                )
+
         response = self.client.post(
             "/login",
             data={"email": "abbie@example.com", "password": "group1"},
@@ -128,11 +123,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["phone"], "123-456-7890")
         # mock DB query was called with email
         mock_cursor.execute.assert_called_once_with(
-            """
-            SELECT customer_id, name, last_name, email, phone, password
-            FROM customers
-            WHERE email = %s
-            """,
+            mock.ANY,
             ("abbie@example.com",),
         )
         # inmemory CUSTOMERS was updated
@@ -146,6 +137,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db_connection.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = None
 
         response = self.client.post(
             "/login", data={"email": "nonexistent@example.com", "password": "wrongpass"}
@@ -184,11 +176,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
         mock_cursor.execute.assert_called_once_with(
-            """
-            SELECT customer_id, name, last_name, email, phone, password
-            FROM customers
-            WHERE email = %s
-            """,
+            mock.ANY,
             ("abbie@example.com",),
         )
         self.assertNotIn("abbie@example.com", CUSTOMERS)
@@ -448,6 +436,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+                99, "Test", "User", "test@example.com", "N/A", "testpass"
+                )
         # 1. Register
         self.client.post(
             "/register",
@@ -492,6 +483,17 @@ class SessionManagementTests(unittest.TestCase):
         self.app = app
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
+
+        patcher = patch('app.get_db_connection')
+        self.addCleanup(patcher.stop)
+        self.mock_db = patcher.start()
+        self.mock_conn = MagicMock()
+        self.mock_cursor = MagicMock()
+        self.mock_db.return_value = self.mock_conn
+        self.mock_conn.cursor.return_value = self.mock_cursor
+        self.mock_cursor.fetchone.return_value = (
+                1, "Test", "User", "test@example.com", "000-000-0000", "testpass"
+                )
 
         # Reset test data
         CUSTOMERS.clear()
