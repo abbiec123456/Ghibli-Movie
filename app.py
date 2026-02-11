@@ -283,7 +283,6 @@ def booking():
             b["course"] == "Moving Castle Creations - 3D Animation"
             for b in BOOKINGS
         )
-
         if already_booked:
             return redirect(url_for("customer_dashboard"))
 
