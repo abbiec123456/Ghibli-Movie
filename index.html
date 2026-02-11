@@ -666,15 +666,15 @@ view their personal details and bookings, and update extra requests for courses.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">363</span>
-<span class="normal">364</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">364</span>
 <span class="normal">365</span>
 <span class="normal">366</span>
 <span class="normal">367</span>
 <span class="normal">368</span>
 <span class="normal">369</span>
 <span class="normal">370</span>
-<span class="normal">371</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin&quot;</span><span class="p">)</span>
+<span class="normal">371</span>
+<span class="normal">372</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">admin_dashboard</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Display admin dashboard.</span>
@@ -758,8 +758,8 @@ view their personal details and bookings, and update extra requests for courses.
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;POST&quot;</span><span class="p">:</span>
         <span class="c1"># Check if already booked</span>
         <span class="n">already_booked</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="n">b</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> <span class="ow">and</span>
-            <span class="n">b</span><span class="p">[</span><span class="s2">&quot;course&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Moving Castle Creations - 3D Animation&quot;</span>
+            <span class="n">b</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> 
+            <span class="ow">and</span> <span class="n">b</span><span class="p">[</span><span class="s2">&quot;course&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Moving Castle Creations - 3D Animation&quot;</span>
             <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BOOKINGS</span>
         <span class="p">)</span>
 
@@ -836,8 +836,7 @@ Requires authentication.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">336</span>
-<span class="normal">337</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">337</span>
 <span class="normal">338</span>
 <span class="normal">339</span>
 <span class="normal">340</span>
@@ -859,7 +858,8 @@ Requires authentication.</p>
 <span class="normal">356</span>
 <span class="normal">357</span>
 <span class="normal">358</span>
-<span class="normal">359</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/booking-submitted&quot;</span><span class="p">)</span>
+<span class="normal">359</span>
+<span class="normal">360</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/booking-submitted&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">booking_submitted</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Display booking confirmation page.</span>
@@ -1300,8 +1300,7 @@ POST: Process booking updates</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">374</span>
-<span class="normal">375</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">375</span>
 <span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
@@ -1318,7 +1317,8 @@ POST: Process booking updates</p>
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
-<span class="normal">392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/bookings/&lt;int:booking_id&gt;/edit&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="normal">392</span>
+<span class="normal">393</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/bookings/&lt;int:booking_id&gt;/edit&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">edit_booking</span><span class="p">(</span><span class="n">booking_id</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handle editing of bookings in admin panel.</span>
