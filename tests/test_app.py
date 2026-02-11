@@ -211,7 +211,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
-    
+
         # Mock the SELECT query result (for displaying dashboard)
         mock_cursor.fetchall.return_value = [
             (1, 5, "Beginner friendly tools", "confirmed", "Moving Castle Creations – 3D Animation", "Learn 3D animation")
@@ -240,7 +240,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn("UPDATE bookings", query)
         self.assertEqual(params[0], "Updated extra request") # extra field data
         self.assertEqual(params[1], "abbie@example.com") # email
-        self.assertEqual(params[2], "5") 
+        self.assertEqual(params[2], "5")
 
         mock_conn.commit.assert_called()
 
