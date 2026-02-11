@@ -8,7 +8,7 @@ testing all routes, authentication, booking functionality, and edge cases.
 import sys
 import os
 import unittest
-from unittest.mock import patch, MagicMock, ANY
+from unittest.mock import patch, MagicMock
 
 # Add the parent directory to the Python path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -160,6 +160,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
                 "123-456-7890",       # phone
                 "group1",             # password (CORRECT password)
         )
+        CUSTOMERS.clear()
 
         response = self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "wrongpassword"}
