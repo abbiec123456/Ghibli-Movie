@@ -208,8 +208,29 @@ def customer_dashboard():
         "email": session.get("email"),
         "phone": session.get("phone"),
     }
+    # set cusor for db
+    db = get_db_connection()
+    cursor = db.cursor()
+    # set query for join booking customerid against customers table
+    query = """
+    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status 
+    FROM bookings b
+    JOIN customers c ON b.customer_id = c.customer_id
+    WHERE c.email = %s
+    """
+    # execute and get rows
+    cursor.execute(query, (user_email,))
+    rows = cursor.fetchall()
 
-    user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    # user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    user_bookings = []
+    for row in rows:
+        user_bookings.append({
+            "booking_id": row[0],
+            "course": row[1],               # Mapping course_id
+            "extra": row[2],                # Mapping nice_to_have_requests
+            "status": row[3]
+        })
 
     return render_template(
         "customer_dashboard.html",
