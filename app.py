@@ -264,7 +264,7 @@ def booking():
     if request.method == "POST":
         # Check if already booked
         already_booked = any(
-            b["email"] == session["email"] 
+            b["email"] == session["email"]
             and b["course"] == "Moving Castle Creations - 3D Animation"
             for b in BOOKINGS
         )
