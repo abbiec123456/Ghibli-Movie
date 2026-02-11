@@ -533,7 +533,8 @@ class SessionManagementTests(unittest.TestCase):
             last_call = self.mock_cursor.execute.call_args
             if last_call and len(last_call[0]) > 1:
                 params = last_call[0][1]
-                email = params.get('email') if isinstance(params, dict) else None
+                if isinstance(params, tuple) and len(params) > 0:
+                    email = params[0]
                 
                 if email == "test@example.com":
                     return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
