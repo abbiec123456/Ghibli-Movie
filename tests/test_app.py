@@ -214,7 +214,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Mock the SELECT query result (for displaying dashboard)
         mock_cursor.fetchall.return_value = [
-            (1, 5, "Beginner friendly tools", "confirmed", "Moving Castle Creations – 3D Animation", "Learn 3D animation")
+            (1, 5, "", "confirmed", "Moving Castle Creations – 3D Animation", "Learn animation")
         ]
 
         # Login first
@@ -260,6 +260,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
+
 
     # ---------- BOOKING PAGE TESTS ----------
 
