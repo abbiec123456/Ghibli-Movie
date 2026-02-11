@@ -98,24 +98,59 @@ def customer_login():
     POST: Process login credentials and create session
 
     Returns:
-        str: Rendered login template or redirect to dashboard
+        str: login template or redirect to dashboard POST
     """
+    # POST checks password and fails or redirects to dashboard
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
 
-        # Check if user exists and password matches
-        if email in CUSTOMERS and CUSTOMERS[email]["password"] == password:
-            session["user"] = email
-            session["role"] = "customer"
-            session["name"] = CUSTOMERS[email]["name"]
-            session["email"] = CUSTOMERS[email]["email"]
-            session["phone"] = CUSTOMERS[email]["phone"]
+        # Read DB and check if we can find user
+        # Look up user in the database
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT customer_id, name, last_name, email, phone, password
+                FROM customers
+                WHERE email = %s
+                """,
+                (email,),
+            )
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+        except Exception:
+            # For production, log this and show generic error
+            return "Invalid login credentials", 401
+        # check if row cursor was successful proceed else fail
+        if not row:
+            return "Invalid login credentials"
+        # success extract row data to variables
+        customer_id, first_name, last_name, email_db, phone, s_password = row
+        # Check if password matched else fail
+        if s_password != password:
+            return "Invalid login credentials"
+        # create full name varible and concantenate first and last name with space for memory db
+        name = f"{first_name} {last_name}"
 
-            return redirect(url_for("customer_dashboard"))
+        # Set in memory array values
+        CUSTOMERS[email_db] = {
+            "password": s_password,
+            "name": name,
+            "email": email_db,
+            "phone": phone,
+        }
+        # Set session values used elsewhere
+        session["user"] = email_db
+        session["role"] = "customer"
+        session["name"] = name
+        session["email"] = email_db
+        session["phone"] = phone
 
-        return "Invalid login credentials"
-
+        return redirect(url_for("customer_dashboard"))
+    # GET sends login
     return render_template("customer_login.html")
 
 

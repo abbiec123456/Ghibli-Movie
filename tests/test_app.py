@@ -36,6 +36,18 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
+        patcher = patch('app.get_db_connection')
+        self.addCleanup(patcher.stop)  # Cleanup after test
+        self.mock_db = patcher.start()
+
+        self.mock_conn = MagicMock()
+        self.mock_cursor = MagicMock()
+        self.mock_db.return_value = self.mock_conn
+        self.mock_conn.cursor.return_value = self.mock_cursor
+        self.mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
         # Reset test data
         CUSTOMERS.clear()
         CUSTOMERS.update(
@@ -84,8 +96,17 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/login")
         self.assertEqual(response.status_code, 200)
 
-    def test_successful_login(self):
+    @patch('app.get_db_connection')
+    def test_successful_login(self, mock_db):
         """Test successful customer login"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+                4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+                )
+
         response = self.client.post(
             "/login",
             data={"email": "abbie@example.com", "password": "group1"},
@@ -101,23 +122,58 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["email"], "abbie@example.com")
             self.assertEqual(sess["phone"], "123-456-7890")
 
-    def test_login_with_invalid_email(self):
+        # inmemory CUSTOMERS was updated
+        self.assertIn("abbie@example.com", CUSTOMERS)
+        self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
+
+    @patch('app.get_db_connection')
+    def test_login_with_invalid_email(self, mock_db_connection):
         """Test login with non-existent email"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = None
+
         response = self.client.post(
             "/login", data={"email": "nonexistent@example.com", "password": "wrongpass"}
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Invalid login credentials", response.data)
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("user", sess)
 
-    def test_login_with_invalid_password(self):
+    @patch('app.get_db_connection')
+    def test_login_with_invalid_password(self, mock_get_db_connection):
         """Test login with correct email but wrong password"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_get_db_connection.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (
+                4,                    # customer_id
+                "Abbie",              # name
+                "Smith",              # last_name
+                "abbie@example.com",  # email
+                "123-456-7890",       # phone
+                "group1",             # password (CORRECT password)
+        )
+        CUSTOMERS.clear()
+
         response = self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "wrongpassword"}
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Invalid login credentials", response.data)
+
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("user", sess)
+            self.assertNotIn("role", sess)
+
+        self.assertNotIn("abbie@example.com", CUSTOMERS)
 
     # ---------- REGISTRATION TESTS ----------
 
@@ -374,6 +430,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+                99, "Test", "User", "test@example.com", "N/A", "testpass"
+                )
         # 1. Register
         self.client.post(
             "/register",
@@ -419,6 +478,17 @@ class SessionManagementTests(unittest.TestCase):
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
+        patcher = patch('app.get_db_connection')
+        self.addCleanup(patcher.stop)
+        self.mock_db = patcher.start()
+        self.mock_conn = MagicMock()
+        self.mock_cursor = MagicMock()
+        self.mock_db.return_value = self.mock_conn
+        self.mock_conn.cursor.return_value = self.mock_cursor
+        self.mock_cursor.fetchone.return_value = (
+                1, "Test", "User", "test@example.com", "000-000-0000", "testpass"
+                )
+
         # Reset test data
         CUSTOMERS.clear()
         CUSTOMERS.update(
@@ -458,22 +528,36 @@ class SessionManagementTests(unittest.TestCase):
             "phone": "111-111-1111",
         }
 
-        # Create two clients
-        client1 = self.app.test_client()
-        client2 = self.app.test_client()
+        def mock_fetchone_side_effect(*args, **kwargs):
+            # Get the email from the last execute call
+            last_call = self.mock_cursor.execute.call_args
+            if last_call and len(last_call[0]) > 1:
+                params = last_call[0][1]
+                if isinstance(params, tuple) and len(params) > 0:
+                    email = params[0]
+                if email == "test@example.com":
+                    return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
+                elif email == "user2@example.com":
+                    return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
+            return None
 
-        # Login with different users
-        client1.post(
+        self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect
+        # Create two clients
+        self.client.post(
             "/login", data={"email": "test@example.com", "password": "testpass"}
         )
-
-        client2.post("/login", data={"email": "user2@example.com", "password": "pass2"})
-
-        # Verify sessions are separate
-        with client1.session_transaction() as sess:
+        # Check user 1 session
+        with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
 
-        with client2.session_transaction() as sess:
+        # Logout user 1
+        self.client.get("/logout")
+
+        # Login user 2
+        self.client.post("/login", data={"email": "user2@example.com", "password": "pass2"})
+
+        # Check user 2 session
+        with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "user2@example.com")
 
 
