@@ -758,7 +758,7 @@ view their personal details and bookings, and update extra requests for courses.
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;POST&quot;</span><span class="p">:</span>
         <span class="c1"># Check if already booked</span>
         <span class="n">already_booked</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="n">b</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> 
+            <span class="n">b</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span>
             <span class="ow">and</span> <span class="n">b</span><span class="p">[</span><span class="s2">&quot;course&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Moving Castle Creations - 3D Animation&quot;</span>
             <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">BOOKINGS</span>
         <span class="p">)</span>
