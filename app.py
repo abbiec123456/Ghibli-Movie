@@ -257,17 +257,12 @@ def logout():
 def booking():
     """
     Handle course booking.
-
-    GET: Display the booking form
-    POST: Process booking submission and store booking data
-
-    Returns:
-        str: Rendered booking template or redirect to confirmation
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
     if request.method == "POST":
+        # Check if already booked
         already_booked = any(
             b["email"] == session["email"] and
             b["course"] == "Moving Castle Creations - 3D Animation"
@@ -277,6 +272,7 @@ def booking():
         if already_booked:
             return redirect(url_for("customer_dashboard"))
 
+        # Process new booking
         selected_modules = request.form.getlist("modules")
         extra = request.form.get("extra", "")
 
@@ -300,7 +296,6 @@ def booking():
             "phone": session.get("phone"),
         },
     )
-
 
 # ---------- BOOKING SUBMITTED ----------
 @app.route("/booking-submitted")
