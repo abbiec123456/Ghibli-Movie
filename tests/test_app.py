@@ -549,7 +549,7 @@ class SessionManagementTests(unittest.TestCase):
         # Check user 1 session
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
- 
+
         # Logout user 1
         self.client.get("/logout")
 
