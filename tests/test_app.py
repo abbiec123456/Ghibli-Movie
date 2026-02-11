@@ -531,36 +531,34 @@ class SessionManagementTests(unittest.TestCase):
         def mock_fetchone_side_effect(*args, **kwargs):
             # Get the email from the last execute call
             last_call = self.mock_cursor.execute.call_args
-            if last_call:
-                sql_query = last_call[0][0] if last_call[0] else ""
-                params = last_call[0][1] if len(last_call[0]) > 1 else {}
+            if last_call and len(last_call[0]) > 1:
+                params = last_call[0][1]
                 email = params.get('email') if isinstance(params, dict) else None
-            
+                
                 if email == "test@example.com":
                     return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
                 elif email == "user2@example.com":
                     return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
-            return None
-            
+            return None            
         self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect    
         # Create two clients
-        client1 = self.app.test_client()
-        client2 = self.app.test_client()
-
-        # Login with different users
-        client1.post(
+        self.client.post(
             "/login", data={"email": "test@example.com", "password": "testpass"}
         )
-
-        client2.post("/login", data={"email": "user2@example.com", "password": "pass2"})
-
-        # Verify sessions are separate
-        with client1.session_transaction() as sess:
+        
+        # Check user 1 session
+        with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
-
-        with client2.session_transaction() as sess:
+        
+        # Logout user 1
+        self.client.get("/logout")
+        
+        # Login user 2
+        self.client.post("/login", data={"email": "user2@example.com", "password": "pass2"})
+        
+        # Check user 2 session
+        with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "user2@example.com")
-
 
 if __name__ == "__main__":
     # Run tests with verbose output
