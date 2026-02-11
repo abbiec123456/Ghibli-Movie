@@ -527,7 +527,21 @@ class SessionManagementTests(unittest.TestCase):
             "email": "user2@example.com",
             "phone": "111-111-1111",
         }
-
+        def mock_fetchone_side_effect(*args, **kwargs):
+            # Get the email from the last execute call
+            last_call = self.mock_cursor.execute.call_args
+            if last_call:
+                sql_query = last_call[0][0] if last_call[0] else ""
+                params = last_call[0][1] if len(last_call[0]) > 1 else {}
+            
+                email = params.get('email') if isinstance(params, dict) else None
+            
+                if email == "test@example.com":
+                    return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
+                elif email == "user2@example.com":
+                    return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
+            return None
+            
         # Create two clients
         client1 = self.app.test_client()
         client2 = self.app.test_client()
