@@ -213,9 +213,16 @@ def customer_dashboard():
     cursor = db.cursor()
     # set query for join booking customerid against customers table
     query = """
-    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status
+    SELECT 
+        b.booking_id, 
+        b.course_id, 
+        b.nice_to_have_requests, 
+        b.status,
+        co.course_name,
+        co.description
     FROM bookings b
     JOIN customers c ON b.customer_id = c.customer_id
+    JOIN courses co ON b.course_id = co.course_id
     WHERE c.email = %s
     """
     # execute and get rows
@@ -227,10 +234,14 @@ def customer_dashboard():
     for row in rows:
         user_bookings.append({
             "booking_id": row[0],
-            "course": row[1],               # Mapping course_id
-            "extra": row[2],                # Mapping nice_to_have_requests
+            "course_id": row[1],
+            "course": row[4],               # course_name from courses table
+            "description": row[5],          # course description
+            "extra": row[2],                # nice_to_have_requests
             "status": row[3]
         })
+    cursor.close()
+    db.close()
 
     return render_template(
         "customer_dashboard.html",
