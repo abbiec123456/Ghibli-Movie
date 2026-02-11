@@ -192,16 +192,26 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        course_to_update = request.form["course"]
+        course_id_to_update = request.form["course"]  # This is course_id from hidden input
         new_extra = request.form["extra"]
 
-        for booking_item in BOOKINGS:
-            if (
-                booking_item["email"] == user_email
-                and booking_item["course"] == course_to_update
-            ):
-                booking_item["extra"] = new_extra
-                break
+        # Update the database
+        db = get_db_connection()
+        cursor = db.cursor()
+
+        # Update query - find booking by customer email and course_id
+        update_query = """
+        UPDATE bookings b
+        JOIN customers c ON b.customer_id = c.customer_id
+        SET b.nice_to_have_requests = %s, b.updated_at = NOW()
+        WHERE c.email = %s AND b.course_id = %s
+        """
+
+        cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
+        db.commit()
+
+        cursor.close()
+        db.close()
 
     personal_details = {
         "name": session.get("name"),
