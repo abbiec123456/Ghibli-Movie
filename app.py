@@ -213,7 +213,7 @@ def customer_dashboard():
     cursor = db.cursor()
     # set query for join booking customerid against customers table
     query = """
-    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status 
+    SELECT b.booking_id, b.course_id, b.nice_to_have_requests, b.status
     FROM bookings b
     JOIN customers c ON b.customer_id = c.customer_id
     WHERE c.email = %s
