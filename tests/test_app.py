@@ -535,22 +535,20 @@ class SessionManagementTests(unittest.TestCase):
                 params = last_call[0][1]
                 if isinstance(params, tuple) and len(params) > 0:
                     email = params[0]
-                
                 if email == "test@example.com":
                     return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
                 elif email == "user2@example.com":
                     return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
-            return None            
-        self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect    
+            return None
+        self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect
         # Create two clients
         self.client.post(
             "/login", data={"email": "test@example.com", "password": "testpass"}
         )
-        
         # Check user 1 session
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
-        
+                    
         # Logout user 1
         self.client.get("/logout")
         
