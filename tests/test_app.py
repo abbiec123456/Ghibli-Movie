@@ -203,9 +203,20 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-
-    def test_update_booking_extra_request(self):
+    @patch('app.get_db_connection')
+    def test_update_booking_extra_request(self, mock_db):
         """Test updating extra request for a booking"""
+        # Mock the database connection and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+    
+        # Mock the SELECT query result (for displaying dashboard)
+        mock_cursor.fetchall.return_value = [
+            (1, 5, "Beginner friendly tools", "confirmed", "Moving Castle Creations – 3D Animation", "Learn 3D animation")
+        ]
+
         # Login first
         self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "group1"}
@@ -214,26 +225,24 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/dashboard",
             data={
-                "course": "Moving Castle Creations – 3D Animation",
+                "course": "5",
                 "extra": "Updated extra request",
             },
             follow_redirects=True,
         )
 
         self.assertEqual(response.status_code, 200)
+        # update should execute to query and parameters for assert
+        update_call = mock_cursor.execute.call_args_list[0]
+        query, params = update_call[0]
 
         # Check that the booking was updated
-        booking = next(
-            (
-                b
-                for b in BOOKINGS
-                if b["email"] == "abbie@example.com"
-                and b["course"] == "Moving Castle Creations – 3D Animation"
-            ),
-            None,
-        )
-        self.assertIsNotNone(booking)
-        self.assertEqual(booking["extra"], "Updated extra request")
+        self.assertIn("UPDATE bookings", query)
+        self.assertEqual(params[0], "Updated extra request") # extra field data
+        self.assertEqual(params[1], "abbie@example.com") # email
+        self.assertEqual(params[2], "5") 
+
+        mock_conn.commit.assert_called()
 
     # ---------- LOGOUT TESTS ----------
 
