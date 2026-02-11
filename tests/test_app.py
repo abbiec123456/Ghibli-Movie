@@ -116,12 +116,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["phone"], "123-456-7890")
         # mock DB query was called with email
         mock_cursor.execute.assert_called_once_with(
-        """
-        SELECT customer_id, name, last_name, email, phone, password
-        FROM customers
-        WHERE email = %s
-        """,
-        ("abbie@example.com",),
+            """
+            SELECT customer_id, name, last_name, email, phone, password
+            FROM customers
+            WHERE email = %s
+            """,
+            ("abbie@example.com",),
         )
         # inmemory CUSTOMERS was updated
         self.assertIn("abbie@example.com", CUSTOMERS)
@@ -153,12 +153,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-        4,                    # customer_id
-        "Abbie",              # name
-        "Smith",              # last_name  
-        "abbie@example.com",  # email
-        "123-456-7890",       # phone
-        "group1",             # password (CORRECT password)
+                4,                    # customer_id
+                "Abbie",              # name
+                "Smith",              # last_name
+                "abbie@example.com",  # email
+                "123-456-7890",       # phone
+                "group1",             # password (CORRECT password)
         )
 
         response = self.client.post(
