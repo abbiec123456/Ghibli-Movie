@@ -249,7 +249,7 @@ def logout():
         werkzeug.wrappers.Response: Redirect to login page
     """
     session.clear()
-        return redirect(url_for("customer_login"))
+    return redirect(url_for("customer_login"))
 
 
 # ---------- BOOKING PAGE -----------
