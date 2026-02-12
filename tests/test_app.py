@@ -487,12 +487,16 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     # ---------- INTEGRATION TESTS ----------
     @patch('app.get_db_connection')
-    def test_full_user_journey(self):
+    def test_full_user_journey(self, mock_db):
         """Test complete user journey: register, login, book, view dashboard"""
         # We just need to mock the sequence of DB calls.
         # Because this is a long sequence, simple mocks might get fragile.
         # just ensuring the calls happen without crashing.
-
+        # Configure the mock passed by the decorator
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
         # 1. Register (INSERT)
         self.client.post(
             "/register",
