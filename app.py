@@ -214,12 +214,6 @@ def register():
 def customer_dashboard():
     """
     Display customer dashboard with personal details and bookings.
-
-    Allows customers to view their information and update booking extras.
-    Requires authentication.
-
-    Returns:
-        str: Rendered dashboard template or redirect to login
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
@@ -227,16 +221,20 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        course_id_to_update = request.form["course"]
-        new_extra = request.form["extra"]
+        # 1. Validate Form Data
+        course_id_to_update = request.form.get("course")
+        new_extra = request.form.get("extra")
+
+        if not course_id_to_update:
+            return "Missing course ID", 400
 
         conn = None
+        cursor = None
         try:
-            # Update the database
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # PostgreSQL UPDATE with FROM clause (instead of JOIN)
+            # 2. Perform Update
             update_query = """
             UPDATE bookings
             SET nice_to_have_requests = %s, updated_at = NOW()
@@ -245,59 +243,75 @@ def customer_dashboard():
             AND c.email = %s
             AND bookings.course_id = %s
             """
-
             cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
-            conn.commit()()
-
-            cursor.close()
-            conn.close()
+            conn.commit()
 
         except Exception as e:
-            print(f"Error updating booking: {e}")
             if conn:
                 conn.rollback()
+            print(f"Update Error: {e}")
+            return f"Error updating booking: {e}", 500
+        finally:
+            # 3. Safe Cleanup
+            if cursor:
+                cursor.close()
+            if conn:
                 conn.close()
-            return f"Error: {str(e)}", 500
+
+        # Redirect to GET after POST (PRG Pattern) to prevent resubmission
+        return redirect(url_for("customer_dashboard"))
+
+    # --- GET Request Handling ---
 
     personal_details = {
         "name": session.get("name"),
         "email": session.get("email"),
         "phone": session.get("phone"),
     }
-    # set cusor for db
-    db = get_db_connection()
-    cursor = db.cursor()
-    # set query for join booking customerid against customers table
-    query = """
-    SELECT
-        b.booking_id,
-        b.course_id,
-        b.nice_to_have_requests,
-        b.status,
-        co.course_name,
-        co.description
-    FROM bookings b
-    JOIN customers c ON b.customer_id = c.customer_id
-    JOIN courses co ON b.course_id = co.course_id
-    WHERE c.email = %s
-    """
-    # execute and get rows
-    cursor.execute(query, (user_email,))
-    rows = cursor.fetchall()
 
-    # user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    conn = None
+    cursor = None
     user_bookings = []
-    for row in rows:
-        user_bookings.append({
-            "booking_id": row[0],
-            "course_id": row[1],
-            "course": row[4],               # course_name from courses table
-            "description": row[5],          # course description
-            "extra": row[2],                # nice_to_have_requests
-            "status": row[3]
-        })
-    cursor.close()
-    db.close()
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT
+            b.booking_id,
+            b.course_id,
+            b.nice_to_have_requests,
+            b.status,
+            co.course_name,
+            co.description
+        FROM bookings b
+        JOIN customers c ON b.customer_id = c.customer_id
+        JOIN courses co ON b.course_id = co.course_id
+        WHERE c.email = %s
+        ORDER BY b.created_at DESC
+        """
+        cursor.execute(query, (user_email,))
+        rows = cursor.fetchall()
+
+        for row in rows:
+            user_bookings.append({
+                "booking_id": row[0],
+                "course_id": row[1],
+                "extra": row[2],
+                "status": row[3],
+                "course": row[4],
+                "description": row[5]
+            })
+
+    except Exception as e:
+        print(f"Dashboard Fetch Error: {e}")
+        return f"Error fetching dashboard: {e}", 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return render_template(
         "customer_dashboard.html",
