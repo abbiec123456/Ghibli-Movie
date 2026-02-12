@@ -289,7 +289,7 @@ def customer_dashboard():
         JOIN customers c ON b.customer_id = c.customer_id
         JOIN courses co ON b.course_id = co.course_id
         WHERE c.email = %s
-        ORDER BY b.created_at DESC
+        ORDER BY b.booking_id DESC
         """
         cursor.execute(query, (user_email,))
         rows = cursor.fetchall()
