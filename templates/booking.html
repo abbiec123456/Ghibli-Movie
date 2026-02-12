@@ -3,6 +3,26 @@
 <head>
     <title>Course Booking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .course-block {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .module-list {
+            margin-left: 25px;
+            margin-top: 10px;
+            padding-left: 10px;
+            border-left: 2px solid #ddd;
+        }
+        .course-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,7 +33,9 @@
     <!-- Header -->
     <div class="header">
         <h1>Book a Course</h1>
-        <p>Moving Castle Creations – 3D Animation Workshop</p>
+        <p>Confirm your Customer Details below</p>
+        <p>Select course(s) and modules from listings below</p>
+        <p>Press submit booking when done to confirm</p>
     </div>
 
     <!-- Booking Form -->
@@ -24,7 +46,6 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
             <h3>Customer Details</h3>
-
             <p>
                 <label for="name"><strong>Name</strong></label><br>
                 <input type="text" name="name" value="{{ user.name }}" disabled>
@@ -32,7 +53,7 @@
 
             <p>
                 <label for="email"><strong>Email</strong></label><br>
-                <input type="email" name = "email" value="{{ user.email }}" disabled>
+                <input type="email" name="email" value="{{ user.email }}" disabled>
             </p>
 
             <p>
@@ -40,28 +61,38 @@
                 <input type="tel" name="phone" value="{{user.phone}}" disabled>
             </p>
 
-            <h3>Course: Moving Castle Creations – 3D Animation </h3>
+            <h3>Select Courses & Modules</h3>
+            
+            {% if courses %}
+                {% for course in courses %}
+                <div class="course-block">
+                    <!-- Course Selection -->
+                    <label class="course-header">
+                        <input type="checkbox" name="courses" value="{{ course.id }}">
+                        {{ course.name }}
+                    </label>
+                    <p><em>{{ course.description }}</em></p>
 
-            <p>
-                <label>
-                    <input type="checkbox" name="modules" value="module1">
-                    Module 1: Introduction to 3D Animation
-                </label>
-            </p>
-
-            <p>
-                <label>
-                    <input type="checkbox" name="modules" value="module2">
-                    Module 2: Character Design Basics
-                </label>
-            </p>
-
-            <p>
-                <label>
-                    <input type="checkbox" name="modules" value="module3">
-                    Module 3: Environmental Modelling
-                </label>
-            </p>
+                    <!-- Modules for this specific course -->
+                    {% if course.modules %}
+                    <div class="module-list">
+                        <strong>Available Modules:</strong><br>
+                        {% for module in course.modules %}
+                        <label>
+                            <!-- Name modules dynamically: modules_1, modules_2 etc -->
+                            <input type="checkbox" name="modules_{{ course.id }}" value="{{ module.id }}">
+                            {{ module.name }}
+                        </label><br>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="module-list">No specific modules listed.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No active courses available at the moment.</p>
+            {% endif %}
 
             <p>
                 <label for="extra"><strong>Special Requests (Optional)</strong></label><br>
@@ -74,5 +105,4 @@
     </div>
 
 </body>
-
 </html>

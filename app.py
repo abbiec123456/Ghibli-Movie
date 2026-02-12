@@ -325,33 +325,137 @@ def booking():
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
+    
+    user_email = session.get("email")
 
     if request.method == "POST":
-        # Check if already booked
-        already_booked = any(
-            b["email"] == session["email"]
-            and b["course"] == "Moving Castle Creations - 3D Animation"
-            for b in BOOKINGS
-        )
+        # 1. Get form data
+        selected_course_ids = request.form.getlist("courses")
+        extra_request = request.form.get("extra", "")
 
-        if already_booked:
-            return redirect(url_for("customer_dashboard"))
+        if not selected_course_ids:
+            return redirect(url_for("booking"))
 
-        # Process new booking
-        selected_modules = request.form.getlist("modules")
-        extra = request.form.get("extra", "")
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-        booking_data = {
-            "email": session.get("email"),
-            "course": "Moving Castle Creations - 3D Animation",
-            "modules": selected_modules,
-            "extra": extra,
-        }
+        try:
+            # Get customer_id
+            cur.execute("SELECT customer_id FROM customers WHERE email = %s", (user_email,))
+            customer_row = cur.fetchone()
+            if not customer_row:
+                return redirect(url_for("customer_login"))
+            customer_id = customer_row[0]
 
-        BOOKINGS.append(booking_data)
-        session["last_booking"] = booking_data
+            # Iterate through selected courses and create bookings
+            for course_id in selected_course_ids:
+                # 2. Check if already booked
+                cur.execute(
+                    """
+                    SELECT booking_id FROM bookings 
+                    WHERE customer_id = %s AND course_id = %s
+                    """,
+                    (customer_id, course_id)
+                )
+                if cur.fetchone():
+                    continue  # Skip if already booked
 
-        return redirect(url_for("booking_submitted"))
+                # 3. Create Booking
+                cur.execute(
+                    """
+                    INSERT INTO bookings (customer_id, course_id, status, nice_to_have_requests, created_at)
+                    VALUES (%s, %s, 'Pending', %s, CURRENT_TIMESTAMP)
+                    RETURNING booking_id
+                    """,
+                    (customer_id, course_id, extra_request)
+                )
+                new_booking_id = cur.fetchone()[0]
+
+                # 4. Handle Modules for this specific course
+                # The HTML checkbox name is dynamic: "modules_{course_id}"
+                # e.g., if course_id is 1, we look for "modules_1"
+                selected_module_ids = request.form.getlist(f"modules_{course_id}")
+
+                if selected_module_ids:
+                    # Prepare data for bulk insert
+                    # List of tuples: [(booking_id, module_id), (booking_id, module_id), ...]
+                    module_insert_data = [(new_booking_id, m_id) for m_id in selected_module_ids]
+                    
+                    cur.executemany(
+                        """
+                        INSERT INTO booking_modules (booking_id, module_id)
+                        VALUES (%s, %s)
+                        """,
+                        module_insert_data
+                    )
+            
+            conn.commit()
+            
+            # Store data for confirmation page
+            session["last_booking"] = {
+                "email": user_email,
+                "course_count": len(selected_course_ids),
+                "extra": extra_request
+            }
+            
+            return redirect(url_for("booking_submitted"))
+
+        except Exception as e:
+            conn.rollback()
+            print(f"Booking Error: {e}")
+            return f"An error occurred: {e}", 500
+        finally:
+            cur.close()
+            conn.close()
+
+    # --- GET REQUEST: Render Form ---
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 1. Fetch Active Courses
+    cur.execute("""
+        SELECT course_id, course_name, description 
+        FROM courses 
+        WHERE active = TRUE 
+        ORDER BY course_name
+    """)
+    courses_data = cur.fetchall()
+
+    # 2. Fetch Active Modules
+    cur.execute("""
+        SELECT module_id, course_id, module_name, module_description
+        FROM modules 
+        WHERE active = TRUE 
+        ORDER BY module_order
+    """)
+    modules_data = cur.fetchall()
+    
+    cur.close()
+    conn.close()
+
+    # 3. Group modules by course_id using a dictionary
+    # structure: { course_id: [module_row, module_row, ...], ... }
+    modules_by_course = {}
+    for m in modules_data:
+        m_id, m_course_id, m_name, m_desc = m
+        if m_course_id not in modules_by_course:
+            modules_by_course[m_course_id] = []
+        modules_by_course[m_course_id].append({
+            "id": m_id,
+            "name": m_name,
+            "description": m_desc
+        })
+
+    # 4. Build final payload for template
+    courses_payload = []
+    for c in courses_data:
+        c_id, c_name, c_desc = c
+        courses_payload.append({
+            "id": c_id,
+            "name": c_name,
+            "description": c_desc,
+            "modules": modules_by_course.get(c_id, []) # Get modules or empty list if none
+        })
 
     return render_template(
         "booking.html",
