@@ -192,26 +192,35 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        course_id_to_update = request.form["course"]  # This is course_id from hidden input
+        course_id_to_update = request.form["course"]
         new_extra = request.form["extra"]
 
-        # Update the database
-        db = get_db_connection()
-        cursor = db.cursor()
+        try:
+            # Update the database
+            db = get_db_connection()
+            cursor = db.cursor()
 
-        # Update query - find booking by customer email and course_id
-        update_query = """
-        UPDATE bookings b
-        JOIN customers c ON b.customer_id = c.customer_id
-        SET b.nice_to_have_requests = %s, b.updated_at = NOW()
-        WHERE c.email = %s AND b.course_id = %s
-        """
+            # PostgreSQL UPDATE with FROM clause (instead of JOIN)
+            update_query = """
+            UPDATE bookings b
+            SET nice_to_have_requests = %s, updated_at = NOW()
+            FROM customers c
+            WHERE b.customer_id = c.customer_id
+            AND c.email = %s
+            AND b.course_id = %s
+            """
 
-        cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
-        db.commit()
+            cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
+            db.commit()
 
-        cursor.close()
-        db.close()
+            cursor.close()
+            db.close()
+
+        except Exception as e:
+            print(f"Error updating booking: {e}")
+            if db:
+                db.rollback()
+            return f"Error: {str(e)}", 500
 
     personal_details = {
         "name": session.get("name"),
