@@ -509,20 +509,27 @@ class GhibliBookingSystemTests(unittest.TestCase):
                 "confirm_password": "testpass",
             },
         )
+        # DEFINE THE SEQUENCE OF DB RETURNS HERE
+        mock_cursor.fetchone.side_effect = [
+            # 1. Login Query: Returns full user details (6 columns)
+            (99, "Test", "User", "test@example.com", "N/A", "testpass"),
+
+            # 2. Booking - Get Customer ID: Returns just ID
+            (99,),
+
+            # 3. Booking - Check Duplicates: Returns None (not found)
+            None,
+
+            # 4. Booking - Insert & Return ID: Returns new booking ID
+            (100,)
+        ]
 
         # 2. Login (SELECT)
-        # Mock fetchone to return the user we just 'created'
-        self.mock_cursor.fetchone.return_value = (
-            99, "Test", "User", "test@example.com", "N/A", "testpass"
-        )
         self.client.post(
             "/login", data={"email": "test@example.com", "password": "testpass"}
         )
 
         # 3. Create booking
-        # Sequence: customer_id (99), not duplicate (None), insert (100)
-        self.mock_cursor.fetchone.side_effect = [(99,), None, (100,)]
-
         response = self.client.post(
             "/book",
             data={"courses": ["1"], "modules_1": ["10"], "extra": "First time"},
@@ -531,6 +538,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
         # 4. View dashboard (SELECT bookings)
+        # Reset side_effect because fetchall is a different method
         self.mock_cursor.fetchall.return_value = []  # Return empty list just to pass
         self.client.get("/dashboard")
 
