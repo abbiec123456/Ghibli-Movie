@@ -230,31 +230,33 @@ def customer_dashboard():
         course_id_to_update = request.form["course"]
         new_extra = request.form["extra"]
 
+        conn = None
         try:
             # Update the database
-            db = get_db_connection()
-            cursor = db.cursor()
+            conn = get_db_connection()
+            cursor = conn.cursor()
 
             # PostgreSQL UPDATE with FROM clause (instead of JOIN)
             update_query = """
-            UPDATE bookings b
+            UPDATE bookings
             SET nice_to_have_requests = %s, updated_at = NOW()
             FROM customers c
-            WHERE b.customer_id = c.customer_id
+            WHERE bookings.customer_id = c.customer_id
             AND c.email = %s
-            AND b.course_id = %s
+            AND bookings.course_id = %s
             """
 
             cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
-            db.commit()
+            conn.commit()()
 
             cursor.close()
-            db.close()
+            conn.close()
 
         except Exception as e:
             print(f"Error updating booking: {e}")
-            if db:
-                db.rollback()
+            if conn:
+                conn.rollback()
+                conn.close()
             return f"Error: {str(e)}", 500
 
     personal_details = {
