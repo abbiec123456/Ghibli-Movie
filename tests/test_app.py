@@ -213,6 +213,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
 
+        mock_cursor.fetchone.return_value = (
+            1,                    # customer_id
+            "Abbie",              # first_name
+            "Smith",              # last_name
+            "abbie@example.com",  # email
+            "123-456-7890",       # phone
+            "group1"              # password
+        )
         # Mock the SELECT query result (for displaying dashboard)
         mock_cursor.fetchall.return_value = [
             (1, 5, "", "confirmed", "Moving Castle Creations – 3D Animation", "Learn animation")
@@ -234,14 +242,20 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         # update should execute to query and parameters for assert
-        update_call = mock_cursor.execute.call_args_list[0]
-        query, params = update_call[0]
+        update_call = None
+        for call in mock_cursor.execute.call_args_list:
+            query = call[0][0]
+            if "UPDATE bookings" in query:
+                update_call = call
+                break
 
-        # Check that the booking was updated
-        self.assertIn("UPDATE bookings", query)
-        self.assertEqual(params[0], "Updated extra request")  # extra field data
-        self.assertEqual(params[1], "abbie@example.com")  # email
-        self.assertEqual(params[2], "5")
+        self.assertIsNotNone(update_call, "UPDATE query was not executed")
+        query, params = update_call[0]
+        
+        # Verify the UPDATE parameters
+        self.assertEqual(params[0], "Updated extra request")  # new_extra
+        self.assertEqual(params[1], "abbie@example.com")      # user_email
+        self.assertEqual(params[2], "5")                      # course_id
 
         mock_conn.commit.assert_called()
 
