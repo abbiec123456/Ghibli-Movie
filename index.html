@@ -892,7 +892,7 @@ Fetches active courses and modules from DB for selection.</p>
                 <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
 <span class="w">                    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">                    INSERT INTO bookings</span>
-<span class="sd">                    (customer_id, course_id, status, nice_to_have_requests, created_at)</span>
+<span class="sd">                    (customer_id, course_id, status, nice_to_have_requests, updated_at)</span>
 <span class="sd">                    VALUES (%s, %s, &#39;Pending&#39;, %s, NOW())</span>
 <span class="sd">                    RETURNING booking_id</span>
 <span class="sd">                    &quot;&quot;&quot;</span><span class="p">,</span>
