@@ -203,6 +203,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
+
     @patch('app.get_db_connection')
     def test_update_booking_extra_request(self, mock_db):
         """Test updating extra request for a booking"""
@@ -238,8 +239,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Check that the booking was updated
         self.assertIn("UPDATE bookings", query)
-        self.assertEqual(params[0], "Updated extra request") # extra field data
-        self.assertEqual(params[1], "abbie@example.com") # email
+        self.assertEqual(params[0], "Updated extra request")  # extra field data
+        self.assertEqual(params[1], "abbie@example.com")  # email
         self.assertEqual(params[2], "5")
 
         mock_conn.commit.assert_called()
@@ -261,10 +262,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
 
-
     # ---------- BOOKING PAGE TESTS ----------
 
     def test_booking_page_requires_authentication(self):
+
         """Test that booking page redirects unauthenticated users"""
         response = self.client.get("/book")
         self.assertEqual(response.status_code, 302)
@@ -422,7 +423,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
 class SessionManagementTests(unittest.TestCase):
     """Test suite for session management"""
-
     def setUp(self):
         """Set up test client"""
         self.app = app
