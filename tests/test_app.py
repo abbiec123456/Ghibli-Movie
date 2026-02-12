@@ -260,8 +260,28 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
 
-    def test_update_booking_extra_request(self):
+    @patch('app.get_db_connection')
+    def test_update_booking_extra_request(self, mock_db):
         """Test updating extra request for a booking"""
+        # Mock the database connection and cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (
+            1,                    # customer_id
+            "Abbie",              # first_name
+            "Smith",              # last_name
+            "abbie@example.com",  # email
+            "123-456-7890",       # phone
+            "group1"              # password
+        )
+        # Mock the SELECT query result (for displaying dashboard)
+        mock_cursor.fetchall.return_value = [
+            (1, 5, "", "confirmed", "Moving Castle Creations – 3D Animation", "Learn animation")
+        ]
+
         # Login first
         self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "group1"}
@@ -270,26 +290,30 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/dashboard",
             data={
-                "course": "Moving Castle Creations – 3D Animation",
+                "course": "5",
                 "extra": "Updated extra request",
             },
             follow_redirects=True,
         )
 
         self.assertEqual(response.status_code, 200)
+        # update should execute to query and parameters for assert
+        update_call = None
+        for call in mock_cursor.execute.call_args_list:
+            query = call[0][0]
+            if "UPDATE bookings" in query:
+                update_call = call
+                break
 
-        # Check that the booking was updated
-        booking = next(
-            (
-                b
-                for b in BOOKINGS
-                if b["email"] == "abbie@example.com"
-                and b["course"] == "Moving Castle Creations – 3D Animation"
-            ),
-            None,
-        )
-        self.assertIsNotNone(booking)
-        self.assertEqual(booking["extra"], "Updated extra request")
+        self.assertIsNotNone(update_call, "UPDATE query was not executed")
+        query, params = update_call[0]
+
+        # Verify the UPDATE parameters
+        self.assertEqual(params[0], "Updated extra request")  # new_extra
+        self.assertEqual(params[1], "abbie@example.com")      # user_email
+        self.assertEqual(params[2], "5")                      # course_id
+
+        mock_conn.commit.assert_called()
 
     # ---------- LOGOUT TESTS ----------
 
@@ -311,6 +335,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     # ---------- BOOKING PAGE TESTS ----------
 
     def test_booking_page_requires_authentication(self):
+
         """Test that booking page redirects unauthenticated users"""
         response = self.client.get("/book")
         self.assertEqual(response.status_code, 302)
@@ -471,7 +496,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
 class SessionManagementTests(unittest.TestCase):
     """Test suite for session management"""
-
     def setUp(self):
         """Set up test client"""
         self.app = app

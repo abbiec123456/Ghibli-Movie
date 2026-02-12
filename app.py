@@ -227,24 +227,75 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        course_to_update = request.form["course"]
+        course_id_to_update = request.form["course"]
         new_extra = request.form["extra"]
 
-        for booking_item in BOOKINGS:
-            if (
-                booking_item["email"] == user_email
-                and booking_item["course"] == course_to_update
-            ):
-                booking_item["extra"] = new_extra
-                break
+        try:
+            # Update the database
+            db = get_db_connection()
+            cursor = db.cursor()
+
+            # PostgreSQL UPDATE with FROM clause (instead of JOIN)
+            update_query = """
+            UPDATE bookings b
+            SET nice_to_have_requests = %s, updated_at = NOW()
+            FROM customers c
+            WHERE b.customer_id = c.customer_id
+            AND c.email = %s
+            AND b.course_id = %s
+            """
+
+            cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
+            db.commit()
+
+            cursor.close()
+            db.close()
+
+        except Exception as e:
+            print(f"Error updating booking: {e}")
+            if db:
+                db.rollback()
+            return f"Error: {str(e)}", 500
 
     personal_details = {
         "name": session.get("name"),
         "email": session.get("email"),
         "phone": session.get("phone"),
     }
+    # set cusor for db
+    db = get_db_connection()
+    cursor = db.cursor()
+    # set query for join booking customerid against customers table
+    query = """
+    SELECT
+        b.booking_id,
+        b.course_id,
+        b.nice_to_have_requests,
+        b.status,
+        co.course_name,
+        co.description
+    FROM bookings b
+    JOIN customers c ON b.customer_id = c.customer_id
+    JOIN courses co ON b.course_id = co.course_id
+    WHERE c.email = %s
+    """
+    # execute and get rows
+    cursor.execute(query, (user_email,))
+    rows = cursor.fetchall()
 
-    user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    # user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    user_bookings = []
+    for row in rows:
+        user_bookings.append({
+            "booking_id": row[0],
+            "course_id": row[1],
+            "course": row[4],               # course_name from courses table
+            "description": row[5],          # course description
+            "extra": row[2],                # nice_to_have_requests
+            "status": row[3]
+        })
+    cursor.close()
+    db.close()
 
     return render_template(
         "customer_dashboard.html",
@@ -266,22 +317,27 @@ def logout():
     return redirect(url_for("customer_login"))
 
 
-# ---------- BOOKING PAGE ----------
+# ---------- BOOKING PAGE -----------
 @app.route("/book", methods=["GET", "POST"])
 def booking():
     """
     Handle course booking.
-
-    GET: Display the booking form
-    POST: Process booking submission and store booking data
-
-    Returns:
-        str: Rendered booking template or redirect to confirmation
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
     if request.method == "POST":
+        # Check if already booked
+        already_booked = any(
+            b["email"] == session["email"]
+            and b["course"] == "Moving Castle Creations - 3D Animation"
+            for b in BOOKINGS
+        )
+
+        if already_booked:
+            return redirect(url_for("customer_dashboard"))
+
+        # Process new booking
         selected_modules = request.form.getlist("modules")
         extra = request.form.get("extra", "")
 
@@ -291,15 +347,6 @@ def booking():
             "modules": selected_modules,
             "extra": extra,
         }
-
-        already_booked = any(
-            b["email"] == session["email"] and
-            b["course"] == "Moving Castle Creations - 3D Animation"
-            for b in BOOKINGS
-        )
-
-        if already_booked:
-            return redirect(url_for("customer_dashboard"))
 
         BOOKINGS.append(booking_data)
         session["last_booking"] = booking_data
