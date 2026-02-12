@@ -1301,7 +1301,7 @@ Requires authentication.</p>
 <span class="s2">        JOIN customers c ON b.customer_id = c.customer_id</span>
 <span class="s2">        JOIN courses co ON b.course_id = co.course_id</span>
 <span class="s2">        WHERE c.email = </span><span class="si">%s</span>
-<span class="s2">        ORDER BY b.created_at DESC</span>
+<span class="s2">        ORDER BY b.booking_id DESC</span>
 <span class="s2">        &quot;&quot;&quot;</span>
         <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="p">(</span><span class="n">user_email</span><span class="p">,))</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
