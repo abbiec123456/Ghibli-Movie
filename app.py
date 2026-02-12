@@ -431,7 +431,7 @@ def booking():
         # 2. Fetch Active Modules
         cur.execute("""
             SELECT module_id, course_id, module_name, module_description
-            FROM modules
+            FROM course_modules
             WHERE active = TRUE
             ORDER BY module_order
         """)
