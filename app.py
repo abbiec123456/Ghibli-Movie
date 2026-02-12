@@ -377,7 +377,7 @@ def booking():
                 cur.execute(
                     """
                     INSERT INTO bookings
-                    (customer_id, course_id, status, nice_to_have_requests, created_at)
+                    (customer_id, course_id, status, nice_to_have_requests, updated_at)
                     VALUES (%s, %s, 'Pending', %s, NOW())
                     RETURNING booking_id
                     """,
