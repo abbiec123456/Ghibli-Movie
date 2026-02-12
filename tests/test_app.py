@@ -251,7 +251,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertIsNotNone(update_call, "UPDATE query was not executed")
         query, params = update_call[0]
-        
+
         # Verify the UPDATE parameters
         self.assertEqual(params[0], "Updated extra request")  # new_extra
         self.assertEqual(params[1], "abbie@example.com")      # user_email
