@@ -666,15 +666,15 @@ view their personal details and bookings, and update extra requests for courses.
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">515</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
 <span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin&quot;</span><span class="p">)</span>
+<span class="normal">519</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">admin_dashboard</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Display admin dashboard.</span>
@@ -700,7 +700,8 @@ view their personal details and bookings, and update extra requests for courses.
 
     <div class="doc doc-contents ">
 
-        <p>Handle course booking.</p>
+        <p>Handle course booking.
+Fetches active courses and modules from DB for selection.</p>
 
 
             <details class="mkdocstrings-source">
@@ -848,158 +849,150 @@ view their personal details and bookings, and update extra requests for courses.
 <span class="normal">477</span>
 <span class="normal">478</span>
 <span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/book&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/book&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">booking</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handle course booking.</span>
+<span class="sd">    Fetches active courses and modules from DB for selection.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;role&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;customer&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;customer_login&quot;</span><span class="p">))</span>
 
     <span class="n">user_email</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
 
+    <span class="c1"># --- POST REQUEST: Handle Form Submission ---</span>
     <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;POST&quot;</span><span class="p">:</span>
-        <span class="c1"># 1. Get form data</span>
         <span class="n">selected_course_ids</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="s2">&quot;courses&quot;</span><span class="p">)</span>
         <span class="n">extra_request</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;extra&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">selected_course_ids</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;booking&quot;</span><span class="p">))</span>
 
-        <span class="n">conn</span> <span class="o">=</span> <span class="n">get_db_connection</span><span class="p">()</span>
-        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-
+        <span class="n">conn</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Get customer_id</span>
+            <span class="n">conn</span> <span class="o">=</span> <span class="n">get_db_connection</span><span class="p">()</span>
+            <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
             <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT customer_id FROM customers WHERE email = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_email</span><span class="p">,))</span>
             <span class="n">customer_row</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">customer_row</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;customer_login&quot;</span><span class="p">))</span>
             <span class="n">customer_id</span> <span class="o">=</span> <span class="n">customer_row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
-            <span class="c1"># Iterate through selected courses and create bookings</span>
             <span class="k">for</span> <span class="n">course_id</span> <span class="ow">in</span> <span class="n">selected_course_ids</span><span class="p">:</span>
-                <span class="c1"># 2. Check if already booked</span>
+                <span class="c1"># Check duplicate</span>
                 <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-<span class="w">                    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">                    SELECT booking_id FROM bookings</span>
-<span class="sd">                     WHERE customer_id = %s AND course_id = %s</span>
-<span class="sd">                    &quot;&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;SELECT booking_id FROM bookings WHERE customer_id = </span><span class="si">%s</span><span class="s2"> AND course_id = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="p">(</span><span class="n">customer_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">():</span>
-                    <span class="k">continue</span>  <span class="c1"># Skip if already booked</span>
+                    <span class="k">continue</span>
 
-                <span class="c1"># 3. Create Booking</span>
+                <span class="c1"># Insert Booking</span>
                 <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
 <span class="w">                    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">                    INSERT INTO bookings</span>
 <span class="sd">                    (customer_id, course_id, status, nice_to_have_requests, created_at)</span>
-<span class="sd">                    VALUES (%s, %s, &#39;Pending&#39;, %s, CURRENT_TIMESTAMP)</span>
+<span class="sd">                    VALUES (%s, %s, &#39;Pending&#39;, %s, NOW())</span>
 <span class="sd">                    RETURNING booking_id</span>
 <span class="sd">                    &quot;&quot;&quot;</span><span class="p">,</span>
                     <span class="p">(</span><span class="n">customer_id</span><span class="p">,</span> <span class="n">course_id</span><span class="p">,</span> <span class="n">extra_request</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">new_booking_id</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
 
-                <span class="c1"># 4. Handle Modules for this specific course</span>
-                <span class="c1"># The HTML checkbox name is dynamic: &quot;modules_{course_id}&quot;</span>
-                <span class="c1"># e.g., if course_id is 1, we look for &quot;modules_1&quot;</span>
+                <span class="c1"># Insert Modules</span>
                 <span class="n">selected_module_ids</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;modules_</span><span class="si">{</span><span class="n">course_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
                 <span class="k">if</span> <span class="n">selected_module_ids</span><span class="p">:</span>
-                    <span class="c1"># Prepare data for bulk insert</span>
-                    <span class="c1"># List of tuples: [(booking_id, module_id), (booking_id, module_id), ...]</span>
                     <span class="n">module_insert_data</span> <span class="o">=</span> <span class="p">[(</span><span class="n">new_booking_id</span><span class="p">,</span> <span class="n">m_id</span><span class="p">)</span> <span class="k">for</span> <span class="n">m_id</span> <span class="ow">in</span> <span class="n">selected_module_ids</span><span class="p">]</span>
-
                     <span class="n">cur</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
-<span class="w">                        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">                        INSERT INTO booking_modules (booking_id, module_id)</span>
-<span class="sd">                        VALUES (%s, %s)</span>
-<span class="sd">                        &quot;&quot;&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;INSERT INTO booking_modules (booking_id, module_id) VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
                         <span class="n">module_insert_data</span>
                     <span class="p">)</span>
 
             <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-
-            <span class="c1"># Store data for confirmation page</span>
             <span class="n">session</span><span class="p">[</span><span class="s2">&quot;last_booking&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">user_email</span><span class="p">,</span>
                 <span class="s2">&quot;course_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">selected_course_ids</span><span class="p">),</span>
                 <span class="s2">&quot;extra&quot;</span><span class="p">:</span> <span class="n">extra_request</span>
             <span class="p">}</span>
-
             <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;booking_submitted&quot;</span><span class="p">))</span>
 
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Booking Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;An error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">500</span>
+            <span class="k">if</span> <span class="n">conn</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Booking POST Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Error processing booking: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">500</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-            <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">conn</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="c1"># --- GET REQUEST: Render Form ---</span>
-    <span class="n">conn</span> <span class="o">=</span> <span class="n">get_db_connection</span><span class="p">()</span>
-    <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">get_db_connection</span><span class="p">()</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
 
-    <span class="c1"># 1. Fetch Active Courses</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        SELECT course_id, course_name, description</span>
-<span class="s2">        FROM courses</span>
-<span class="s2">        WHERE active = TRUE</span>
-<span class="s2">        ORDER BY course_name</span>
-<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
-    <span class="n">courses_data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="c1"># 1. Fetch Active Courses</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DEBUG: Fetching active courses...&quot;</span><span class="p">)</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            SELECT course_id, course_name, description</span>
+<span class="s2">            FROM courses</span>
+<span class="s2">            WHERE active = TRUE</span>
+<span class="s2">            ORDER BY course_name</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">courses_data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DEBUG: Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">courses_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> active courses.&quot;</span><span class="p">)</span>
 
-    <span class="c1"># 2. Fetch Active Modules</span>
-    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">        SELECT module_id, course_id, module_name, module_description</span>
-<span class="s2">        FROM course_modules</span>
-<span class="s2">        WHERE active = TRUE</span>
-<span class="s2">        ORDER BY module_order</span>
-<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
-    <span class="n">modules_data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="c1"># 2. Fetch Active Modules</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            SELECT module_id, course_id, module_name, module_description</span>
+<span class="s2">            FROM modules</span>
+<span class="s2">            WHERE active = TRUE</span>
+<span class="s2">            ORDER BY module_order</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">modules_data</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
 
-    <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
-    <span class="c1"># 3. Group modules by course_id using a dictionary</span>
-    <span class="c1"># structure: { course_id: [module_row, module_row, ...], ... }</span>
-    <span class="n">modules_by_course</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">modules_data</span><span class="p">:</span>
-        <span class="n">m_id</span><span class="p">,</span> <span class="n">m_course_id</span><span class="p">,</span> <span class="n">m_name</span><span class="p">,</span> <span class="n">m_desc</span> <span class="o">=</span> <span class="n">m</span>
-        <span class="k">if</span> <span class="n">m_course_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">modules_by_course</span><span class="p">:</span>
-            <span class="n">modules_by_course</span><span class="p">[</span><span class="n">m_course_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">modules_by_course</span><span class="p">[</span><span class="n">m_course_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">m_id</span><span class="p">,</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">m_name</span><span class="p">,</span>
-            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">m_desc</span>
-        <span class="p">})</span>
+        <span class="c1"># 3. Organize Data</span>
+        <span class="n">modules_by_course</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">modules_data</span><span class="p">:</span>
+            <span class="n">m_id</span><span class="p">,</span> <span class="n">m_course_id</span><span class="p">,</span> <span class="n">m_name</span><span class="p">,</span> <span class="n">m_desc</span> <span class="o">=</span> <span class="n">m</span>
+            <span class="k">if</span> <span class="n">m_course_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">modules_by_course</span><span class="p">:</span>
+                <span class="n">modules_by_course</span><span class="p">[</span><span class="n">m_course_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">modules_by_course</span><span class="p">[</span><span class="n">m_course_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">m_id</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">m_name</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">m_desc</span>
+            <span class="p">})</span>
 
-    <span class="c1"># 4. Build final payload for template</span>
-    <span class="n">courses_payload</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">courses_data</span><span class="p">:</span>
-        <span class="n">c_id</span><span class="p">,</span> <span class="n">c_name</span><span class="p">,</span> <span class="n">c_desc</span> <span class="o">=</span> <span class="n">c</span>
-        <span class="n">courses_payload</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">c_id</span><span class="p">,</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">c_name</span><span class="p">,</span>
-            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">c_desc</span><span class="p">,</span>
-            <span class="s2">&quot;modules&quot;</span><span class="p">:</span> <span class="n">modules_by_course</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c_id</span><span class="p">,</span> <span class="p">[])</span>  <span class="c1"># Get modules or empty list if none</span>
-        <span class="p">})</span>
+        <span class="n">courses_payload</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">courses_data</span><span class="p">:</span>
+            <span class="n">c_id</span><span class="p">,</span> <span class="n">c_name</span><span class="p">,</span> <span class="n">c_desc</span> <span class="o">=</span> <span class="n">c</span>
+            <span class="n">courses_payload</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">c_id</span><span class="p">,</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">c_name</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">c_desc</span><span class="p">,</span>
+                <span class="s2">&quot;modules&quot;</span><span class="p">:</span> <span class="n">modules_by_course</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c_id</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="p">})</span>
 
-    <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span>
-        <span class="s2">&quot;booking.html&quot;</span><span class="p">,</span>
-        <span class="n">user</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;phone&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;phone&quot;</span><span class="p">),</span>
-        <span class="p">},</span>
-    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span>
+            <span class="s2">&quot;booking.html&quot;</span><span class="p">,</span>
+            <span class="n">user</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;phone&quot;</span><span class="p">:</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;phone&quot;</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="n">courses</span><span class="o">=</span><span class="n">courses_payload</span>  <span class="c1"># &lt;--- CRITICAL: Passing data to template</span>
+        <span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Booking GET Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Error loading booking page: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">500</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1046,7 +1039,11 @@ Requires authentication.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">488</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
 <span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
@@ -1065,11 +1062,7 @@ Requires authentication.</p>
 <span class="normal">504</span>
 <span class="normal">505</span>
 <span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/booking-submitted&quot;</span><span class="p">)</span>
+<span class="normal">507</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/booking-submitted&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">booking_submitted</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Display booking confirmation page.</span>
@@ -1578,7 +1571,11 @@ POST: Process booking updates</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>app.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">526</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
 <span class="normal">527</span>
 <span class="normal">528</span>
 <span class="normal">529</span>
@@ -1592,11 +1589,7 @@ POST: Process booking updates</p>
 <span class="normal">537</span>
 <span class="normal">538</span>
 <span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
-<span class="normal">543</span>
-<span class="normal">544</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/bookings/&lt;int:booking_id&gt;/edit&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="normal">540</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/bookings/&lt;int:booking_id&gt;/edit&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">edit_booking</span><span class="p">(</span><span class="n">booking_id</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handle editing of bookings in admin panel.</span>
