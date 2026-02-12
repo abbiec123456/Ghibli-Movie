@@ -946,7 +946,7 @@ Fetches active courses and modules from DB for selection.</p>
         <span class="c1"># 2. Fetch Active Modules</span>
         <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">            SELECT module_id, course_id, module_name, module_description</span>
-<span class="s2">            FROM modules</span>
+<span class="s2">            FROM course_modules</span>
 <span class="s2">            WHERE active = TRUE</span>
 <span class="s2">            ORDER BY module_order</span>
 <span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
