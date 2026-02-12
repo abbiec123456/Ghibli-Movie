@@ -325,7 +325,7 @@ def booking():
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
-    
+
     user_email = session.get("email")
 
     if request.method == "POST":
@@ -352,8 +352,8 @@ def booking():
                 # 2. Check if already booked
                 cur.execute(
                     """
-                    SELECT booking_id FROM bookings 
-                    WHERE customer_id = %s AND course_id = %s
+                    SELECT booking_id FROM bookings
+                     WHERE customer_id = %s AND course_id = %s
                     """,
                     (customer_id, course_id)
                 )
@@ -363,7 +363,8 @@ def booking():
                 # 3. Create Booking
                 cur.execute(
                     """
-                    INSERT INTO bookings (customer_id, course_id, status, nice_to_have_requests, created_at)
+                    INSERT INTO bookings
+                    (customer_id, course_id, status, nice_to_have_requests, created_at)
                     VALUES (%s, %s, 'Pending', %s, CURRENT_TIMESTAMP)
                     RETURNING booking_id
                     """,
@@ -380,7 +381,7 @@ def booking():
                     # Prepare data for bulk insert
                     # List of tuples: [(booking_id, module_id), (booking_id, module_id), ...]
                     module_insert_data = [(new_booking_id, m_id) for m_id in selected_module_ids]
-                    
+
                     cur.executemany(
                         """
                         INSERT INTO booking_modules (booking_id, module_id)
@@ -388,16 +389,16 @@ def booking():
                         """,
                         module_insert_data
                     )
-            
+
             conn.commit()
-            
+
             # Store data for confirmation page
             session["last_booking"] = {
                 "email": user_email,
                 "course_count": len(selected_course_ids),
                 "extra": extra_request
             }
-            
+
             return redirect(url_for("booking_submitted"))
 
         except Exception as e:
@@ -414,9 +415,9 @@ def booking():
 
     # 1. Fetch Active Courses
     cur.execute("""
-        SELECT course_id, course_name, description 
-        FROM courses 
-        WHERE active = TRUE 
+        SELECT course_id, course_name, description
+        FROM courses
+        WHERE active = TRUE
         ORDER BY course_name
     """)
     courses_data = cur.fetchall()
@@ -424,12 +425,12 @@ def booking():
     # 2. Fetch Active Modules
     cur.execute("""
         SELECT module_id, course_id, module_name, module_description
-        FROM modules 
-        WHERE active = TRUE 
+        FROM modules
+        WHERE active = TRUE
         ORDER BY module_order
     """)
     modules_data = cur.fetchall()
-    
+
     cur.close()
     conn.close()
 
@@ -454,7 +455,7 @@ def booking():
             "id": c_id,
             "name": c_name,
             "description": c_desc,
-            "modules": modules_by_course.get(c_id, []) # Get modules or empty list if none
+            "modules": modules_by_course.get(c_id, [])  # Get modules or empty list if none
         })
 
     return render_template(
