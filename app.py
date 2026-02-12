@@ -235,7 +235,7 @@ def logout():
 @app.route("/book", methods=["GET", "POST"])
 def booking():
     """
-    Handle course booking.
+    Handle course booking
 
     GET: Display the booking form
     POST: Process booking submission and store booking data
