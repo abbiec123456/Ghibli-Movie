@@ -13,19 +13,32 @@
         <h1>Booking Confirmed </h1>
         <p>Thanks {{ session.name }} — your place has been reserved.</p>
     </div>
-
+    
     <div class="dashboard">
-        <p>You’ve successfully booked:</p>
-        <ul>
-            {% for module in booking_data.modules %}
-                <li>{{ module_labels[module] }}</li>
-            {% endfor %}
-        </ul>
+        <h2>Your New Bookings</h2>
+        
+        {% for booking in bookings %}
+        <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; padding-bottom: 10px;">
+            <h3>Course: {{ booking.course }}</h3>
+            
+            {% if booking.modules %}
+            <h4>Modules:</h4>
+            <ul>
+                {% for module in booking.modules %}
+                    <li>{{ module }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p><em>No specific modules selected.</em></p>
+            {% endif %}
 
-        {% if booking_data.extra %}
-            <h3>Nice to have requests</h3>
-            <p>{{ booking_data.extra }}</p>
-        {% endif %}
+            {% if booking.extra %}
+            <p><strong>Notes:</strong> {{ booking.extra }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <br>
 
         <a href="{{ url_for('customer_dashboard') }}">Go to Dashboard</a>
     </div>
