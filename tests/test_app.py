@@ -388,15 +388,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Booking Submitted", response.data)  # Assuming title in template
 
-        # Verify Booking INSERT
-        # Verify Module INSERT (executemany)
-        self.mock_cursor.executemany.assert_called()
-        call_args = self.mock_cursor.executemany.call_args
-        self.assertIn("INSERT INTO booking_modules", call_args[0][0])
-        # Check params: [(booking_id, module_id), ...]
-        self.assertEqual(call_args[0][1], [(999, "10"), (999, "11")])
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["last_booking_ids"], [999])
 
     def test_create_booking_without_modules(self):
         """Test creating a booking without selecting modules"""
@@ -405,14 +399,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "/login", data={"email": "abbie@example.com", "password": "group1"}
         )
 
-        # Sequence: 
+        # Sequence for Option B (ID-based):
         # 1. customer_id -> (4,)
-        # 2. course_name -> ("Course Name",) <-- NEW CALL
-        # 3. check duplicate -> None
-        # 4. insert -> (888,)
+        # 2. check duplicate -> None
+        # 3. insert -> (888,)
+
+        # NOTE: Option B does NOT query for course names during POST.
+        # It only does inserts.
         self.mock_cursor.fetchone.side_effect = [
             (4,),
-            ("Test Course",),
             None,
             (888,)
         ]
@@ -426,12 +421,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
             follow_redirects=True
         )
         self.assertEqual(response.status_code, 200)
-        
-        # Verify session has last booking info
+
+        # Verify session has last_booking_ids info
         with self.client.session_transaction() as sess:
-            # Check for the NEW structure (list of courses)
-            self.assertEqual(sess["last_booking"]["courses"], ["Test Course"])
-            self.assertEqual(sess["last_booking"]["modules"], [])
+            self.assertEqual(sess["last_booking_ids"], [888])
 
     # ---------- BOOKING SUBMITTED TESTS ----------
 
@@ -461,16 +454,24 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Manually set the session data that /book would have set
         with self.client.session_transaction() as sess:
-            sess["last_booking"] = {
-                "courses": ["My Test Course"],
-                "modules": ["Mod 1", "Mod 2"],
-                "extra": "Test request"
-            }
+            sess["last_booking_ids"] = [101]
+
+        # 2. Mock the DB calls that booking_submitted() now makes
+        # It queries:
+        #   - fetchall() for courses details
+        #   - fetchall() for modules (for each course)
+
+        # First fetchall: Returns bookings [(booking_id, course_name, extra)]
+        # Second fetchall: Returns modules for that booking
+        self.mock_cursor.fetchall.side_effect = [
+            [(101, "Test Course Name", "Test Extra")],  # Booking Details
+            [("Module A",), ("Module B",)]              # Modules for Booking 101
+        ]
 
         response = self.client.get("/booking-submitted")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"My Test Course", response.data)
-        self.assertIn(b"Mod 1", response.data)
+        self.assertIn(b"Test Course Name", response.data)
+        self.assertIn(b"Module A", response.data)
 
     # ---------- ADMIN TESTS ----------
 
