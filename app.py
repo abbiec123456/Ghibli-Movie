@@ -353,6 +353,8 @@ def booking():
         if not selected_course_ids:
             return redirect(url_for("booking"))
 
+        new_booking_ids = []  # Track IDs of successfully created bookings
+
         conn = None
         try:
             conn = get_db_connection()
@@ -383,7 +385,8 @@ def booking():
                     """,
                     (customer_id, course_id, extra_request)
                 )
-                new_booking_id = cur.fetchone()[0]
+                new_booking_id = cur.fetchone()[0]   # note a single item
+                new_booking_ids.append(new_booking_id)  # Add to a list
 
                 # Insert Modules
                 selected_module_ids = request.form.getlist(f"modules_{course_id}")
@@ -395,11 +398,8 @@ def booking():
                     )
 
             conn.commit()
-            session["last_booking"] = {
-                "email": user_email,
-                "course_count": len(selected_course_ids),
-                "extra": extra_request
-            }
+            # send ids to submitted status page
+            session["last_booking_ids"] = new_booking_ids
             return redirect(url_for("booking_submitted"))
 
         except Exception as e:
@@ -495,15 +495,60 @@ def booking_submitted():
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
-    booking_data = session.get("last_booking")
-
-    if not booking_data:
+    # Get IDs from Session
+    booking_ids = session.get("last_booking_ids")
+    if not booking_ids:
         return redirect(url_for("booking"))
+
+    booking_details = []
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Fetch Course & Extra Info for bookings
+        # use ANY(%s) to match any ID in the list
+        cur.execute("""
+            SELECT b.booking_id, c.course_name, b.nice_to_have_requests
+            FROM bookings b
+            JOIN courses c ON b.course_id = c.course_id
+            WHERE b.booking_id = ANY(%s)
+        """, (booking_ids,))
+
+        rows = cur.fetchall()
+
+        for row in rows:
+            b_id, c_name, extra = row
+
+            # Fetch Modules for this specific booking
+            cur.execute("""
+                SELECT m.module_name
+                FROM booking_modules bm
+                JOIN modules m ON bm.module_id = m.module_id
+                WHERE bm.booking_id = %s
+            """, (b_id,))
+
+            modules = [m[0] for m in cur.fetchall()]
+
+            booking_details.append({
+                "course": c_name,
+                "modules": modules,
+                "extra": extra
+            })
+
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print(f"Error fetching confirmation: {e}")
+        if conn:
+            conn.close()
+        return "Error loading confirmation", 500
 
     return render_template(
         "booking_submitted.html",
-        booking_data=booking_data,
-        module_labels=MODULE_LABELS,
+        bookings=booking_details  # Pass list of booking objects
     )
 
 
