@@ -405,9 +405,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "/login", data={"email": "abbie@example.com", "password": "group1"}
         )
 
-        # Sequence: customer_id -> (4,), check duplicate -> None, insert -> (888,)
+        # Sequence: 
+        # 1. customer_id -> (4,)
+        # 2. course_name -> ("Course Name",) <-- NEW CALL
+        # 3. check duplicate -> None
+        # 4. insert -> (888,)
         self.mock_cursor.fetchone.side_effect = [
             (4,),
+            ("Test Course",),
             None,
             (888,)
         ]
@@ -421,13 +426,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
             follow_redirects=True
         )
         self.assertEqual(response.status_code, 200)
-
-        # Verify executemany was NOT called (no modules)
-        self.mock_cursor.executemany.assert_not_called()
-
+        
         # Verify session has last booking info
         with self.client.session_transaction() as sess:
-            self.assertEqual(sess["last_booking"]["course_count"], 1)
+            # Check for the NEW structure (list of courses)
+            self.assertEqual(sess["last_booking"]["courses"], ["Test Course"])
+            self.assertEqual(sess["last_booking"]["modules"], [])
 
     # ---------- BOOKING SUBMITTED TESTS ----------
 
@@ -458,14 +462,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Manually set the session data that /book would have set
         with self.client.session_transaction() as sess:
             sess["last_booking"] = {
-                "email": "abbie@example.com",
-                "course_count": 1,
+                "courses": ["My Test Course"],
+                "modules": ["Mod 1", "Mod 2"],
                 "extra": "Test request"
             }
 
         response = self.client.get("/booking-submitted")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Test request", response.data)
+        self.assertIn(b"My Test Course", response.data)
+        self.assertIn(b"Mod 1", response.data)
 
     # ---------- ADMIN TESTS ----------
 
