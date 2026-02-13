@@ -214,12 +214,6 @@ def register():
 def customer_dashboard():
     """
     Display customer dashboard with personal details and bookings.
-
-    Allows customers to view their information and update booking extras.
-    Requires authentication.
-
-    Returns:
-        str: Rendered dashboard template or redirect to login
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
@@ -227,75 +221,97 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        course_id_to_update = request.form["course"]
-        new_extra = request.form["extra"]
+        # 1. Validate Form Data
+        course_id_to_update = request.form.get("course")
+        new_extra = request.form.get("extra")
 
+        if not course_id_to_update:
+            return "Missing course ID", 400
+
+        conn = None
+        cursor = None
         try:
-            # Update the database
-            db = get_db_connection()
-            cursor = db.cursor()
+            conn = get_db_connection()
+            cursor = conn.cursor()
 
-            # PostgreSQL UPDATE with FROM clause (instead of JOIN)
+            # 2. Perform Update
             update_query = """
-            UPDATE bookings b
+            UPDATE bookings
             SET nice_to_have_requests = %s, updated_at = NOW()
             FROM customers c
-            WHERE b.customer_id = c.customer_id
+            WHERE bookings.customer_id = c.customer_id
             AND c.email = %s
-            AND b.course_id = %s
+            AND bookings.course_id = %s
             """
-
             cursor.execute(update_query, (new_extra, user_email, course_id_to_update))
-            db.commit()
-
-            cursor.close()
-            db.close()
+            conn.commit()
 
         except Exception as e:
-            print(f"Error updating booking: {e}")
-            if db:
-                db.rollback()
-            return f"Error: {str(e)}", 500
+            if conn:
+                conn.rollback()
+            print(f"Update Error: {e}")
+            return f"Error updating booking: {e}", 500
+        finally:
+            # 3. Safe Cleanup
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+        # Redirect to GET after POST (PRG Pattern) to prevent resubmission
+        return redirect(url_for("customer_dashboard"))
+
+    # --- GET Request Handling ---
 
     personal_details = {
         "name": session.get("name"),
         "email": session.get("email"),
         "phone": session.get("phone"),
     }
-    # set cusor for db
-    db = get_db_connection()
-    cursor = db.cursor()
-    # set query for join booking customerid against customers table
-    query = """
-    SELECT
-        b.booking_id,
-        b.course_id,
-        b.nice_to_have_requests,
-        b.status,
-        co.course_name,
-        co.description
-    FROM bookings b
-    JOIN customers c ON b.customer_id = c.customer_id
-    JOIN courses co ON b.course_id = co.course_id
-    WHERE c.email = %s
-    """
-    # execute and get rows
-    cursor.execute(query, (user_email,))
-    rows = cursor.fetchall()
 
-    # user_bookings = [b for b in BOOKINGS if b["email"] == user_email]
+    conn = None
+    cursor = None
     user_bookings = []
-    for row in rows:
-        user_bookings.append({
-            "booking_id": row[0],
-            "course_id": row[1],
-            "course": row[4],               # course_name from courses table
-            "description": row[5],          # course description
-            "extra": row[2],                # nice_to_have_requests
-            "status": row[3]
-        })
-    cursor.close()
-    db.close()
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+        SELECT
+            b.booking_id,
+            b.course_id,
+            b.nice_to_have_requests,
+            b.status,
+            co.course_name,
+            co.description
+        FROM bookings b
+        JOIN customers c ON b.customer_id = c.customer_id
+        JOIN courses co ON b.course_id = co.course_id
+        WHERE c.email = %s
+        ORDER BY b.booking_id DESC
+        """
+        cursor.execute(query, (user_email,))
+        rows = cursor.fetchall()
+
+        for row in rows:
+            user_bookings.append({
+                "booking_id": row[0],
+                "course_id": row[1],
+                "extra": row[2],
+                "status": row[3],
+                "course": row[4],
+                "description": row[5]
+            })
+
+    except Exception as e:
+        print(f"Dashboard Fetch Error: {e}")
+        return f"Error fetching dashboard: {e}", 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
     return render_template(
         "customer_dashboard.html",
@@ -322,45 +338,146 @@ def logout():
 def booking():
     """
     Handle course booking.
+    Fetches active courses and modules from DB for selection.
     """
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
+    user_email = session.get("email")
+
+    # --- POST REQUEST: Handle Form Submission ---
     if request.method == "POST":
-        # Check if already booked
-        already_booked = any(
-            b["email"] == session["email"]
-            and b["course"] == "Moving Castle Creations - 3D Animation"
-            for b in BOOKINGS
+        selected_course_ids = request.form.getlist("courses")
+        extra_request = request.form.get("extra", "")
+
+        if not selected_course_ids:
+            return redirect(url_for("booking"))
+
+        conn = None
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+
+            cur.execute("SELECT customer_id FROM customers WHERE email = %s", (user_email,))
+            customer_row = cur.fetchone()
+            if not customer_row:
+                return redirect(url_for("customer_login"))
+            customer_id = customer_row[0]
+
+            for course_id in selected_course_ids:
+                # Check duplicate
+                cur.execute(
+                    "SELECT booking_id FROM bookings WHERE customer_id = %s AND course_id = %s",
+                    (customer_id, course_id)
+                )
+                if cur.fetchone():
+                    continue
+
+                # Insert Booking
+                cur.execute(
+                    """
+                    INSERT INTO bookings
+                    (customer_id, course_id, status, nice_to_have_requests, updated_at)
+                    VALUES (%s, %s, 'Pending', %s, NOW())
+                    RETURNING booking_id
+                    """,
+                    (customer_id, course_id, extra_request)
+                )
+                new_booking_id = cur.fetchone()[0]
+
+                # Insert Modules
+                selected_module_ids = request.form.getlist(f"modules_{course_id}")
+                if selected_module_ids:
+                    module_insert_data = [(new_booking_id, m_id) for m_id in selected_module_ids]
+                    cur.executemany(
+                        "INSERT INTO booking_modules (booking_id, module_id) VALUES (%s, %s)",
+                        module_insert_data
+                    )
+
+            conn.commit()
+            session["last_booking"] = {
+                "email": user_email,
+                "course_count": len(selected_course_ids),
+                "extra": extra_request
+            }
+            return redirect(url_for("booking_submitted"))
+
+        except Exception as e:
+            if conn:
+                conn.rollback()
+                print(f"Booking POST Error: {e}")
+            return f"Error processing booking: {e}", 500
+        finally:
+            if conn:
+                conn.close()
+
+    # --- GET REQUEST: Render Form ---
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 1. Fetch Active Courses
+        print("DEBUG: Fetching active courses...")
+        cur.execute("""
+            SELECT course_id, course_name, description
+            FROM courses
+            WHERE active = TRUE
+            ORDER BY course_name
+        """)
+        courses_data = cur.fetchall()
+        print(f"DEBUG: Found {len(courses_data)} active courses.")
+
+        # 2. Fetch Active Modules
+        cur.execute("""
+            SELECT module_id, course_id, module_name, module_description
+            FROM course_modules
+            WHERE active = TRUE
+            ORDER BY module_order
+        """)
+        modules_data = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        # 3. Organize Data
+        modules_by_course = {}
+        for m in modules_data:
+            m_id, m_course_id, m_name, m_desc = m
+            if m_course_id not in modules_by_course:
+                modules_by_course[m_course_id] = []
+            modules_by_course[m_course_id].append({
+                "id": m_id,
+                "name": m_name,
+                "description": m_desc
+            })
+
+        courses_payload = []
+        for c in courses_data:
+            c_id, c_name, c_desc = c
+            courses_payload.append({
+                "id": c_id,
+                "name": c_name,
+                "description": c_desc,
+                "modules": modules_by_course.get(c_id, [])
+            })
+
+        return render_template(
+            "booking.html",
+            user={
+                "name": session.get("name"),
+                "email": session.get("email"),
+                "phone": session.get("phone"),
+            },
+            courses=courses_payload  # <--- CRITICAL: Passing data to template
         )
 
-        if already_booked:
-            return redirect(url_for("customer_dashboard"))
-
-        # Process new booking
-        selected_modules = request.form.getlist("modules")
-        extra = request.form.get("extra", "")
-
-        booking_data = {
-            "email": session.get("email"),
-            "course": "Moving Castle Creations - 3D Animation",
-            "modules": selected_modules,
-            "extra": extra,
-        }
-
-        BOOKINGS.append(booking_data)
-        session["last_booking"] = booking_data
-
-        return redirect(url_for("booking_submitted"))
-
-    return render_template(
-        "booking.html",
-        user={
-            "name": session.get("name"),
-            "email": session.get("email"),
-            "phone": session.get("phone"),
-        },
-    )
+    except Exception as e:
+        print(f"Booking GET Error: {e}")
+        return f"Error loading booking page: {e}", 500
+    finally:
+        if conn:
+            conn.close()
 
 
 # ---------- BOOKING SUBMITTED ----------
