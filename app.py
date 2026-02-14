@@ -552,6 +552,51 @@ def booking_submitted():
         bookings=booking_details  # Pass list of booking objects
     )
 
+# ---------- ADMIN LOGIN ----------
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    """
+    Handle administrator login.
+    """
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        conn = None
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+
+            cur.execute("""
+                SELECT admin_id, first_name, last_name, email, password
+                FROM admins
+                WHERE email = %s
+            """, (email,))
+
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+
+        except Exception:
+            return "Invalid admin credentials", 401
+
+        if not row:
+            return "Invalid admin credentials", 401
+
+        admin_id, first_name, last_name, email_db, stored_password = row
+
+        if stored_password != password:
+            return "Invalid admin credentials", 401
+
+        # Create session
+        session.clear()
+        session["user"] = email_db
+        session["role"] = "admin"
+        session["name"] = f"{first_name} {last_name}"
+
+        return redirect(url_for("admin_dashboard"))
+
+    return render_template("admin_login.html")
 
 # ---------- ADMIN ----------
 @app.route("/admin")
@@ -562,6 +607,9 @@ def admin_dashboard():
     Returns:
         str: Rendered admin dashboard template
     """
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+    
     return render_template("admin_dashboard.html")
 
 
@@ -579,7 +627,9 @@ def edit_booking(booking_id):
     Returns:
         str: Rendered edit template or redirect to admin dashboard
     """
-
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+    
     if request.method == "POST":
         return redirect(url_for("admin_dashboard"))
 

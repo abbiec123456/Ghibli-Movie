@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Floating clouds -->
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <!-- Header banner -->
+    <div class="header">
+        <h1>Studio Ghibli Movie Maker</h1>
+        <p>Administrator Access Portal</p>
+    </div>
+
+    <!-- Login box -->
+    <div class="container">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="email" name="email" placeholder="Admin Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Enter Admin Panel</button>
+        </form>
+    </div>
+
+    <p class="auth-switch">
+        Return to 
+        <a href="{{ url_for('customer_login') }}">Customer Login</a>
+    </p>
+
+</body>
+</html>
