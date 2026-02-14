@@ -188,9 +188,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn(b"Invalid login credentials", response.data)
 
-
     # ---------- REGISTRATION TESTS ----------
-
     def test_register_page_loads(self):
         """Test that the registration page loads successfully"""
         response = self.client.get("/register")
@@ -326,7 +324,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Course 1", response.data)
-
 
     @patch('app.get_db_connection')
     def test_update_booking_extra_request(self, mock_db):
