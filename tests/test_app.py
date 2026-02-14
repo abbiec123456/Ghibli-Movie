@@ -542,10 +542,11 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.side_effect = Exception("DB Error")
 
         with self.client.session_transaction() as sess:
-           sess["user"] = "abbie@example.com"
-           sess["role"] = "user"
-           sess["name"] = "Abbie"
-           sess["last_booking_ids"] = [101]
+            sess["user"] = "abbie@example.com"
+            sess["role"] = "customer"
+            sess["name"] = "Abbie"
+            sess["email"] = "abbie@example.com"
+            sess["last_booking_ids"] = [101]
 
         response = self.client.get("/booking-submitted")
 
