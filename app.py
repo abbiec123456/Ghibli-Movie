@@ -525,11 +525,11 @@ def booking_submitted():
             cur.execute("""
                 SELECT m.module_name
                 FROM booking_modules bm
-                JOIN modules m ON bm.module_id = m.module_id
+                JOIN course_modules m ON bm.module_id = m.module_id
                 WHERE bm.booking_id = %s
             """, (b_id,))
 
-            modules = [m[0] for m in cur.fetchall()]
+            modules = [m_row[0] for m_row in cur.fetchall()]
 
             booking_details.append({
                 "course": c_name,
@@ -542,9 +542,10 @@ def booking_submitted():
 
     except Exception as e:
         print(f"Error fetching confirmation: {e}")
+        return "Error loading confirmation", 500
+    finally:
         if conn:
             conn.close()
-        return "Error loading confirmation", 500
 
     return render_template(
         "booking_submitted.html",
