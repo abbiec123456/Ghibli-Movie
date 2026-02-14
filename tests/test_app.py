@@ -175,8 +175,20 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertNotIn("abbie@example.com", CUSTOMERS)
 
-    # ---------- REGISTRATION TESTS ----------
+    @patch('app.get_db_connection')
+    def test_login_db_exception(self, mock_db):
+        """Login handles DB exception"""
+        mock_db.side_effect = Exception("DB Error")
 
+        response = self.client.post(
+            "/login",
+            data={"email": "test@example.com", "password": "pass"}
+        )
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b"Invalid login credentials", response.data)
+
+    # ---------- REGISTRATION TESTS ----------
     def test_register_page_loads(self):
         """Test that the registration page loads successfully"""
         response = self.client.get("/register")
@@ -232,6 +244,26 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn(b"Passwords do not match", response.data)
         self.assertNotIn("jane@example.com", CUSTOMERS)
 
+    @patch('app.get_db_connection')
+    def test_registration_db_error(self, mock_db):
+        """Registration handles DB exception"""
+        mock_db.side_effect = Exception("DB Fail")
+
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "Fail",
+                "last_name": "User",
+                "email": "fail@example.com",
+                "phone": "N/A",
+                "password": "pass",
+                "confirm_password": "pass",
+            }
+        )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error creating account", response.data)
+
     # ---------- CUSTOMER DASHBOARD TESTS ----------
 
     def test_dashboard_requires_authentication(self):
@@ -261,6 +293,37 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
+
+    def test_dashboard_update_missing_course_id(self):
+        """POST to dashboard without course ID returns 400"""
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+
+        response = self.client.post(
+            "/dashboard",
+            data={"extra": "No course id"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Missing course ID", response.data)
+
+    def test_booking_get_fetches_courses_and_modules(self):
+        """Ensure booking page processes DB results"""
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+
+        # Mock courses and modules
+        self.mock_cursor.fetchall.side_effect = [
+            [(1, "Course 1", "Desc 1")],  # courses
+            [(10, 1, "Module A", "Desc A")]  # modules
+        ]
+
+        response = self.client.get("/book")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Course 1", response.data)
 
     @patch('app.get_db_connection')
     def test_update_booking_extra_request(self, mock_db):
@@ -473,6 +536,23 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn(b"Test Course Name", response.data)
         self.assertIn(b"Module A", response.data)
 
+    @patch('app.get_db_connection')
+    def test_booking_submitted_db_exception(self, mock_db):
+        """Simulate DB failure in booking confirmation"""
+        mock_db.side_effect = Exception("DB Error")
+
+        with self.client.session_transaction() as sess:
+            sess["user"] = "abbie@example.com"
+            sess["role"] = "customer"
+            sess["name"] = "Abbie"
+            sess["email"] = "abbie@example.com"
+            sess["last_booking_ids"] = [101]
+
+        response = self.client.get("/booking-submitted")
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error loading confirmation", response.data)
+
     # ---------- ADMIN TESTS ----------
 
     def test_admin_dashboard_loads(self):
@@ -490,6 +570,55 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post("/admin/bookings/1/edit")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/admin"))
+
+    @patch('app.get_db_connection')
+    def test_admin_login_page_loads(self, mock_db):
+        """Admin login page loads"""
+        response = self.client.get("/admin/login")
+        self.assertEqual(response.status_code, 200)
+
+    @patch('app.get_db_connection')
+    def test_successful_admin_login(self, mock_db):
+        """Admin login sets session correctly"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (
+            1, "Admin", "User", "admin@example.com", "adminpass"
+        )
+
+        response = self.client.post(
+            "/admin/login",
+            data={"email": "admin@example.com", "password": "adminpass"},
+            follow_redirects=True
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["role"], "admin")
+            self.assertEqual(sess["user"], "admin@example.com")
+            self.assertEqual(sess["name"], "Admin User")
+
+    @patch('app.get_db_connection')
+    def test_admin_login_invalid_credentials(self, mock_db):
+        """Admin login fails with invalid credentials"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = None
+
+        response = self.client.post(
+            "/admin/login",
+            data={"email": "wrong@example.com", "password": "wrong"}
+        )
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn(b"Invalid admin credentials", response.data)
 
     # ---------- INTEGRATION TESTS ----------
     @patch('app.get_db_connection')
