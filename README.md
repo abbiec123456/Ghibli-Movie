@@ -58,8 +58,6 @@ administrator of the end system (Studio Ghibli member) should be able to access 
 and edit as appropriate. Once the client enters details, it should not be able to be changed by the
 person applying for the course.
 User access levels (client, administrator)
-Includes at least one self-developed API and one web service
-To be run over <specify platform>
 
 # Frameworks
 We will be using PostgreSQL for our database
@@ -90,7 +88,7 @@ These are the current Risks on the project, re-aligned on a weekly basis
 
 
 # Tenants of Design
-The code framework to be used will be <<>>, we will be programming using the IDE << >>
+The code framework to be used will be Flask with Python code.
 
 # Security:
 - << >>: uses static analysis to find bugs in code. 
@@ -126,10 +124,10 @@ The code framework to be used will be <<>>, we will be programming using the IDE
     Use Agile methodologies in the project at all times.
 
 # Meetings
-Stand-ups will occur Every <<Tuesday/8:35pm>> after class 1 per week and 2 where needed.
+Stand-ups will occur Every <<Tuesday/8:35pm>> after class 1 per week.
 The order in which people give their updates will be << >>.
 Updates will be in the form: What I've done, Impediments, What I plan to do.
-Sprint planning will occur at <<Every second Tuesday>> every week.
+Sprint planning will occur at <<date/time>> every week.
 Please add and update items within <<issue management tool>> prior to the sprint planning session.
 Sprint retro will be at the end of our sprint on <<Date/Time>> (timebox retro for 15 minutes, to be organised by the scrum master).
 Points raised in the sprint retro will be noted and posted on the Slack channel by the Scrum Master. The Scrum Master is rotated per team member every week.
@@ -146,7 +144,6 @@ Be honest.
 Slack is the preferred method of communication.
 Communication in this order: <<Slack, Microsoft Teams, E-Mail>> *Note that if the lecturers can't see the communications, we cannot grade it!
 If a demonstration is required, use Zoom, record the session and upload it to the Slack channel.
-No Slack communications between <<time and time>>.
 Raise a problem as soon as you see it.
 Respect each other and understand differences in knowledge.
 All team documents are to be created using Markdown language and shared on GitHub.
