@@ -16,6 +16,17 @@
         <p>Create magical stories through animation</p>
     </div>
 
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <!-- Login box -->
     <div class="container">
         <form method="POST">
@@ -25,10 +36,11 @@
             <button type="submit">Enter the Studio</button>
         </form>
     </div>
-<p class="auth-switch">
-  Don’t have an account?
-  <a href="{{ url_for('register') }}">Register</a>
-</p>
+
+    <p class="auth-switch">
+        Don’t have an account?
+        <a href="{{ url_for('register') }}">Register</a>
+    </p>
 
 </body>
 </html>
