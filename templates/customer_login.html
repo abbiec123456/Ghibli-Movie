@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Customer Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
     <!-- Floating clouds -->
@@ -18,17 +20,35 @@
 
     <!-- Login box -->
     <div class="container">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <label for="email">Email</label>
+            <input id="email" type="email" name="email" required>
+
+            <label for="password">Password</label>
+            <input id="password" type="password" name="password" required>
+
             <button type="submit">Enter the Studio</button>
         </form>
     </div>
-<p class="auth-switch">
-  Don’t have an account?
-  <a href="{{ url_for('register') }}">Register</a>
-</p>
+
+    <p class="auth-switch">
+        Don’t have an account?
+        <a href="{{ url_for('register') }}">Register</a>
+    </p>
 
 </body>
 </html>

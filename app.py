@@ -10,7 +10,7 @@ Note: This is a basic implementation with temporary in-memory data.
 import os
 import psycopg2
 from urllib.parse import urlparse
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
@@ -169,7 +169,7 @@ def register():
     if request.method == "POST":
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
-        name = first_name + " " + last_name
+        name = f"{first_name} {last_name}"
         email = request.form["email"]
         phone = request.form["phone"]
         password = request.form["password"]
@@ -186,27 +186,37 @@ def register():
             "email": email,
             "phone": "N/A",
         }
+
         # Insert into customers table
         try:
             conn = get_db_connection()
             cur = conn.cursor()
+
             cur.execute(
                 """
-                INSERT INTO customers (name, last_name, email, phone, created_at, password)
+                INSERT INTO customers
+                (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
                 """,
                 (first_name, last_name, email, phone, password),
             )
+
             conn.commit()
             cur.close()
             conn.close()
+
         except Exception as e:
             # For production, log this instead of returning raw error
             return f"Error creating account: {e}", 500
 
+        flash(
+            "🎉 Account created successfully! You can now log in.",
+            "success",
+        )
         return redirect(url_for("customer_login"))
 
     return render_template("register.html")
+
 
 
 # ---------- CUSTOMER DASHBOARD ----------
