@@ -10,7 +10,7 @@ Note: This is a basic implementation with temporary in-memory data.
 import os
 import psycopg2
 from urllib.parse import urlparse
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session,flash
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
