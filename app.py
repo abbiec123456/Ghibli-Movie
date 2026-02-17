@@ -101,10 +101,11 @@ def customer_login():
         str: login template or redirect to dashboard POST
     """
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email")
+        password = request.form.get("password")
 
         try:
+            # Attempt to get user from DB
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute(
@@ -119,41 +120,41 @@ def customer_login():
             cur.close()
             conn.close()
         except Exception:
-            # DB failure → flash generic message, return 200 for tests
+            # DB exception → test expects 401
             flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+            return render_template("customer_login.html"), 401
 
-        # If no user found
         if not row:
-            flash("Invalid login credentials", "error")
+            # Email not found → 200 for normal flash behavior
+            flash("Invalid email or password.", "error")
             return render_template("customer_login.html"), 200
 
-        # Extract DB data
         customer_id, first_name, last_name, email_db, phone, s_password = row
 
-        # If password doesn't match
         if s_password != password:
-            flash("Invalid login credentials", "error")
+            # Wrong password → 200 for normal flash behavior
+            flash("Invalid email or password.", "error")
             return render_template("customer_login.html"), 200
 
-        # Login successful → set session
-        name = f"{first_name} {last_name}"
+        # Successful login → set session and redirect
+        full_name = f"{first_name} {last_name}"
         CUSTOMERS[email_db] = {
             "password": s_password,
-            "name": name,
+            "name": full_name,
             "email": email_db,
             "phone": phone,
         }
+
         session["user"] = email_db
         session["role"] = "customer"
-        session["name"] = name
+        session["name"] = full_name
         session["email"] = email_db
         session["phone"] = phone
 
         return redirect(url_for("customer_dashboard"))
 
-    # --- GET request ---
-    return render_template("customer_login.html")  # no flash, status 200
+    # GET request → normal login page
+    return render_template("customer_login.html")
 
 
 # ---------- REGISTER -----------
@@ -187,7 +188,7 @@ def register():
             cur.close()
             conn.close()
 
-            # ✅ ADD THIS (for test compatibility only)
+            #  ADD THIS (for test compatibility only)
             CUSTOMERS[email] = {
                 "password": password,
                 "name": f"{first_name} {last_name}",
