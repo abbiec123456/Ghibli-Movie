@@ -121,20 +121,20 @@ def customer_login():
         except Exception:
             # If DB fails, show generic error
             flash("Database error, please try again.", "error")
-            return render_template("customer_login.html"), 500
+            return render_template("customer_login.html"), 200  #  return 200
 
         # If no user found
         if not row:
-            flash("Invalid email or password.", "error")  #  Only POST failure
-            return render_template("customer_login.html"), 401
+            flash("Invalid email or password.", "error")  # Flash message for login failure
+            return render_template("customer_login.html"), 200  #  return 200
 
         # Extract DB data
         customer_id, first_name, last_name, email_db, phone, s_password = row
 
         # If password doesn't match
         if s_password != password:
-            flash("Invalid email or password.", "error")  #  Only POST failure
-            return render_template("customer_login.html"), 401
+            flash("Invalid email or password.", "error")  # Flash message for login failure
+            return render_template("customer_login.html"), 200  #  return 200
 
         # Login successful → set session
         name = f"{first_name} {last_name}"
@@ -153,7 +153,7 @@ def customer_login():
         return redirect(url_for("customer_dashboard"))
 
     # --- GET request ---
-    return render_template("customer_login.html")  #  No flash, no 401
+    return render_template("customer_login.html")  # Normal page load
 
 
 # ---------- REGISTER -----------
