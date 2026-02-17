@@ -8,10 +8,20 @@ Note: This is a basic implementation with temporary in-memory data.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, session
-from config import Config
+import os
+from config import DevelopmentConfig, TestingConfig, ProductionConfig
 
 app = Flask(__name__)
-app.config.from_object(Config)
+env = os.getenv("FLASK_ENV", "development").lower()
+
+if env == "production":
+    app.config.from_object(ProductionConfig)
+elif env == "testing":
+    app.config.from_object(TestingConfig)
+else:
+    app.config.from_object(DevelopmentConfig)
+
+app.config["DATABASE_URL"] = app.config.get("DATABASE_URL") or DevelopmentConfig.get_database_url()
 app.secret_key = "ghibli_secret_key"
 
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
