@@ -157,53 +157,43 @@ def customer_login():
 # ---------- REGISTER -----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """
-    Handle customer registration.
 
-    GET: Display the registration form
-    POST: Process registration and create new customer account
-
-    Returns:
-        str: Rendered registration template or redirect to login
-    """
     if request.method == "POST":
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
-        name = first_name + " " + last_name
         email = request.form["email"]
         phone = request.form["phone"]
         password = request.form["password"]
         confirm_password = request.form["confirm_password"]
 
-        # Check passwords match
+        # Password match validation
         if password != confirm_password:
-            return "Passwords do not match"
+            flash("Passwords do not match.", "error")
+            return render_template("register.html")
 
-        # Save new user in memory
-        CUSTOMERS[email] = {
-            "password": password,
-            "name": name,
-            "email": email,
-            "phone": "N/A",
-        }
-        # Insert into customers table
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-            cur.execute(
-                """
+
+            cur.execute("""
                 INSERT INTO customers (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-                """,
-                (first_name, last_name, email, phone, password),
-            )
+            """, (first_name, last_name, email, phone, password))
+
             conn.commit()
             cur.close()
             conn.close()
-        except Exception as e:
-            # For production, log this instead of returning raw error
-            return f"Error creating account: {e}", 500
 
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+            flash("An account with this email already exists.", "error")
+            return render_template("register.html")
+
+        except Exception:
+            flash("Something went wrong. Please try again.", "error")
+            return render_template("register.html")
+
+        flash("Account created successfully. Please log in.", "success")
         return redirect(url_for("customer_login"))
 
     return render_template("register.html")
