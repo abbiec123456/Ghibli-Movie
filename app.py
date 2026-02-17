@@ -119,24 +119,21 @@ def customer_login():
             cur.close()
             conn.close()
         except Exception:
-            # DB exception → show generic login error
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+            # DB failure → flash and return 401 to match test
+            flash("Database error, please try again.", "error")
+            return render_template("customer_login.html"), 401
 
-        # If user not found
         if not row:
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+            flash("Invalid email or password.", "error")
+            return render_template("customer_login.html"), 401
 
-        # Extract DB data
         customer_id, first_name, last_name, email_db, phone, s_password = row
 
-        # If password doesn't match
         if s_password != password:
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+            flash("Invalid email or password.", "error")
+            return render_template("customer_login.html"), 401
 
-        # Login successful → set session
+        # Success → set session
         name = f"{first_name} {last_name}"
         CUSTOMERS[email_db] = {
             "password": s_password,
@@ -152,8 +149,8 @@ def customer_login():
 
         return redirect(url_for("customer_dashboard"))
 
-    # --- GET request ---
-    return render_template("customer_login.html")  # Normal page load
+    # GET request → normal login page
+    return render_template("customer_login.html")
 
 
 # ---------- REGISTER -----------
