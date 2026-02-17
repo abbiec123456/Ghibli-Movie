@@ -119,22 +119,22 @@ def customer_login():
             cur.close()
             conn.close()
         except Exception:
-            # If DB fails, show generic error
-            flash("Database error, please try again.", "error")
-            return render_template("customer_login.html"), 200  #  return 200
+            # DB exception → show generic login error
+            flash("Invalid login credentials", "error")
+            return render_template("customer_login.html"), 200
 
-        # If no user found
+        # If user not found
         if not row:
-            flash("Invalid email or password.", "error")  # Flash message for login failure
-            return render_template("customer_login.html"), 200  #  return 200
+            flash("Invalid login credentials", "error")
+            return render_template("customer_login.html"), 200
 
         # Extract DB data
         customer_id, first_name, last_name, email_db, phone, s_password = row
 
         # If password doesn't match
         if s_password != password:
-            flash("Invalid email or password.", "error")  # Flash message for login failure
-            return render_template("customer_login.html"), 200  #  return 200
+            flash("Invalid login credentials", "error")
+            return render_template("customer_login.html"), 200
 
         # Login successful → set session
         name = f"{first_name} {last_name}"
