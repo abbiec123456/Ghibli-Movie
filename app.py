@@ -155,7 +155,6 @@ def customer_login():
 
 
 # ---------- REGISTER -----------
-# ---------- REGISTER -----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -202,7 +201,7 @@ def register():
 
         except Exception:
             # RETURN 500 (what the test expects)
-            return "Database Error", 500
+            return "Error creating account", 500
 
         flash("Account created successfully. Please log in.", "success")
         return redirect(url_for("customer_login"))
