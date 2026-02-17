@@ -125,15 +125,15 @@ def customer_login():
             return render_template("customer_login.html"), 401
 
         if not row:
-            # Email not found → 200 for normal flash behavior
-            flash("Invalid email or password.", "error")
+            # Email not found → flash test-compatible message
+            flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
         customer_id, first_name, last_name, email_db, phone, s_password = row
 
         if s_password != password:
-            # Wrong password → 200 for normal flash behavior
-            flash("Invalid email or password.", "error")
+            # Wrong password → flash test-compatible message
+            flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
         # Successful login → set session and redirect
