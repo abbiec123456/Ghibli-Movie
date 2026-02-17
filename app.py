@@ -209,7 +209,6 @@ def register():
     return render_template("register.html")
 
 
-
 # ---------- CUSTOMER DASHBOARD ----------
 @app.route("/dashboard", methods=["GET", "POST"])
 def customer_dashboard():
