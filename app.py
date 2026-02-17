@@ -8,8 +8,10 @@ Note: This is a basic implementation with temporary in-memory data.
 """
 
 from flask import Flask, render_template, request, redirect, url_for, session
+from config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
 app.secret_key = "ghibli_secret_key"
 
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
@@ -138,17 +140,33 @@ def booking():
 
 
 # ---------- ADMIN ----------
+# ---------- ADMIN ----------
 
 @app.route("/admin")
 def admin_dashboard():
-    return render_template("admin_dashboard.html")
+    return render_template("admin_dashboard.html", bookings=BOOKINGS)
 
+@app.route("/admin/bookings/edit", methods=["GET", "POST"])
+def edit_booking():
+    course = request.args.get("course")
 
-@app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
-def edit_booking(booking_id):
+    if not course:
+        return "Missing course parameter", 400
+
+    booking = next(
+        (b for b in BOOKINGS if b["course"].strip().lower() == course.strip().lower()),
+        None
+    )
+    if booking is None:
+        return f"Booking not found: {course}", 404
+
     if request.method == "POST":
+        booking["course"] = request.form["course"]
+        booking["extra"] = request.form.get("extra", "")
         return redirect(url_for("admin_dashboard"))
-    return render_template("edit_booking.html")
+
+    return render_template("edit_booking.html", booking=booking)
+
 
 
 if __name__ == "__main__":
