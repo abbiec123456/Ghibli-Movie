@@ -100,13 +100,10 @@ def customer_login():
     Returns:
         str: login template or redirect to dashboard POST
     """
-    # POST checks password and fails or redirects to dashboard
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
 
-        # Read DB and check if we can find user
-        # Look up user in the database
         try:
             conn = get_db_connection()
             cur = conn.cursor()
@@ -122,27 +119,31 @@ def customer_login():
             cur.close()
             conn.close()
         except Exception:
-            # For production, log this and show generic error
-            return "Invalid login credentials", 401
-        # check if row cursor was successful proceed else fail
-        if not row:
-            return "Invalid login credentials"
-        # success extract row data to variables
-        customer_id, first_name, last_name, email_db, phone, s_password = row
-        # Check if password matched else fail
-        if s_password != password:
-            return "Invalid login credentials"
-        # create full name varible and concantenate first and last name with space for memory db
-        name = f"{first_name} {last_name}"
+            # If DB fails, show generic error
+            flash("Database error, please try again.", "error")
+            return render_template("customer_login.html"), 500
 
-        # Set in memory array values
+        # If no user found
+        if not row:
+            flash("Invalid email or password.", "error")  #  Only POST failure
+            return render_template("customer_login.html"), 401
+
+        # Extract DB data
+        customer_id, first_name, last_name, email_db, phone, s_password = row
+
+        # If password doesn't match
+        if s_password != password:
+            flash("Invalid email or password.", "error")  #  Only POST failure
+            return render_template("customer_login.html"), 401
+
+        # Login successful → set session
+        name = f"{first_name} {last_name}"
         CUSTOMERS[email_db] = {
             "password": s_password,
             "name": name,
             "email": email_db,
             "phone": phone,
         }
-        # Set session values used elsewhere
         session["user"] = email_db
         session["role"] = "customer"
         session["name"] = name
@@ -150,10 +151,9 @@ def customer_login():
         session["phone"] = phone
 
         return redirect(url_for("customer_dashboard"))
-    # GET sends login
-    flash("Invalid email or password.", "error")
-    return render_template("customer_login.html"), 401
 
+    # --- GET request ---
+    return render_template("customer_login.html")  #  No flash, no 401
 
 
 # ---------- REGISTER -----------
