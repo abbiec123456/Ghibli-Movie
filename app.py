@@ -151,7 +151,9 @@ def customer_login():
 
         return redirect(url_for("customer_dashboard"))
     # GET sends login
-    return render_template("customer_login.html")
+    flash("Invalid email or password.", "error")
+    return render_template("customer_login.html"), 401
+
 
 
 # ---------- REGISTER -----------

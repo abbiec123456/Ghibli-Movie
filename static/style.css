@@ -283,3 +283,14 @@ body.landing {
   width: 100px;   /* Bigger size */
   height: auto;
 }
+.flash {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.flash.error {
+    background-color: #ffdddd;
+    color: #a10000;
+}
