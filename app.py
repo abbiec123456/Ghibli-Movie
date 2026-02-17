@@ -28,13 +28,12 @@ def get_db_connection():
     if not database_url:
         raise ValueError("DATABASE_URL environment variable is required")
 
-    # Parse postgresql://user:pass@host:port/dbname
     parsed = urlparse(database_url)
 
     return psycopg2.connect(
         host=parsed.hostname,
         port=parsed.port or 5432,
-        dbname=parsed.path[1:],  # Remove leading '/'
+        dbname=parsed.path[1:],
         user=parsed.username,
         password=parsed.password,
     )
@@ -49,6 +48,7 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 csrf = CSRFProtect(app)
 
 ABBIE_EMAIL = "abbie@example.com"
+
 # ---------- TEMPORARY IN-MEMORY STORAGE ----------
 
 CUSTOMERS = {
@@ -608,18 +608,10 @@ def admin_login():
 
 
 # ---------- ADMIN ----------
+
 @app.route("/admin")
 def admin_dashboard():
-    """
-    Display admin dashboard.
-
-    Returns:
-        str: Rendered admin dashboard template
-    """
-    if not app.config.get("TESTING") and session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
-
-    return render_template("admin_dashboard.html")
+    return render_template("admin_dashboard.html", bookings=BOOKINGS)
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
@@ -629,20 +621,20 @@ def edit_booking(booking_id):
 
     GET: Display the edit booking form
     POST: Process booking updates
-
-    Args:
-        booking_id (int): The ID of the booking to edit
-
-    Returns:
-        str: Rendered edit template or redirect to admin dashboard
     """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
+    booking = next((b for b in BOOKINGS if b.get("id") == booking_id), None)
+    if booking is None:
+        return f"Booking not found: {booking_id}", 404
+
     if request.method == "POST":
+        booking["course"] = request.form.get("course", booking["course"])
+        booking["extra"] = request.form.get("extra", booking.get("extra", ""))
         return redirect(url_for("admin_dashboard"))
 
-    return render_template("edit_booking.html", booking_id=booking_id)
+    return render_template("edit_booking.html", booking=booking)
 
 
 if __name__ == "__main__":

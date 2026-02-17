@@ -17,20 +17,17 @@
   <div class="dashboard">
     <h2>Bookings</h2>
 
-    <div class="booking">
-      <p><strong>Name:</strong> Lola</p>
-      <p><strong>Course:</strong> Character Design Basics</p>
-      <a href="/admin/bookings/1/edit">Edit booking</a>
-    </div>
-
-    <div class="booking">
-      <p><strong>Name:</strong> Abbie</p>
-      <p><strong>Course:</strong> Castle Environment Design</p>
-      <a href="/admin/bookings/2/edit">Edit booking</a>
-    </div>
+    {% for b in bookings %}
+      <div class="booking">
+        <p><strong>Email:</strong> {{ b.email }}</p>
+        <p><strong>Course:</strong> {{ b.course }}</p>
+        <a href="{{ url_for('edit_booking') }}?course={{ b.course|urlencode }}">Edit booking</a>
+      </div>
+    {% endfor %}
 
     <a href="/">Back</a>
   </div>
 
 </body>
 </html>
+
