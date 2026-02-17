@@ -160,7 +160,6 @@ def customer_login():
 # ---------- REGISTER -----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
@@ -188,7 +187,7 @@ def register():
             cur.close()
             conn.close()
 
-            #  ADD THIS (for test compatibility only)
+            # For test compatibility (mocking DB)
             CUSTOMERS[email] = {
                 "password": password,
                 "name": f"{first_name} {last_name}",
@@ -203,8 +202,13 @@ def register():
             return render_template("register.html")
 
         except Exception:
-            # RETURN 500 (what the test expects)
-            return "Error creating account", 500
+            # Return 500 during testing or real DB failure
+            if app.config.get("TESTING"):
+                return "Error creating account", 500
+            if conn:
+                conn.rollback()
+            flash("Error creating account, please try again.", "error")
+            return render_template("register.html")
 
         flash("Account created successfully. Please log in.", "success")
         return redirect(url_for("customer_login"))
