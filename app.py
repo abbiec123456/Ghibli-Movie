@@ -62,11 +62,17 @@ CUSTOMERS = {
 
 BOOKINGS = [
     {
+        "id": 1,
         "email": ABBIE_EMAIL,
         "course": "Moving Castle Creations – 3D Animation",
         "extra": "Beginner friendly tools",
     },
-    {"email": ABBIE_EMAIL, "course": "Totoro Character Design", "extra": ""},
+    {
+        "id": 2,
+        "email": ABBIE_EMAIL,
+        "course": "Totoro Character Design",
+        "extra": "",
+    },
 ]
 
 MODULE_LABELS = {
@@ -178,10 +184,13 @@ def register():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO customers (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-            """, (first_name, last_name, email, phone, password))
+            """,
+                (first_name, last_name, email, phone, password),
+            )
 
             conn.commit()
             cur.close()
@@ -302,14 +311,16 @@ def customer_dashboard():
         rows = cursor.fetchall()
 
         for row in rows:
-            user_bookings.append({
-                "booking_id": row[0],
-                "course_id": row[1],
-                "extra": row[2],
-                "status": row[3],
-                "course": row[4],
-                "description": row[5]
-            })
+            user_bookings.append(
+                {
+                    "booking_id": row[0],
+                    "course_id": row[1],
+                    "extra": row[2],
+                    "status": row[3],
+                    "course": row[4],
+                    "description": row[5],
+                }
+            )
 
     except Exception as e:
         print(f"Dashboard Fetch Error: {e}")
@@ -367,7 +378,9 @@ def booking():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            cur.execute("SELECT customer_id FROM customers WHERE email = %s", (user_email,))
+            cur.execute(
+                "SELECT customer_id FROM customers WHERE email = %s", (user_email,)
+            )
             customer_row = cur.fetchone()
             if not customer_row:
                 return redirect(url_for("customer_login"))
@@ -377,7 +390,7 @@ def booking():
                 # Check duplicate
                 cur.execute(
                     "SELECT booking_id FROM bookings WHERE customer_id = %s AND course_id = %s",
-                    (customer_id, course_id)
+                    (customer_id, course_id),
                 )
                 if cur.fetchone():
                     continue
@@ -390,18 +403,20 @@ def booking():
                     VALUES (%s, %s, 'Pending', %s, NOW())
                     RETURNING booking_id
                     """,
-                    (customer_id, course_id, extra_request)
+                    (customer_id, course_id, extra_request),
                 )
-                new_booking_id = cur.fetchone()[0]   # note a single item
+                new_booking_id = cur.fetchone()[0]  # note a single item
                 new_booking_ids.append(new_booking_id)  # Add to a list
 
                 # Insert Modules
                 selected_module_ids = request.form.getlist(f"modules_{course_id}")
                 if selected_module_ids:
-                    module_insert_data = [(new_booking_id, m_id) for m_id in selected_module_ids]
+                    module_insert_data = [
+                        (new_booking_id, m_id) for m_id in selected_module_ids
+                    ]
                     cur.executemany(
                         "INSERT INTO booking_modules (booking_id, module_id) VALUES (%s, %s)",
-                        module_insert_data
+                        module_insert_data,
                     )
 
             conn.commit()
@@ -453,21 +468,21 @@ def booking():
             m_id, m_course_id, m_name, m_desc = m
             if m_course_id not in modules_by_course:
                 modules_by_course[m_course_id] = []
-            modules_by_course[m_course_id].append({
-                "id": m_id,
-                "name": m_name,
-                "description": m_desc
-            })
+            modules_by_course[m_course_id].append(
+                {"id": m_id, "name": m_name, "description": m_desc}
+            )
 
         courses_payload = []
         for c in courses_data:
             c_id, c_name, c_desc = c
-            courses_payload.append({
-                "id": c_id,
-                "name": c_name,
-                "description": c_desc,
-                "modules": modules_by_course.get(c_id, [])
-            })
+            courses_payload.append(
+                {
+                    "id": c_id,
+                    "name": c_name,
+                    "description": c_desc,
+                    "modules": modules_by_course.get(c_id, []),
+                }
+            )
 
         return render_template(
             "booking.html",
@@ -476,7 +491,7 @@ def booking():
                 "email": session.get("email"),
                 "phone": session.get("phone"),
             },
-            courses=courses_payload  # <--- CRITICAL: Passing data to template
+            courses=courses_payload,  # <--- CRITICAL: Passing data to template
         )
 
     except Exception as e:
@@ -516,12 +531,15 @@ def booking_submitted():
 
         # Fetch Course & Extra Info for bookings
         # use ANY(%s) to match any ID in the list
-        cur.execute("""
+        cur.execute(
+            """
             SELECT b.booking_id, c.course_name, b.nice_to_have_requests
             FROM bookings b
             JOIN courses c ON b.course_id = c.course_id
             WHERE b.booking_id = ANY(%s)
-        """, (booking_ids,))
+        """,
+            (booking_ids,),
+        )
 
         rows = cur.fetchall()
 
@@ -529,20 +547,21 @@ def booking_submitted():
             b_id, c_name, extra = row
 
             # Fetch Modules for this specific booking
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT m.module_name
                 FROM booking_modules bm
                 JOIN course_modules m ON bm.module_id = m.module_id
                 WHERE bm.booking_id = %s
-            """, (b_id,))
+            """,
+                (b_id,),
+            )
 
             modules = [m_row[0] for m_row in cur.fetchall()]
 
-            booking_details.append({
-                "course": c_name,
-                "modules": modules,
-                "extra": extra
-            })
+            booking_details.append(
+                {"course": c_name, "modules": modules, "extra": extra}
+            )
 
         cur.close()
         conn.close()
@@ -556,7 +575,7 @@ def booking_submitted():
 
     return render_template(
         "booking_submitted.html",
-        bookings=booking_details  # Pass list of booking objects
+        bookings=booking_details,  # Pass list of booking objects
     )
 
 
@@ -575,11 +594,14 @@ def admin_login():
             conn = get_db_connection()
             cur = conn.cursor()
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT admin_id, first_name, last_name, email, password
                 FROM admins
                 WHERE email = %s
-            """, (email,))
+            """,
+                (email,),
+            )
 
             row = cur.fetchone()
             cur.close()
@@ -608,6 +630,7 @@ def admin_login():
 
 
 # ---------- ADMIN ----------
+
 
 @app.route("/admin")
 def admin_dashboard():

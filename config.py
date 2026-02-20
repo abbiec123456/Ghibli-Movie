@@ -1,5 +1,6 @@
 import os
 
+
 class BaseConfig:
     """Shared config for all environments."""
 
@@ -12,7 +13,6 @@ class BaseConfig:
     DB_USER = os.getenv("DB_USER", "ghibli_user")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "ghibli_pass")
 
-   
     DATABASE_URL = os.getenv("DATABASE_URL")
 
     @classmethod
@@ -28,7 +28,7 @@ class DevelopmentConfig(BaseConfig):
 
 class TestingConfig(BaseConfig):
     TESTING = True
-   
+
     @classmethod
     def get_database_url(cls) -> str:
         return os.getenv("DATABASE_URL", "sqlite:///:memory:")
@@ -36,4 +36,3 @@ class TestingConfig(BaseConfig):
 
 class ProductionConfig(BaseConfig):
     DEBUG = False
-
