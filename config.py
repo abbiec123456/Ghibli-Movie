@@ -19,7 +19,10 @@ class BaseConfig:
     def get_database_url(cls) -> str:
         if cls.DATABASE_URL:
             return cls.DATABASE_URL
-        return f"postgresql://{cls.DB_USER}:{cls.DB_PASSWORD}@{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}"
+        return (
+            f"postgresql://{cls.DB_USER}:{cls.DB_PASSWORD}"
+            f"@{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}"
+        )
 
 
 class DevelopmentConfig(BaseConfig):
