@@ -36,7 +36,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
-        patcher = patch('app.get_db_connection')
+        patcher = patch("app.get_db_connection")
         self.addCleanup(patcher.stop)  # Cleanup after test
         self.mock_db = patcher.start()
 
@@ -45,7 +45,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.mock_db.return_value = self.mock_conn
         self.mock_conn.cursor.return_value = self.mock_cursor
         self.mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         # Reset test data
@@ -96,7 +101,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/login")
         self.assertEqual(response.status_code, 200)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_successful_login(self, mock_db):
         """Test successful customer login"""
         mock_conn = MagicMock()
@@ -104,8 +109,13 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-                4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
-                )
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
+        )
 
         response = self.client.post(
             "/login",
@@ -126,7 +136,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn("abbie@example.com", CUSTOMERS)
         self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_login_with_invalid_email(self, mock_db_connection):
         """Test login with non-existent email"""
         mock_conn = MagicMock()
@@ -144,7 +154,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertNotIn("user", sess)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_login_with_invalid_password(self, mock_get_db_connection):
         """Test login with correct email but wrong password"""
         mock_conn = MagicMock()
@@ -153,12 +163,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-                4,                    # customer_id
-                "Abbie",              # name
-                "Smith",              # last_name
-                "abbie@example.com",  # email
-                "123-456-7890",       # phone
-                "group1",             # password (CORRECT password)
+            4,  # customer_id
+            "Abbie",  # name
+            "Smith",  # last_name
+            "abbie@example.com",  # email
+            "123-456-7890",  # phone
+            "group1",  # password (CORRECT password)
         )
         CUSTOMERS.clear()
 
@@ -175,14 +185,13 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertNotIn("abbie@example.com", CUSTOMERS)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_login_db_exception(self, mock_db):
         """Login handles DB exception"""
         mock_db.side_effect = Exception("DB Error")
 
         response = self.client.post(
-            "/login",
-            data={"email": "test@example.com", "password": "pass"}
+            "/login", data={"email": "test@example.com", "password": "pass"}
         )
 
         self.assertEqual(response.status_code, 401)
@@ -194,7 +203,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/register")
         self.assertEqual(response.status_code, 200)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_successful_registration(self, mock_db):
         """Test successful new user registration"""
         # Mock the database connection and cursor
@@ -244,7 +253,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn(b"Passwords do not match", response.data)
         self.assertNotIn("jane@example.com", CUSTOMERS)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_registration_db_error(self, mock_db):
         """Registration handles DB exception"""
         mock_db.side_effect = Exception("DB Fail")
@@ -258,7 +267,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
                 "phone": "N/A",
                 "password": "pass",
                 "confirm_password": "pass",
-            }
+            },
         )
 
         self.assertEqual(response.status_code, 500)
@@ -300,10 +309,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "/login", data={"email": "abbie@example.com", "password": "group1"}
         )
 
-        response = self.client.post(
-            "/dashboard",
-            data={"extra": "No course id"}
-        )
+        response = self.client.post("/dashboard", data={"extra": "No course id"})
 
         self.assertEqual(response.status_code, 400)
         self.assertIn(b"Missing course ID", response.data)
@@ -317,7 +323,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Mock courses and modules
         self.mock_cursor.fetchall.side_effect = [
             [(1, "Course 1", "Desc 1")],  # courses
-            [(10, 1, "Module A", "Desc A")]  # modules
+            [(10, 1, "Module A", "Desc A")],  # modules
         ]
 
         response = self.client.get("/book")
@@ -325,7 +331,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Course 1", response.data)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_update_booking_extra_request(self, mock_db):
         """Test updating extra request for a booking"""
         # Mock the database connection and cursor
@@ -335,16 +341,23 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-            1,                    # customer_id
-            "Abbie",              # first_name
-            "Smith",              # last_name
+            1,  # customer_id
+            "Abbie",  # first_name
+            "Smith",  # last_name
             "abbie@example.com",  # email
-            "123-456-7890",       # phone
-            "group1"              # password
+            "123-456-7890",  # phone
+            "group1",  # password
         )
         # Mock the SELECT query result (for displaying dashboard)
         mock_cursor.fetchall.return_value = [
-            (1, 5, "", "confirmed", "Moving Castle Creations – 3D Animation", "Learn animation")
+            (
+                1,
+                5,
+                "",
+                "confirmed",
+                "Moving Castle Creations – 3D Animation",
+                "Learn animation",
+            )
         ]
 
         # Login first
@@ -375,8 +388,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Verify the UPDATE parameters
         self.assertEqual(params[0], "Updated extra request")  # new_extra
-        self.assertEqual(params[1], "abbie@example.com")      # user_email
-        self.assertEqual(params[2], "5")                      # course_id
+        self.assertEqual(params[1], "abbie@example.com")  # user_email
+        self.assertEqual(params[2], "5")  # course_id
 
         mock_conn.commit.assert_called()
 
@@ -400,7 +413,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
     # ---------- BOOKING PAGE TESTS ----------
 
     def test_booking_page_requires_authentication(self):
-
         """Test that booking page redirects unauthenticated users"""
         response = self.client.get("/book")
         self.assertEqual(response.status_code, 302)
@@ -435,17 +447,17 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # 3. INSERT ... RETURNING booking_id -> returns (999,)
 
         self.mock_cursor.fetchone.side_effect = [
-            (4,),   # customer_id
-            None,   # Not already booked
-            (999,)  # New booking ID
+            (4,),  # customer_id
+            None,  # Not already booked
+            (999,),  # New booking ID
         ]
 
         response = self.client.post(
             "/book",
             data={
-                "courses": ["1"],           # Select Course ID 1
+                "courses": ["1"],  # Select Course ID 1
                 "modules_1": ["10", "11"],  # Select Modules for Course 1
-                "extra": "Special request"
+                "extra": "Special request",
             },
             follow_redirects=True,
         )
@@ -469,19 +481,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # NOTE: Option B does NOT query for course names during POST.
         # It only does inserts.
-        self.mock_cursor.fetchone.side_effect = [
-            (4,),
-            None,
-            (888,)
-        ]
+        self.mock_cursor.fetchone.side_effect = [(4,), None, (888,)]
 
         response = self.client.post(
             "/book",
-            data={
-                "courses": ["2"],
-                "extra": "No modules"
-            },
-            follow_redirects=True
+            data={"courses": ["2"], "extra": "No modules"},
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
 
@@ -528,7 +533,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Second fetchall: Returns modules for that booking
         self.mock_cursor.fetchall.side_effect = [
             [(101, "Test Course Name", "Test Extra")],  # Booking Details
-            [("Module A",), ("Module B",)]              # Modules for Booking 101
+            [("Module A",), ("Module B",)],  # Modules for Booking 101
         ]
 
         response = self.client.get("/booking-submitted")
@@ -536,7 +541,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn(b"Test Course Name", response.data)
         self.assertIn(b"Module A", response.data)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_booking_submitted_db_exception(self, mock_db):
         """Simulate DB failure in booking confirmation"""
         mock_db.side_effect = Exception("DB Error")
@@ -571,13 +576,13 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/admin"))
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_admin_login_page_loads(self, mock_db):
         """Admin login page loads"""
         response = self.client.get("/admin/login")
         self.assertEqual(response.status_code, 200)
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_successful_admin_login(self, mock_db):
         """Admin login sets session correctly"""
         mock_conn = MagicMock()
@@ -586,13 +591,17 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-            1, "Admin", "User", "admin@example.com", "adminpass"
+            1,
+            "Admin",
+            "User",
+            "admin@example.com",
+            "adminpass",
         )
 
         response = self.client.post(
             "/admin/login",
             data={"email": "admin@example.com", "password": "adminpass"},
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         self.assertEqual(response.status_code, 200)
@@ -602,7 +611,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["user"], "admin@example.com")
             self.assertEqual(sess["name"], "Admin User")
 
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_admin_login_invalid_credentials(self, mock_db):
         """Admin login fails with invalid credentials"""
         mock_conn = MagicMock()
@@ -613,15 +622,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor.fetchone.return_value = None
 
         response = self.client.post(
-            "/admin/login",
-            data={"email": "wrong@example.com", "password": "wrong"}
+            "/admin/login", data={"email": "wrong@example.com", "password": "wrong"}
         )
 
         self.assertEqual(response.status_code, 401)
         self.assertIn(b"Invalid admin credentials", response.data)
 
     # ---------- INTEGRATION TESTS ----------
-    @patch('app.get_db_connection')
+    @patch("app.get_db_connection")
     def test_full_user_journey(self, mock_db):
         """Test complete user journey: register, login, book, view dashboard"""
         # We just need to mock the sequence of DB calls.
@@ -648,15 +656,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor.fetchone.side_effect = [
             # 1. Login Query: Returns full user details (6 columns)
             (99, "Test", "User", "test@example.com", "N/A", "testpass"),
-
             # 2. Booking - Get Customer ID: Returns just ID
             (99,),
-
             # 3. Booking - Check Duplicates: Returns None (not found)
             None,
-
             # 4. Booking - Insert & Return ID: Returns new booking ID
-            (100,)
+            (100,),
         ]
 
         # 2. Login (SELECT)
@@ -668,7 +673,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/book",
             data={"courses": ["1"], "modules_1": ["10"], "extra": "First time"},
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
 
@@ -680,13 +685,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
 class SessionManagementTests(unittest.TestCase):
     """Test suite for session management"""
+
     def setUp(self):
         """Set up test client"""
         self.app = app
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
 
-        patcher = patch('app.get_db_connection')
+        patcher = patch("app.get_db_connection")
         self.addCleanup(patcher.stop)
         self.mock_db = patcher.start()
         self.mock_conn = MagicMock()
@@ -694,8 +700,13 @@ class SessionManagementTests(unittest.TestCase):
         self.mock_db.return_value = self.mock_conn
         self.mock_conn.cursor.return_value = self.mock_cursor
         self.mock_cursor.fetchone.return_value = (
-                1, "Test", "User", "test@example.com", "000-000-0000", "testpass"
-                )
+            1,
+            "Test",
+            "User",
+            "test@example.com",
+            "000-000-0000",
+            "testpass",
+        )
 
         # Reset test data
         CUSTOMERS.clear()
@@ -744,9 +755,23 @@ class SessionManagementTests(unittest.TestCase):
                 if isinstance(params, tuple) and len(params) > 0:
                     email = params[0]
                 if email == "test@example.com":
-                    return (1, "Test", "User", "test@example.com", "000-000-0000", "testpass")
+                    return (
+                        1,
+                        "Test",
+                        "User",
+                        "test@example.com",
+                        "000-000-0000",
+                        "testpass",
+                    )
                 elif email == "user2@example.com":
-                    return (2, "User", "Two", "user2@example.com", "111-111-1111", "pass2")
+                    return (
+                        2,
+                        "User",
+                        "Two",
+                        "user2@example.com",
+                        "111-111-1111",
+                        "pass2",
+                    )
             return None
 
         self.mock_cursor.fetchone.side_effect = mock_fetchone_side_effect
@@ -762,7 +787,9 @@ class SessionManagementTests(unittest.TestCase):
         self.client.get("/logout")
 
         # Login user 2
-        self.client.post("/login", data={"email": "user2@example.com", "password": "pass2"})
+        self.client.post(
+            "/login", data={"email": "user2@example.com", "password": "pass2"}
+        )
 
         # Check user 2 session
         with self.client.session_transaction() as sess:
