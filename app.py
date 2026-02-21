@@ -19,6 +19,7 @@ env = os.environ.get("FLASK_ENV", "development").lower()
 if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
 
+
 def get_db_connection():
     """
     Parse DATABASE_URL (from Docker Compose) and connect securely.
@@ -42,6 +43,8 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
 )
+
+
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
@@ -73,6 +76,8 @@ BOOKINGS = [
         "extra": "",
     },
 ]
+
+
 def ensure_booking_ids():
     """
     Ensure every booking dict has an integer 'id'.
@@ -81,6 +86,7 @@ def ensure_booking_ids():
     for i, b in enumerate(BOOKINGS, start=1):
         if isinstance(b, dict) and b.get("id") is None:
             b["id"] = i
+
 
 MODULE_LABELS = {
     "module1": "Introduction to 3D Animation",
