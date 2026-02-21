@@ -15,10 +15,9 @@ from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
-
-if app.config["SECRET_KEY"] == "ghibli_secret_key" and not app.debug:
+env = os.environ.get("FLASK_ENV", "development").lower()
+if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
-
 
 def get_db_connection():
     """
@@ -74,6 +73,14 @@ BOOKINGS = [
         "extra": "",
     },
 ]
+def ensure_booking_ids():
+    """
+    Ensure every booking dict has an integer 'id'.
+    If missing, assign sequential ids (1..n).
+    """
+    for i, b in enumerate(BOOKINGS, start=1):
+        if isinstance(b, dict) and b.get("id") is None:
+            b["id"] = i
 
 MODULE_LABELS = {
     "module1": "Introduction to 3D Animation",
@@ -634,19 +641,16 @@ def admin_login():
 
 @app.route("/admin")
 def admin_dashboard():
+    ensure_booking_ids()
     return render_template("admin_dashboard.html", bookings=BOOKINGS)
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
-    """
-    Handle editing of bookings in admin panel.
-
-    GET: Display the edit booking form
-    POST: Process booking updates
-    """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
+
+    ensure_booking_ids()
 
     booking = next((b for b in BOOKINGS if b.get("id") == booking_id), None)
     if booking is None:

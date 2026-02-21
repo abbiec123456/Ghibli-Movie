@@ -19,11 +19,11 @@
 
     {% for b in bookings %}
       <div class="booking">
-        <p><strong>Email:</strong> {{ b.email }}</p>
-        <p><strong>Course:</strong> {{ b.course }}</p>
-
-        
-      	<a href="{{ url_for('edit_booking', booking_id=b.id) }}">Edit booking</a>
+        <p><strong>Email:</strong>
+	 {{ b.email }}</p>
+        <p><strong>Course:</strong> 
+	{{ b.course }}</p>      
+      	<a href="{{ url_for('edit_booking', booking_id=b["id"]) }}">Edit booking</a>
       </div>
     {% endfor %}
 
