@@ -116,6 +116,9 @@ def customer_login():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        conn = None
+        cur = None
+        row = None
         try:
             conn = get_db_connection()
             cur = conn.cursor()
@@ -128,11 +131,14 @@ def customer_login():
                 (email,),
             )
             row = cur.fetchone()
-            cur.close()
-            conn.close()
         except Exception:
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 401
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
         if not row:
             flash("Invalid login credentials", "error")
@@ -141,10 +147,33 @@ def customer_login():
         customer_id, first_name, last_name, email_db, phone, stored_password = row
 
         # --- Check password ---
-        if stored_password.startswith("pbkdf2:"):  # hashed password
+        valid = False
+        if stored_password.startswith(("pbkdf2:", "sha256:")):
+            # hashed password → check directly
             valid = check_password_hash(stored_password, password)
-        else:  # old plain-text password
-            valid = stored_password == password
+        else:
+            # old plain-text password → compare, then rehash
+            if stored_password == password:
+                valid = True
+                # automatically rehash and update DB
+                new_hashed = generate_password_hash(password)
+                conn = None
+                cur = None
+                try:
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE customers SET password = %s WHERE email = %s",
+                        (new_hashed, email),
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f"Error rehashing old password: {e}")
+                finally:
+                    if cur:
+                        cur.close()
+                    if conn:
+                        conn.close()
 
         if not valid:
             flash("Invalid login credentials", "error")
