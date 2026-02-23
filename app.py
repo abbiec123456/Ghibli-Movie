@@ -20,6 +20,8 @@ env = os.environ.get("FLASK_ENV", "development").lower()
 if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
 
+CUSTOMERS = {}
+BOOKINGS = []
 
 def get_db_connection():
     """
