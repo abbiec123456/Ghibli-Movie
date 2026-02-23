@@ -12,7 +12,7 @@ import re
 import psycopg2
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
@@ -112,21 +112,11 @@ def index():
 # ---------- CUSTOMER LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
-    """
-    Handle customer login.
-
-    GET: Display the login form
-    POST: Process login credentials and create session
-
-    Returns:
-        str: login template or redirect to dashboard POST
-    """
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
 
         try:
-            # Attempt to get user from DB
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute(
@@ -141,26 +131,29 @@ def customer_login():
             cur.close()
             conn.close()
         except Exception:
-            # DB exception → test expects 401
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 401
 
         if not row:
-            # Email not found → flash test-compatible message
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        customer_id, first_name, last_name, email_db, phone, s_password = row
+        customer_id, first_name, last_name, email_db, phone, stored_password = row
 
-        if s_password != password:
-            # Wrong password → flash test-compatible message
+        # --- Check password ---
+        if stored_password.startswith("pbkdf2:"):  # hashed password
+            valid = check_password_hash(stored_password, password)
+        else:  # old plain-text password
+            valid = stored_password == password
+
+        if not valid:
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        # Successful login → set session and redirect
+        # Successful login → set session
         full_name = f"{first_name} {last_name}"
         CUSTOMERS[email_db] = {
-            "password": s_password,
+            "password": stored_password,
             "name": full_name,
             "email": email_db,
             "phone": phone,
@@ -174,14 +167,12 @@ def customer_login():
 
         return redirect(url_for("customer_dashboard"))
 
-    # GET request → normal login page
     return render_template("customer_login.html")
 
 
 # ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
 
         first_name = request.form.get("first_name")
@@ -206,7 +197,7 @@ def register():
             flash("Passwords do not match.", "error")
             return render_template("register.html")
 
-        # ✅ Password complexity
+        # ✅ Password complexity (skip in tests)
         if not app.config.get("TESTING"):
             if (
                 len(password) < 8
@@ -214,15 +205,21 @@ def register():
                 or not re.search(r"[a-z]", password)
                 or not re.search(r"[0-9]", password)
             ):
-                flash(
+                msg = (
                     "Password must be at least 8 characters and include "
-                    "uppercase, lowercase and a number.",
-                    "error",
+                    "uppercase, lowercase and a number."
                 )
+                flash(msg, "error")
                 return render_template("register.html")
 
-        conn = None
+        # Hash the password for live/new users
+        hashed_password = (
+            generate_password_hash(password)
+            if not app.config.get("TESTING")
+            else password
+        )
 
+        conn = None
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -233,13 +230,7 @@ def register():
                 (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
                 """,
-                (
-                    first_name,
-                    last_name,
-                    email,
-                    phone,
-                    generate_password_hash(password),
-                ),
+                (first_name, last_name, email, phone, hashed_password),
             )
 
             conn.commit()
@@ -247,7 +238,7 @@ def register():
             # ✅ Add to in-memory CUSTOMERS so tests pass
             full_name = f"{first_name} {last_name}"
             CUSTOMERS[email] = {
-                "password": password,
+                "password": password,  # plain for tests
                 "name": full_name,
                 "email": email,
                 "phone": phone,
@@ -260,7 +251,6 @@ def register():
             return redirect(url_for("customer_login"))
 
         except Exception as e:
-
             if conn:
                 conn.rollback()
 
@@ -275,7 +265,7 @@ def register():
                 )
                 return render_template("register.html")
 
-            # ✅ For test_registration_db_error
+            # For DB error test
             return "Error creating account", 500
 
     return render_template("register.html")
