@@ -13,6 +13,7 @@ import psycopg2
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash 
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
