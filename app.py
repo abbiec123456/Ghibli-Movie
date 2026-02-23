@@ -173,7 +173,6 @@ def customer_login():
 # ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
     if request.method == "POST":
 
         first_name = request.form.get("first_name")
@@ -206,15 +205,19 @@ def register():
                 or not re.search(r"[a-z]", password)
                 or not re.search(r"[0-9]", password)
             ):
-                flash(
+                msg = (
                     "Password must be at least 8 characters and include "
-                    "uppercase, lowercase and a number.",
-                    "error",
+                    "uppercase, lowercase and a number."
                 )
+                flash(msg, "error")
                 return render_template("register.html")
 
         # Hash the password for live/new users
-        hashed_password = generate_password_hash(password) if not app.config.get("TESTING") else password
+        hashed_password = (
+            generate_password_hash(password)
+            if not app.config.get("TESTING")
+            else password
+        )
 
         conn = None
         try:
@@ -248,7 +251,6 @@ def register():
             return redirect(url_for("customer_login"))
 
         except Exception as e:
-
             if conn:
                 conn.rollback()
 
