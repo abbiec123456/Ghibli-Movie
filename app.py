@@ -675,7 +675,7 @@ def edit_booking(booking_id):
             FROM bookings b
             JOIN courses course ON b.course_id = course.course_id
             JOIN customers customer ON b.customer_id = customer.customer_id
-            WHERE b.booking_id = %s 
+            WHERE b.booking_id = %s
             """, (booking_id,))
 
         booking_data = cur.fetchone()
@@ -710,10 +710,11 @@ def edit_booking(booking_id):
         if conn:
             conn.rollback()
             print("Edit booking error:", e)
-            return "Error processing booking",500
+            return "Error processing booking", 500
     finally:
         if conn:
             conn.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
