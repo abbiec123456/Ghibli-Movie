@@ -314,3 +314,74 @@ body.landing {
     width: 100px;
     height: auto;
 }
+/* =====================================================
+   CARD FADE-IN ANIMATION
+===================================================== */
+
+@keyframes fadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.container,
+.auth-card {
+    animation: fadeSlide 0.6s ease forwards;
+}
+
+
+/* =====================================================
+   GLASS LOGIN CARD
+===================================================== */
+
+.container {
+    width: 420px;
+    margin: 60px auto;
+    padding: 35px;
+
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+
+    position: relative;
+    z-index: 2;
+}
+
+
+/* =====================================================
+   INPUT FOCUS EFFECT
+===================================================== */
+
+input:focus {
+    outline: none;
+    border-color: #88bdbc;
+    box-shadow: 0 0 8px rgba(136, 189, 188, 0.5);
+    transition: 0.2s ease;
+}
+
+
+/* =====================================================
+   BUTTON HOVER UPGRADE
+===================================================== */
+
+button:hover {
+    background-color: #6daaa8;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+}
+
+
+/* =====================================================
+   CLOUD DEPTH EFFECT
+===================================================== */
+
+.cloud {
+    filter: blur(1px);
+}
