@@ -1,14 +1,30 @@
-/* -------- GENERAL -------- */
+/* =====================================================
+   GLOBAL STYLES
+===================================================== */
+
 body {
     margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(to bottom, #cdeffd, #fefae0);
+    font-family: "Segoe UI", Arial, sans-serif;
     color: #3a3a3a;
+    background: linear-gradient(to bottom, #cdeffd, #fefae0);
     overflow-x: hidden;
 }
 
-/* -------- FLOATING CLOUDS -------- */
+input,
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 10px;
+    border: 1px solid #bbb;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+/* =====================================================
+   FLOATING CLOUDS
+===================================================== */
+
 .cloud {
     position: absolute;
     background: white;
@@ -19,7 +35,7 @@ body {
 
 .cloud::before,
 .cloud::after {
-    content: '';
+    content: "";
     position: absolute;
     background: white;
     width: 60px;
@@ -28,13 +44,8 @@ body {
     top: -30px;
 }
 
-.cloud::before {
-    left: 10px;
-}
-
-.cloud::after {
-    left: 40px;
-}
+.cloud::before { left: 10px; }
+.cloud::after { left: 40px; }
 
 .cloud.small {
     width: 80px;
@@ -53,15 +64,14 @@ body {
 }
 
 @keyframes float {
-    from {
-        transform: translateX(-200px);
-    }
-    to {
-        transform: translateX(120vw);
-    }
+    from { transform: translateX(-200px); }
+    to { transform: translateX(120vw); }
 }
 
-/* -------- HEADER BANNER -------- */
+/* =====================================================
+   HEADER
+===================================================== */
+
 .header {
     text-align: center;
     padding: 50px 20px 30px;
@@ -78,28 +88,36 @@ body {
     color: #5f7c6e;
 }
 
-/* -------- LOGIN CARD -------- */
-.container {
-    width: 420px;
+/* =====================================================
+   CARDS / CONTAINERS
+===================================================== */
+
+.container,
+.dashboard {
     margin: 60px auto;
-    background: rgba(255, 255, 255, 0.9);
     padding: 30px;
     border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     position: relative;
     z-index: 2;
 }
 
-input {
-    width: 100%;
-    padding: 12px;
-    margin-top: 12px;
-    border-radius: 10px;
-    border: 1px solid #bbb;
-    font-size: 1em;
+.container { width: 420px; }
+.dashboard { width: 600px; }
+
+.booking {
+    background: #f1faee;
+    padding: 15px;
+    border-radius: 14px;
+    margin-bottom: 15px;
+    text-align: center;
 }
 
-/* -------- BUTTON ANIMATION -------- */
+/* =====================================================
+   BUTTONS
+===================================================== */
+
 button {
     width: 100%;
     margin-top: 25px;
@@ -109,13 +127,13 @@ button {
     background-color: #88bdbc;
     font-size: 1.1em;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
+    transition: all 0.2s ease;
 }
 
 button:hover {
     background-color: #6daaa8;
     transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.2);
 }
 
 button:active {
@@ -123,166 +141,159 @@ button:active {
     box-shadow: none;
 }
 
-/* -------- DASHBOARD -------- */
-.dashboard {
-    width: 600px;
-    margin: 40px auto;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-    position: relative;
-    z-index: 2;
-}
-
-.booking {
-    background: #f1faee;
-    padding: 15px;
-    border-radius: 14px;
-    margin-bottom: 15px;
-    justify-content: center;
-    text-align: center;
-}
+/* =====================================================
+   LINKS
+===================================================== */
 
 a {
     display: block;
     text-align: center;
     margin-top: 25px;
     color: #4a7c59;
-    text-decoration: none;
     font-weight: bold;
+    text-decoration: none;
 }
 
-input,
-textarea {
-    box-sizing: border-box;
-}
+/* =====================================================
+   NAVBAR / LANDING PAGE
+===================================================== */
 
-/* ---------- GLOBAL ---------- */
 body.landing {
-  margin: 0;
-  min-height: 100vh;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(to bottom, #dff5ff, #fef9e7);
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #dff5ff, #fef9e7);
 }
 
-/* ---------- NAVBAR ---------- */
 .navbar {
-  padding: 1rem 2rem;
+    padding: 1rem 2rem;
+    position: relative;
+    z-index: 10;
 }
 
 .nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .logo {
-  font-weight: 600;
-  color: #4f7f67;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #4f7f67;
 }
 
 .nav-links {
-  display: flex;
-  gap: 1rem;
+    display: flex;
+    gap: 1rem;
 }
 
 .nav-link {
-  text-decoration: none;
-  color: #4f7f67;
-  padding: 0.5rem 1rem;
+    text-decoration: none;
+    color: #4f7f67;
+    padding: 0.5rem 1rem;
 }
 
 .nav-button {
-  background-color: #8ec7c3;
-  color: #1f3d35;
-  text-decoration: none;
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
+    background-color: #8ec7c3;
+    color: #1f3d35;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    text-decoration: none;
 }
 
-/* ---------- HERO ---------- */
+/* =====================================================
+   HERO SECTION
+===================================================== */
+
 .hero {
-  min-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 .hero h1 {
-  font-size: 2.5rem;
-  color: #4f7f67;
+    font-size: 2.5rem;
+    color: #4f7f67;
 }
 
 .hero p {
-  margin-top: 1rem;
-  color: #5f7f75;
+    margin-top: 1rem;
+    color: #5f7f75;
 }
 
 .hero-buttons {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.primary-btn,
+.secondary-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    text-decoration: none;
 }
 
 .primary-btn {
-  background-color: #8ec7c3;
-  color: #1f3d35;
-  padding: 0.75rem 1.5rem;
-  border-radius: 999px;
-  text-decoration: none;
+    background-color: #8ec7c3;
+    color: #1f3d35;
 }
 
 .secondary-btn {
-  border: 1px solid #8ec7c3;
-  color: #4f7f67;
-  padding: 0.75rem 1.5rem;
-  border-radius: 999px;
-  text-decoration: none;
+    border: 1px solid #8ec7c3;
+    color: #4f7f67;
 }
-.navbar, .nav-links a {
-  position: relative;
-  z-index: 10;
-}
+
+/* =====================================================
+   AUTH / LOGIN
+===================================================== */
+
 .auth-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .auth-card h2 {
-  margin-bottom: 1.5rem;
-  color: #4f7f67;
-  text-align: center;
-}
-
-.auth-card input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+    text-align: center;
+    color: #4f7f67;
 }
 
 .auth-switch {
-  margin-top: 1rem;
-  text-align: center;
+    margin-top: 1rem;
+    text-align: center;
 }
 
-.logo-totoro {
-  width: 100px;   /* Bigger size */
-  height: auto;
+/* Password Toggle */
+
+.password-wrapper {
+    position: relative;
 }
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* =====================================================
+   FLASH MESSAGES
+===================================================== */
+
 .flash {
     padding: 10px;
     margin-bottom: 10px;
@@ -293,4 +304,13 @@ body.landing {
 .flash.error {
     background-color: #ffdddd;
     color: #a10000;
+}
+
+/* =====================================================
+   IMAGES
+===================================================== */
+
+.logo-totoro {
+    width: 100px;
+    height: auto;
 }
