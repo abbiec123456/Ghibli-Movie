@@ -119,7 +119,6 @@ def customer_login():
         conn = None
         cur = None
         row = None
-
         try:
             conn = get_db_connection()
             cur = conn.cursor()
@@ -132,11 +131,9 @@ def customer_login():
                 (email,),
             )
             row = cur.fetchone()
-
         except Exception:
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 401
-
         finally:
             if cur:
                 cur.close()
@@ -149,21 +146,17 @@ def customer_login():
 
         customer_id, first_name, last_name, email_db, phone, stored_password = row
 
-        # ---------- PASSWORD CHECK ----------
+        # --- Check password ---
         valid = False
-
-        try:
-            # Works for scrypt / pbkdf2 / sha256 automatically
+        if stored_password.startswith(("pbkdf2:", "sha256:")):
+            # hashed password → check directly
             valid = check_password_hash(stored_password, password)
-
-        except ValueError:
-            # Not a hash → old plain-text password
+        else:
+            # old plain-text password → compare, then rehash
             if stored_password == password:
                 valid = True
-
-                # ✅ Rehash automatically
-                new_hash = generate_password_hash(password)
-
+                # automatically rehash and update DB
+                new_hashed = generate_password_hash(password)
                 conn = None
                 cur = None
                 try:
@@ -171,11 +164,11 @@ def customer_login():
                     cur = conn.cursor()
                     cur.execute(
                         "UPDATE customers SET password = %s WHERE email = %s",
-                        (new_hash, email_db),
+                        (new_hashed, email),
                     )
                     conn.commit()
                 except Exception as e:
-                    print(f"Rehash failed: {e}")
+                    print(f"Error rehashing old password: {e}")
                 finally:
                     if cur:
                         cur.close()
@@ -186,9 +179,8 @@ def customer_login():
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        # ---------- SUCCESS LOGIN ----------
+        # Successful login → set session
         full_name = f"{first_name} {last_name}"
-
         CUSTOMERS[email_db] = {
             "password": stored_password,
             "name": full_name,
@@ -742,3 +734,4 @@ def edit_booking(booking_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
