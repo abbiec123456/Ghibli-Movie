@@ -148,7 +148,7 @@ def customer_login():
 
         # --- Check password ---
         valid = False
-        if stored_password.startswith(("scrypt:","pbkdf2:", "sha256:")):
+        if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
             # hashed password → check directly
             valid = check_password_hash(stored_password, password)
         else:
