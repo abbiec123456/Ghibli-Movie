@@ -8,8 +8,9 @@ Note: This is a basic implementation with temporary in-memory data.
 """
 
 import os
-import psycopg2
 from urllib.parse import urlparse
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_wtf.csrf import CSRFProtect
 
@@ -49,51 +50,6 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
 
-ABBIE_EMAIL = "abbie@example.com"
-
-# ---------- TEMPORARY IN-MEMORY STORAGE ----------
-
-CUSTOMERS = {
-    ABBIE_EMAIL: {
-        "password": "group1",
-        "name": "Abbie Smith",
-        "email": ABBIE_EMAIL,
-        "phone": "123-456-7890",
-    }
-}
-
-BOOKINGS = [
-    {
-        "id": 1,
-        "email": ABBIE_EMAIL,
-        "course": "Moving Castle Creations – 3D Animation",
-        "extra": "Beginner friendly tools",
-    },
-    {
-        "id": 2,
-        "email": ABBIE_EMAIL,
-        "course": "Totoro Character Design",
-        "extra": "",
-    },
-]
-
-
-def ensure_booking_ids():
-    """
-    Ensure every booking dict has an integer 'id'.
-    If missing, assign sequential ids (1..n).
-    """
-    for i, b in enumerate(BOOKINGS, start=1):
-        if isinstance(b, dict) and b.get("id") is None:
-            b["id"] = i
-
-
-MODULE_LABELS = {
-    "module1": "Introduction to 3D Animation",
-    "module2": "Character Design Basics",
-    "module3": "Environmental Modelling",
-}
-
 
 # ---------- LANDING PAGE ----------
 @app.route("/")
@@ -119,6 +75,7 @@ def customer_login():
     Returns:
         str: login template or redirect to dashboard POST
     """
+    print("DATABASE_URL:", os.environ.get("DATABASE_URL"))
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -157,12 +114,6 @@ def customer_login():
 
         # Successful login → set session and redirect
         full_name = f"{first_name} {last_name}"
-        CUSTOMERS[email_db] = {
-            "password": s_password,
-            "name": full_name,
-            "email": email_db,
-            "phone": phone,
-        }
 
         session["user"] = email_db
         session["role"] = "customer"
@@ -179,6 +130,15 @@ def customer_login():
 # ---------- REGISTER -----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """
+    Handle customer registration.
+
+    GET: Display the registration form
+    POST: Process registration and create new customer account
+
+    Returns:
+        str: Rendered registration template or redirect to login
+    """
     if request.method == "POST":
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
@@ -208,14 +168,6 @@ def register():
             conn.commit()
             cur.close()
             conn.close()
-
-            # For test compatibility (mocking DB)
-            CUSTOMERS[email] = {
-                "password": password,
-                "name": f"{first_name} {last_name}",
-                "email": email,
-                "phone": phone,
-            }
 
         except psycopg2.errors.UniqueViolation:
             if conn:
@@ -609,7 +561,7 @@ def admin_login():
 
             cur.execute(
                 """
-                SELECT admin_id, first_name, last_name, email, password
+                SELECT admin_id, name, email, password
                 FROM admins
                 WHERE email = %s
             """,
@@ -626,7 +578,7 @@ def admin_login():
         if not row:
             return "Invalid admin credentials", 401
 
-        admin_id, first_name, last_name, email_db, stored_password = row
+        admin_id, name, email_db, stored_password = row
 
         if stored_password != password:
             return "Invalid admin credentials", 401
@@ -635,7 +587,7 @@ def admin_login():
         session.clear()
         session["user"] = email_db
         session["role"] = "admin"
-        session["name"] = f"{first_name} {last_name}"
+        session["name"] = f"{name}"
 
         return redirect(url_for("admin_dashboard"))
 
@@ -647,28 +599,121 @@ def admin_login():
 
 @app.route("/admin")
 def admin_dashboard():
-    ensure_booking_ids()
-    return render_template("admin_dashboard.html", bookings=BOOKINGS)
+    """
+    Display admin dashboard.
+
+    Returns:
+        str: Rendered admin dashboard template
+    """
+
+    if not app.config.get("TESTING") and session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute(
+            """
+            SELECT b.booking_id, customer.email, course.course_name
+            FROM bookings b
+            JOIN customers customer ON b.customer_id = customer.customer_id
+            JOIN courses course ON b.course_id = course.course_id
+            ORDER BY b.booking_id;
+            """
+        )
+
+        bookings = cur.fetchall()
+
+        return render_template(
+            "admin_dashboard.html",
+            bookings=bookings
+        )
+
+    except Exception as e:
+        print("Admin dashboard error:", e)
+        return "error loading dashboard", 500
+
+    finally:
+        if conn:
+            conn.close()
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
+    """
+    Handle editing of bookings in admin panel.
+
+    GET: Display the edit booking form
+    POST: Process booking updates
+
+    Args:
+        booking_id (int): The ID of the booking to edit
+
+    Returns:
+        str: Rendered edit template or redirect to admin dashboard
+    """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    ensure_booking_ids()
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    booking = next((b for b in BOOKINGS if b.get("id") == booking_id), None)
-    if booking is None:
-        return f"Booking not found: {booking_id}", 404
+        # GET booking, customer, course
+        cur.execute(
+            """
+            SELECT b.booking_id,
+            b.customer_id,
+            b.course_id,
+            course.course_name,
+            customer.name,
+            customer.last_name
+            FROM bookings b
+            JOIN courses course ON b.course_id = course.course_id
+            JOIN customers customer ON b.customer_id = customer.customer_id
+            WHERE b.booking_id = %s 
+            """, (booking_id,))
 
-    if request.method == "POST":
-        booking["course"] = request.form.get("course", booking["course"])
-        booking["extra"] = request.form.get("extra", booking.get("extra", ""))
-        return redirect(url_for("admin_dashboard"))
+        booking_data = cur.fetchone()
 
-    return render_template("edit_booking.html", booking=booking)
+        if not booking_data:
+            return f"Booking not found: {booking_id}", 404
 
+        if request.method == "POST":
+            new_course_id = request.form.get("course_id")
+
+            cur.execute(
+                """
+                UPDATE bookings
+                SET course_id = %s,
+                    updated_at = now()
+                WHERE booking_id = %s
+                """, (new_course_id, booking_id),
+            )
+
+            conn.commit()
+            return redirect(url_for("admin_dashboard"))
+
+        cur.execute("SELECT course_id, course_name FROM courses")
+        courses = cur.fetchall()
+
+        return render_template(
+            "edit_booking.html",
+            booking=booking_data,
+            courses=courses)
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+            print("Edit booking error:", e)
+            return "Error processing booking",500
+    finally:
+        if conn:
+            conn.close()
 
 if __name__ == "__main__":
     app.run(debug=True)

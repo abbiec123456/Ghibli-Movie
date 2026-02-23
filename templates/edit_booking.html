@@ -19,18 +19,25 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <p>
         <label><strong>Name</strong></label><br>
-        <input type="text" name="name" value="Lola">
+        <input type="text" value="{{booking.name}} {{ booking.last_name }}">
       </p>
 
       <p>
         <label><strong>Course</strong></label><br>
-        <input type="text" name="course" value="Character Design Basics">
+        <select name="course_id" required>
+          {% for c in courses %}
+            <option value="{{c.course_id}}"
+              {% if c.course_id == booking.course_id %}selected{% endif %}>
+              {{ c.course_name }}
+            </option>
+          {% endfor %}
+        </select>
       </p>
 
       <button type="submit">Save changes</button>
     </form>
 
-    <a href="/admin">Back to dashboard</a>
+    <a href="{{ url_for('admin_dashboard') }}">Back to dashboard</a>
   </div>
 
 </body>

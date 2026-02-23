@@ -22,8 +22,8 @@
         <p><strong>Email:</strong>
 	 {{ b.email }}</p>
         <p><strong>Course:</strong> 
-	{{ b.course }}</p>      
-      	<a href="{{ url_for('edit_booking', booking_id=b["id"]) }}">Edit booking</a>
+	{{ b.course_name }}</p>      
+      	<a href="{{ url_for('edit_booking', booking_id=b.booking_id) }}">Edit booking</a>
       </div>
     {% endfor %}
 
