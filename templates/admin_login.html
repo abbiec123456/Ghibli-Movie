@@ -18,10 +18,35 @@
 
     <!-- Login box -->
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="email" name="email" placeholder="Admin Email" required>
-            <input type="password" name="password" placeholder="Password" required>
+
+            <div style="position: relative;">
+                <input 
+                    type="password" 
+                    name="password" 
+                    id="admin_password" 
+                    placeholder="Password" 
+                    required 
+                    style="padding-right:40px;"
+                >
+                <span onclick="toggleAdminPassword()" 
+                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
+                    👁️
+                </span>
+            </div>
+            
             <button type="submit">Enter Admin Panel</button>
         </form>
     </div>
@@ -30,6 +55,13 @@
         Return to 
         <a href="{{ url_for('customer_login') }}">Customer Login</a>
     </p>
+
+    <script>
+        function toggleAdminPassword() {
+            const passwordField = document.getElementById("admin_password");
+            passwordField.type = passwordField.type === "password" ? "text" : "password";
+        }
+    </script>
 
 </body>
 </html>
