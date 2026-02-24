@@ -753,7 +753,9 @@ def db_dump():
 
         for table in tables:
 
-            cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table,))
+            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
+            cur.execute(query, (table,))
+
             columns = [col[0] for col in cur.fetchall()]
 
             cur.execute(f"SELECT * FROM {table}")
