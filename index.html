@@ -679,7 +679,7 @@ view their personal details and bookings, and update extra requests for courses.
         <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;Invalid admin credentials&quot;</span><span class="p">,</span> <span class="mi">401</span>
 
-        <span class="n">admin_id</span><span class="p">,</span> <span class="n">first_name</span><span class="p">,</span> <span class="n">last_name</span><span class="p">,</span> <span class="n">email_db</span><span class="p">,</span> <span class="n">stored_password</span> <span class="o">=</span> <span class="n">row</span>
+        <span class="n">admin_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email_db</span><span class="p">,</span> <span class="n">stored_password</span> <span class="o">=</span> <span class="n">row</span>
 
         <span class="k">if</span> <span class="n">stored_password</span> <span class="o">!=</span> <span class="n">password</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;Invalid admin credentials&quot;</span><span class="p">,</span> <span class="mi">401</span>
@@ -688,7 +688,7 @@ view their personal details and bookings, and update extra requests for courses.
         <span class="n">session</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">session</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">email_db</span>
         <span class="n">session</span><span class="p">[</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
-        <span class="n">session</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">last_name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">session</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
 
         <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;admin_dashboard&quot;</span><span class="p">))</span>
 
