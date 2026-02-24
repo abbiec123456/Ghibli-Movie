@@ -643,11 +643,7 @@ view their personal details and bookings, and update extra requests for courses.
 <span class="normal">698</span>
 <span class="normal">699</span>
 <span class="normal">700</span>
-<span class="normal">701</span>
-<span class="normal">702</span>
-<span class="normal">703</span>
-<span class="normal">704</span>
-<span class="normal">705</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/login&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
+<span class="normal">701</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">&quot;/admin/login&quot;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">admin_login</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handle administrator login.</span>
@@ -678,12 +674,8 @@ view their personal details and bookings, and update extra requests for courses.
             <span class="n">flash</span><span class="p">(</span><span class="s2">&quot;Database error occurred.&quot;</span><span class="p">,</span> <span class="s2">&quot;error&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;admin_login.html&quot;</span><span class="p">),</span> <span class="mi">500</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;Invalid admin credentials&quot;</span><span class="p">,</span> <span class="mi">401</span>
-
-        <span class="n">admin_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email_db</span><span class="p">,</span> <span class="n">stored_password</span> <span class="o">=</span> <span class="n">row</span>
-
         <span class="k">if</span> <span class="n">row</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="n">password</span><span class="p">:</span>
+            <span class="n">admin_id</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email_db</span><span class="p">,</span> <span class="n">stored_password</span> <span class="o">=</span> <span class="n">row</span>
             <span class="c1"># Create session</span>
             <span class="n">session</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="n">session</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">email_db</span>
