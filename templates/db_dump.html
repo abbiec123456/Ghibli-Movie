@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Database Dump</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f4; }
+        .table-container { background: white; padding: 20px; margin-bottom: 40px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: bold; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+        .empty { color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>Database Diagnostic Dump</h1>
+    <p>Current Environment: <strong>{{ config.ENV }}</strong></p>
+
+    {% for table_name, data in db_content.items() %}
+    <div class="table-container">
+        <h2>Table: {{ table_name }}</h2>
+        {% if data.rows %}
+        <table>
+            <thead>
+                <tr>
+                    {% for col in data.columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data.rows %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty">Table is empty.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>
