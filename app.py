@@ -688,7 +688,7 @@ def admin_login():
         if not row:
             return "Invalid admin credentials", 401
 
-        admin_id, first_name, last_name, email_db, stored_password = row
+        admin_id, name, email_db, stored_password = row
 
         if stored_password != password:
             return "Invalid admin credentials", 401
@@ -697,7 +697,7 @@ def admin_login():
         session.clear()
         session["user"] = email_db
         session["role"] = "admin"
-        session["name"] = f"{first_name} {last_name}"
+        session["name"] = name
 
         return redirect(url_for("admin_dashboard"))
 
