@@ -733,29 +733,31 @@ def edit_booking(booking_id):
 
 # ---------- TEMP DB DUMP ----------
 
+
 @app.route("/debug/db-dump")
 def db_dump():
 
     conn = None
     db_content = {}
-    
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'public'
         """)
         tables = [row[0] for row in cur.fetchall()]
 
         for table in tables:
-            
-            cur.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = %s", (table,))
+
+            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
+            cur.execute(query, (table,))
+
             columns = [col[0] for col in cur.fetchall()]
 
-            
             cur.execute(f"SELECT * FROM {table}")
             rows = cur.fetchall()
 
@@ -772,6 +774,7 @@ def db_dump():
             conn.close()
 
     return render_template("db_dump.html", db_content=db_content)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
