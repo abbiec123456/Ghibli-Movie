@@ -683,23 +683,24 @@ def admin_login():
             conn.close()
 
         except Exception:
-            return "Invalid admin credentials", 401
+            flash("Database error occurred.", "error")
+            return render_template("admin_login.html"), 500
 
         if not row:
             return "Invalid admin credentials", 401
 
         admin_id, name, email_db, stored_password = row
 
-        if stored_password != password:
-            return "Invalid admin credentials", 401
-
-        # Create session
-        session.clear()
-        session["user"] = email_db
-        session["role"] = "admin"
-        session["name"] = name
-
-        return redirect(url_for("admin_dashboard"))
+        if row and row[3] == password:
+            # Create session
+            session.clear()
+            session["user"] = email_db
+            session["role"] = "admin"
+            session["name"] = name
+            return redirect(url_for("admin_dashboard"))
+        else:
+            flash("Invalid admin credentials", "error")
+            return render_template("admin_login.html"), 401
 
     return render_template("admin_login.html")
 
