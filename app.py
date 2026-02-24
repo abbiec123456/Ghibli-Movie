@@ -25,7 +25,7 @@ if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
 # Initialize Logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(levelname)s: %(message)s' 
+    format='%(levelname)s: %(message)s'
 )
 logger = logging.getLogger(__name__)
 
