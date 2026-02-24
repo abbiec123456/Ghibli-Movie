@@ -686,12 +686,8 @@ def admin_login():
             flash("Database error occurred.", "error")
             return render_template("admin_login.html"), 500
 
-        if not row:
-            return "Invalid admin credentials", 401
-
-        admin_id, name, email_db, stored_password = row
-
         if row and row[3] == password:
+            admin_id, name, email_db, stored_password = row
             # Create session
             session.clear()
             session["user"] = email_db
