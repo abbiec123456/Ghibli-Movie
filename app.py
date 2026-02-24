@@ -10,6 +10,7 @@ Note: This is a basic implementation with temporary in-memory data.
 import os
 import re
 import psycopg2
+import logging
 from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -20,6 +21,13 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 env = os.environ.get("FLASK_ENV", "development").lower()
 if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
+
+# Initialize Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s' 
+)
+logger = logging.getLogger(__name__)
 
 
 def get_db_connection():
