@@ -592,8 +592,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         mock_cursor.fetchone.return_value = (
             1,
-            "Admin",
-            "User",
+            "Admin User",
             "admin@example.com",
             "adminpass",
         )

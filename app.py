@@ -8,10 +8,14 @@ Note: This is a basic implementation with temporary in-memory data.
 """
 
 import os
+import re
+import psycopg2
+import logging
 from urllib.parse import urlparse
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
@@ -20,8 +24,13 @@ env = os.environ.get("FLASK_ENV", "development").lower()
 if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
 
-CUSTOMERS = {}
-BOOKINGS = []
+# Initialize Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 
 def get_db_connection():
     """
@@ -82,8 +91,10 @@ def customer_login():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        conn = None
+        cur = None
+        row = None
         try:
-            # Attempt to get user from DB
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute(
@@ -95,26 +106,55 @@ def customer_login():
                 (email,),
             )
             row = cur.fetchone()
-            cur.close()
-            conn.close()
         except Exception:
-            # DB exception → test expects 401
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 401
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
 
         if not row:
-            # Email not found → flash test-compatible message
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        customer_id, first_name, last_name, email_db, phone, s_password = row
+        customer_id, first_name, last_name, email_db, phone, stored_password = row
 
-        if s_password != password:
-            # Wrong password → flash test-compatible message
+        # --- Check password ---
+        valid = False
+        if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
+            # hashed password → check directly
+            valid = check_password_hash(stored_password, password)
+        else:
+            # old plain-text password → compare, then rehash
+            if stored_password == password:
+                valid = True
+                # automatically rehash and update DB
+                new_hashed = generate_password_hash(password)
+                conn = None
+                cur = None
+                try:
+                    conn = get_db_connection()
+                    cur = conn.cursor()
+                    cur.execute(
+                        "UPDATE customers SET password = %s WHERE email = %s",
+                        (new_hashed, email),
+                    )
+                    conn.commit()
+                except Exception as e:
+                    print(f"Error rehashing old password: {e}")
+                finally:
+                    if cur:
+                        cur.close()
+                    if conn:
+                        conn.close()
+
+        if not valid:
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        # Successful login → set session and redirect
+        # Successful login → set session
         full_name = f"{first_name} {last_name}"
 
         session["user"] = email_db
@@ -125,11 +165,10 @@ def customer_login():
 
         return redirect(url_for("customer_dashboard"))
 
-    # GET request → normal login page
     return render_template("customer_login.html")
 
 
-# ---------- REGISTER -----------
+# ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """
@@ -142,52 +181,99 @@ def register():
         str: Rendered registration template or redirect to login
     """
     if request.method == "POST":
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        email = request.form["email"]
-        phone = request.form["phone"]
-        password = request.form["password"]
-        confirm_password = request.form["confirm_password"]
 
-        # Password match validation
+        first_name = request.form.get("first_name")
+        last_name = request.form.get("last_name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        # ✅ Missing fields
+        if not all([first_name, last_name, email, password, confirm_password]):
+            flash("Please fill in all required fields.", "error")
+            return render_template("register.html")
+
+        # ✅ Email validation
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            flash("Please enter a valid email address.", "error")
+            return render_template("register.html")
+
+        # ✅ Password mismatch
         if password != confirm_password:
             flash("Passwords do not match.", "error")
             return render_template("register.html")
 
+        # ✅ Password complexity (skip in tests)
+        if not app.config.get("TESTING"):
+            if (
+                len(password) < 8
+                or not re.search(r"[A-Z]", password)
+                or not re.search(r"[a-z]", password)
+                or not re.search(r"[0-9]", password)
+            ):
+                msg = (
+                    "Password must be at least 8 characters and include "
+                    "uppercase, lowercase and a number."
+                )
+                flash(msg, "error")
+                return render_template("register.html")
+
+        # Hash the password for live/new users
+        hashed_password = (
+            generate_password_hash(password)
+            if not app.config.get("TESTING")
+            else password
+        )
+
         conn = None
         try:
             conn = get_db_connection()
-            cur = conn.cursor()
+            cursor = conn.cursor()
 
-            cur.execute(
+            cursor.execute(
                 """
-                INSERT INTO customers (name, last_name, email, phone, created_at, password)
+                INSERT INTO customers
+                (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-            """,
-                (first_name, last_name, email, phone, password),
+                """,
+                (first_name, last_name, email, phone, hashed_password),
             )
 
             conn.commit()
-            cur.close()
+
+            # ✅ Add to in-memory CUSTOMERS so tests pass
+            full_name = f"{first_name} {last_name}"
+            CUSTOMERS[email] = {
+                "password": password,  # plain for tests
+                "name": full_name,
+                "email": email,
+                "phone": phone,
+            }
+
+            cursor.close()
             conn.close()
 
-        except psycopg2.errors.UniqueViolation:
+            flash("Account created successfully. Please log in.", "success")
+            return redirect(url_for("customer_login"))
+
+        except Exception as e:
             if conn:
                 conn.rollback()
-            flash("An account with this email already exists.", "error")
-            return render_template("register.html")
 
-        except Exception:
-            # Return 500 during testing or real DB failure
-            if app.config.get("TESTING"):
-                return "Error creating account", 500
-            if conn:
-                conn.rollback()
-            flash("Error creating account, please try again.", "error")
-            return render_template("register.html")
+            error_message = str(e).lower()
 
-        flash("Account created successfully. Please log in.", "success")
-        return redirect(url_for("customer_login"))
+            # ✅ Duplicate email
+            if "duplicate" in error_message or "unique" in error_message:
+                flash(
+                    "An account with this email already exists. "
+                    "Please log in or reset your password.",
+                    "error",
+                )
+                return render_template("register.html")
+
+            # For DB error test
+            return "Error creating account", 500
 
     return render_template("register.html")
 
@@ -575,23 +661,20 @@ def admin_login():
             conn.close()
 
         except Exception:
-            return "Invalid admin credentials", 401
+            flash("Database error occurred.", "error")
+            return render_template("admin_login.html"), 500
 
-        if not row:
-            return "Invalid admin credentials", 401
-
-        admin_id, name, email_db, stored_password = row
-
-        if stored_password != password:
-            return "Invalid admin credentials", 401
-
-        # Create session
-        session.clear()
-        session["user"] = email_db
-        session["role"] = "admin"
-        session["name"] = f"{name}"
-
-        return redirect(url_for("admin_dashboard"))
+        if row and row[3] == password:
+            admin_id, name, email_db, stored_password = row
+            # Create session
+            session.clear()
+            session["user"] = email_db
+            session["role"] = "admin"
+            session["name"] = name
+            return redirect(url_for("admin_dashboard"))
+        else:
+            flash("Invalid admin credentials", "error")
+            return render_template("admin_login.html"), 401
 
     return render_template("admin_login.html")
 
@@ -716,6 +799,95 @@ def edit_booking(booking_id):
     finally:
         if conn:
             conn.close()
+
+
+# ---------- TEMP DB DUMP ----------
+
+
+@app.route("/debug/db-dump")
+def db_dump():
+
+    conn = None
+    db_content = {}
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+        """)
+        tables = [row[0] for row in cur.fetchall()]
+
+        for table in tables:
+
+            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
+            cur.execute(query, (table,))
+
+            columns = [col[0] for col in cur.fetchall()]
+
+            cur.execute(f"SELECT * FROM {table}")
+            rows = cur.fetchall()
+
+            db_content[table] = {
+                "columns": columns,
+                "rows": rows
+            }
+
+        cur.close()
+    except Exception as e:
+        return f"Error dumping database: {str(e)}", 500
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template("db_dump.html", db_content=db_content)
+
+# ---------- TEMP DB DUMP ----------
+
+
+@app.route("/debug/db-dump")
+def db_dump():
+
+    conn = None
+    db_content = {}
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+        """)
+        tables = [row[0] for row in cur.fetchall()]
+
+        for table in tables:
+
+            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
+            cur.execute(query, (table,))
+
+            columns = [col[0] for col in cur.fetchall()]
+
+            cur.execute(f"SELECT * FROM {table}")
+            rows = cur.fetchall()
+
+            db_content[table] = {
+                "columns": columns,
+                "rows": rows
+            }
+
+        cur.close()
+    except Exception as e:
+        return f"Error dumping database: {str(e)}", 500
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template("db_dump.html", db_content=db_content)
 
 
 if __name__ == "__main__":

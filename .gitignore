@@ -25,3 +25,4 @@ venv/
 .coverage
 coverage.xml
 htmlcov/
+t -vpython -m pytest -v
