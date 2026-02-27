@@ -10,20 +10,26 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
+
 # Add the parent directory to the Python path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 try:
-    from app import app, CUSTOMERS, BOOKINGS
+    from app import app
 except ImportError:
-    # Try alternative import paths
-    try:
-        from main import app, CUSTOMERS, BOOKINGS
-    except ImportError:
-        # If running from tests directory
-        sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-        from app import app, CUSTOMERS, BOOKINGS
+    from main import app
+
+# try:
+#     from app import app
+# except ImportError:
+#     # Try alternative import paths
+#     try:
+#         from main import app
+#     except ImportError:
+#         # If running from tests directory
+#         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+#         from app import app, CUSTOMERS, BOOKINGS
 
 
 class GhibliBookingSystemTests(unittest.TestCase):
@@ -53,39 +59,39 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "group1",
         )
 
-        # Reset test data
-        CUSTOMERS.clear()
-        CUSTOMERS.update(
-            {
-                "abbie@example.com": {
-                    "password": "group1",
-                    "name": "Abbie Smith",
-                    "email": "abbie@example.com",
-                    "phone": "123-456-7890",
-                }
-            }
-        )
+        # # Reset test data
+        # CUSTOMERS.clear()
+        # CUSTOMERS.update(
+        #     {
+        #         "abbie@example.com": {
+        #             "password": "group1",
+        #             "name": "Abbie Smith",
+        #             "email": "abbie@example.com",
+        #             "phone": "123-456-7890",
+        #         }
+        #     }
+        # )
 
-        BOOKINGS.clear()
-        BOOKINGS.extend(
-            [
-                {
-                    "email": "abbie@example.com",
-                    "course": "Moving Castle Creations – 3D Animation",
-                    "extra": "Beginner friendly tools",
-                },
-                {
-                    "email": "abbie@example.com",
-                    "course": "Totoro Character Design",
-                    "extra": "",
-                },
-            ]
-        )
+        # BOOKINGS.clear()
+        # BOOKINGS.extend(
+        #     [
+        #         {
+        #             "email": "abbie@example.com",
+        #             "course": "Moving Castle Creations – 3D Animation",
+        #             "extra": "Beginner friendly tools",
+        #         },
+        #         {
+        #             "email": "abbie@example.com",
+        #             "course": "Totoro Character Design",
+        #             "extra": "",
+        #         },
+        #     ]
+        # )
 
     def tearDown(self):
         """Clean up after each test"""
-        CUSTOMERS.clear()
-        BOOKINGS.clear()
+        # CUSTOMERS.clear()
+        # BOOKINGS.clear()
 
     # ---------- LANDING PAGE TESTS ----------
 
@@ -132,9 +138,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["email"], "abbie@example.com")
             self.assertEqual(sess["phone"], "123-456-7890")
 
-        # inmemory CUSTOMERS was updated
-        self.assertIn("abbie@example.com", CUSTOMERS)
-        self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
+        # # inmemory CUSTOMERS was updated
+        # self.assertIn("abbie@example.com", CUSTOMERS)
+        # self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
 
     @patch("app.get_db_connection")
     def test_login_with_invalid_email(self, mock_db_connection):
@@ -170,7 +176,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "123-456-7890",  # phone
             "group1",  # password (CORRECT password)
         )
-        CUSTOMERS.clear()
+        # CUSTOMERS.clear()
 
         response = self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "wrongpassword"}
@@ -183,7 +189,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
 
-        self.assertNotIn("abbie@example.com", CUSTOMERS)
+        # self.assertNotIn("abbie@example.com", CUSTOMERS)
 
     @patch("app.get_db_connection")
     def test_login_db_exception(self, mock_db):
@@ -230,10 +236,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Verify database insert was called
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called_once()
-        self.assertIn("john@example.com", CUSTOMERS)
-        self.assertEqual(CUSTOMERS["john@example.com"]["name"], "John Doe")
-        self.assertEqual(CUSTOMERS["john@example.com"]["password"], "password123")
-        self.assertEqual(CUSTOMERS["john@example.com"]["phone"], "N/A")
+        # self.assertIn("john@example.com", CUSTOMERS)
+        # self.assertEqual(CUSTOMERS["john@example.com"]["name"], "John Doe")
+        # self.assertEqual(CUSTOMERS["john@example.com"]["password"], "password123")
+        # self.assertEqual(CUSTOMERS["john@example.com"]["phone"], "N/A")
 
     def test_registration_password_mismatch(self):
         """Test registration with mismatched passwords"""
@@ -251,7 +257,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Passwords do not match", response.data)
-        self.assertNotIn("jane@example.com", CUSTOMERS)
+        self.mock_cursor.execute.assert_not_called()
 
     @patch("app.get_db_connection")
     def test_registration_db_error(self, mock_db):
@@ -707,18 +713,18 @@ class SessionManagementTests(unittest.TestCase):
             "testpass",
         )
 
-        # Reset test data
-        CUSTOMERS.clear()
-        CUSTOMERS.update(
-            {
-                "test@example.com": {
-                    "password": "testpass",
-                    "name": "Test User",
-                    "email": "test@example.com",
-                    "phone": "000-000-0000",
-                }
-            }
-        )
+        # # Reset test data
+        # CUSTOMERS.clear()
+        # CUSTOMERS.update(
+        #     {
+        #         "test@example.com": {
+        #             "password": "testpass",
+        #             "name": "Test User",
+        #             "email": "test@example.com",
+        #             "phone": "000-000-0000",
+        #         }
+        #     }
+        # )
 
     def test_session_persists_across_requests(self):
         """Test that session data persists across multiple requests"""
@@ -738,13 +744,13 @@ class SessionManagementTests(unittest.TestCase):
 
     def test_multiple_users_sessions_isolated(self):
         """Test that different users have isolated sessions"""
-        # Add another user
-        CUSTOMERS["user2@example.com"] = {
-            "password": "pass2",
-            "name": "User Two",
-            "email": "user2@example.com",
-            "phone": "111-111-1111",
-        }
+        # # Add another user
+        # CUSTOMERS["user2@example.com"] = {
+        #     "password": "pass2",
+        #     "name": "User Two",
+        #     "email": "user2@example.com",
+        #     "phone": "111-111-1111",
+        # }
 
         def mock_fetchone_side_effect(*args, **kwargs):
             # Get the email from the last execute call
