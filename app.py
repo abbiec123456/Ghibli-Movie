@@ -9,7 +9,6 @@ Note: This is a basic implementation with temporary in-memory data.
 
 import os
 import re
-import psycopg2
 import logging
 from urllib.parse import urlparse
 import psycopg2
@@ -241,15 +240,6 @@ def register():
             )
 
             conn.commit()
-
-            # ✅ Add to in-memory CUSTOMERS so tests pass
-            full_name = f"{first_name} {last_name}"
-            CUSTOMERS[email] = {
-                "password": password,  # plain for tests
-                "name": full_name,
-                "email": email,
-                "phone": phone,
-            }
 
             cursor.close()
             conn.close()
@@ -800,50 +790,6 @@ def edit_booking(booking_id):
         if conn:
             conn.close()
 
-
-# ---------- TEMP DB DUMP ----------
-
-
-@app.route("/debug/db-dump")
-def db_dump():
-
-    conn = None
-    db_content = {}
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_schema = 'public'
-        """)
-        tables = [row[0] for row in cur.fetchall()]
-
-        for table in tables:
-
-            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
-            cur.execute(query, (table,))
-
-            columns = [col[0] for col in cur.fetchall()]
-
-            cur.execute(f"SELECT * FROM {table}")
-            rows = cur.fetchall()
-
-            db_content[table] = {
-                "columns": columns,
-                "rows": rows
-            }
-
-        cur.close()
-    except Exception as e:
-        return f"Error dumping database: {str(e)}", 500
-    finally:
-        if conn:
-            conn.close()
-
-    return render_template("db_dump.html", db_content=db_content)
 
 # ---------- TEMP DB DUMP ----------
 
