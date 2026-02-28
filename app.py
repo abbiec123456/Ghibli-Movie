@@ -9,9 +9,9 @@ Note: This is a basic implementation with temporary in-memory data.
 
 import os
 import re
-import psycopg2
 import logging
 from urllib.parse import urlparse
+import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
@@ -59,51 +59,6 @@ app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
 
-ABBIE_EMAIL = "abbie@example.com"
-
-# ---------- TEMPORARY IN-MEMORY STORAGE ----------
-
-CUSTOMERS = {
-    ABBIE_EMAIL: {
-        "password": "group1",
-        "name": "Abbie Smith",
-        "email": ABBIE_EMAIL,
-        "phone": "123-456-7890",
-    }
-}
-
-BOOKINGS = [
-    {
-        "id": 1,
-        "email": ABBIE_EMAIL,
-        "course": "Moving Castle Creations – 3D Animation",
-        "extra": "Beginner friendly tools",
-    },
-    {
-        "id": 2,
-        "email": ABBIE_EMAIL,
-        "course": "Totoro Character Design",
-        "extra": "",
-    },
-]
-
-
-def ensure_booking_ids():
-    """
-    Ensure every booking dict has an integer 'id'.
-    If missing, assign sequential ids (1..n).
-    """
-    for i, b in enumerate(BOOKINGS, start=1):
-        if isinstance(b, dict) and b.get("id") is None:
-            b["id"] = i
-
-
-MODULE_LABELS = {
-    "module1": "Introduction to 3D Animation",
-    "module2": "Character Design Basics",
-    "module3": "Environmental Modelling",
-}
-
 
 # ---------- LANDING PAGE ----------
 @app.route("/")
@@ -120,6 +75,16 @@ def index():
 # ---------- CUSTOMER LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
+    """
+    Handle customer login.
+
+    GET: Display the login form
+    POST: Process login credentials and create session
+
+    Returns:
+        str: login template or redirect to dashboard POST
+    """
+    print("DATABASE_URL:", os.environ.get("DATABASE_URL"))
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -189,12 +154,6 @@ def customer_login():
 
         # Successful login → set session
         full_name = f"{first_name} {last_name}"
-        CUSTOMERS[email_db] = {
-            "password": stored_password,
-            "name": full_name,
-            "email": email_db,
-            "phone": phone,
-        }
 
         session["user"] = email_db
         session["role"] = "customer"
@@ -210,6 +169,15 @@ def customer_login():
 # ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    """
+    Handle customer registration.
+
+    GET: Display the registration form
+    POST: Process registration and create new customer account
+
+    Returns:
+        str: Rendered registration template or redirect to login
+    """
     if request.method == "POST":
 
         first_name = request.form.get("first_name")
@@ -275,15 +243,6 @@ def register():
             )
 
             conn.commit()
-
-            # ✅ Add to in-memory CUSTOMERS so tests pass
-            full_name = f"{first_name} {last_name}"
-            CUSTOMERS[email] = {
-                "password": password,  # plain for tests
-                "name": full_name,
-                "email": email,
-                "phone": phone,
-            }
 
             cursor.close()
             conn.close()
@@ -718,6 +677,9 @@ def admin_login():
 
 @app.route("/admin")
 def admin_dashboard():
+    """
+    admin dashboard
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -750,6 +712,9 @@ def admin_dashboard():
 
 @app.route("/admin/bookings")
 def manage_bookings():
+    """
+    admin manage booking
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -770,6 +735,18 @@ def manage_bookings():
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
+    """
+    Handle editing of bookings in admin panel.
+
+    GET: Display the edit booking form
+    POST: Process booking updates
+
+    Args:
+        booking_id (int): The ID of the booking to edit
+
+    Returns:
+        str: Rendered edit template or redirect to admin dashboard
+    """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -824,6 +801,9 @@ def edit_booking(booking_id):
 
 @app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
 def delete_booking(booking_id):
+    """
+    Delete booking
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -847,7 +827,9 @@ def delete_booking(booking_id):
 
 @app.route("/debug/db-dump")
 def db_dump():
-
+    """
+    Temp db dump
+    """
     conn = None
     db_content = {}
 
