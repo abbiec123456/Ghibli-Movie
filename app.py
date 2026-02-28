@@ -12,7 +12,6 @@ import re
 import logging
 from urllib.parse import urlparse
 import psycopg2
-from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
@@ -678,6 +677,9 @@ def admin_login():
 
 @app.route("/admin")
 def admin_dashboard():
+    """
+    admin dashboard
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -710,6 +712,9 @@ def admin_dashboard():
 
 @app.route("/admin/bookings")
 def manage_bookings():
+    """
+    admin manage booking
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -796,6 +801,9 @@ def edit_booking(booking_id):
 
 @app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
 def delete_booking(booking_id):
+    """
+    Delete booking
+    """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
@@ -819,7 +827,9 @@ def delete_booking(booking_id):
 
 @app.route("/debug/db-dump")
 def db_dump():
-
+    """
+    Temp db dump
+    """
     conn = None
     db_content = {}
 
