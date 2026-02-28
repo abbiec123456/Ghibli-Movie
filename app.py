@@ -203,6 +203,10 @@ def register():
             flash("Passwords do not match.", "error")
             return render_template("register.html")
 
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "error")
+            return render_template("register.html")  # Stay on page to show error
+
         # ✅ Password complexity (skip in tests)
         if not app.config.get("TESTING"):
             if (
@@ -674,46 +678,54 @@ def admin_login():
 
 @app.route("/admin")
 def admin_dashboard():
-    """
-    Display admin dashboard.
-
-    Returns:
-        str: Rendered admin dashboard template
-    """
-
-    if not app.config.get("TESTING") and session.get("role") != "admin":
+    if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
     conn = None
-
     try:
         conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor()
 
-        cur.execute(
-            """
-            SELECT b.booking_id, customer.email, course.course_name
-            FROM bookings b
-            JOIN customers customer ON b.customer_id = customer.customer_id
-            JOIN courses course ON b.course_id = course.course_id
-            ORDER BY b.booking_id;
-            """
-        )
+        cur.execute("SELECT COUNT(*) FROM customers")
+        customer_count = cur.fetchone()[0]
 
-        bookings = cur.fetchall()
+        cur.execute("SELECT COUNT(*) FROM courses")
+        course_count = cur.fetchone()[0]
+
+        cur.execute("SELECT COUNT(*) FROM bookings")
+        booking_count = cur.fetchone()[0]
 
         return render_template(
             "admin_dashboard.html",
-            bookings=bookings
+            customer_count=customer_count,
+            course_count=course_count,
+            booking_count=booking_count
         )
-
     except Exception as e:
-        print("Admin dashboard error:", e)
-        return "error loading dashboard", 500
-
+        return f"Admin Stats Error: {e}", 500
     finally:
         if conn:
             conn.close()
+
+
+@app.route("/admin/bookings")
+def manage_bookings():
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT b.booking_id, c.email, co.course_name, b.nice_to_have_requests
+        FROM bookings b
+        JOIN customers c ON b.customer_id = c.customer_id
+        JOIN courses co ON b.course_id = co.course_id
+        ORDER BY b.booking_id DESC
+    """)
+    rows = cur.fetchall()
+    bookings = [{"id": r[0], "email": r[1], "course": r[2], "extra": r[3]} for r in rows]
+    conn.close()
+    return render_template("manage_bookings.html", bookings=bookings)
 
 
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
@@ -733,63 +745,74 @@ def edit_booking(booking_id):
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    conn = None
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        # GET booking, customer, course
-        cur.execute(
-            """
-            SELECT b.booking_id,
-            b.customer_id,
-            b.course_id,
-            course.course_name,
-            customer.name,
-            customer.last_name
-            FROM bookings b
-            JOIN courses course ON b.course_id = course.course_id
-            JOIN customers customer ON b.customer_id = customer.customer_id
-            WHERE b.booking_id = %s
-            """, (booking_id,))
+    if request.method == "POST":
+        new_course_id = request.form.get("course_id")
+        new_extra = request.form.get("extra")
 
-        booking_data = cur.fetchone()
-
-        if not booking_data:
-            return f"Booking not found: {booking_id}", 404
-
-        if request.method == "POST":
-            new_course_id = request.form.get("course_id")
-
-            cur.execute(
-                """
+        try:
+            cur.execute("""
                 UPDATE bookings
-                SET course_id = %s,
-                    updated_at = now()
+                SET course_id = %s, nice_to_have_requests = %s, updated_at = NOW()
                 WHERE booking_id = %s
-                """, (new_course_id, booking_id),
-            )
-
+            """, (new_course_id, new_extra, booking_id))
             conn.commit()
-            return redirect(url_for("admin_dashboard"))
-
-        cur.execute("SELECT course_id, course_name FROM courses")
-        courses = cur.fetchall()
-
-        return render_template(
-            "edit_booking.html",
-            booking=booking_data,
-            courses=courses)
-
-    except Exception as e:
-        if conn:
+            flash("Booking updated successfully!", "success")
+            return redirect(url_for("manage_bookings"))
+        except Exception as e:
             conn.rollback()
-            print("Edit booking error:", e)
-            return "Error processing booking", 500
-    finally:
-        if conn:
+            flash(f"Error updating: {e}", "error")
+        finally:
             conn.close()
 
+    # GET Request: Fetch current data to populate form
+    cur.execute("""
+        SELECT b.booking_id, b.nice_to_have_requests, b.course_id, c.course_name
+        FROM bookings b
+        JOIN courses c ON b.course_id = c.course_id
+        WHERE b.booking_id = %s
+    """, (booking_id,))
+    row = cur.fetchone()
+
+    # Also fetch all courses so the admin can change the course in a dropdown
+    cur.execute("SELECT course_id, course_name FROM courses WHERE active = TRUE")
+    all_courses = cur.fetchall()
+    conn.close()
+
+    if not row:
+        return "Booking not found", 404
+
+    booking_data = {
+        "id": row[0],
+        "extra": row[1],
+        "course_id": row[2],
+        "course_name": row[3]
+    }
+
+    return render_template("edit_booking.html", booking=booking_data, courses=all_courses)
+
+
+@app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
+def delete_booking(booking_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Delete dependencies first
+        cur.execute("DELETE FROM booking_modules WHERE booking_id = %s", (booking_id,))
+        cur.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
+        conn.commit()
+        flash("Booking deleted successfully.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error deleting booking: {e}", "error")
+    finally:
+        conn.close()
+    return redirect(url_for("manage_bookings"))
 
 # ---------- TEMP DB DUMP ----------
 

@@ -17,24 +17,19 @@
   <div class="dashboard">
     <form method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-      <p>
-        <label><strong>Name</strong></label><br>
-        <input type="text" value="{{booking.name}} {{ booking.last_name }}">
-      </p>
-
-      <p>
-        <label><strong>Course</strong></label><br>
-        <select name="course_id" required>
-          {% for c in courses %}
-            <option value="{{c.course_id}}"
-              {% if c.course_id == booking.course_id %}selected{% endif %}>
-              {{ c.course_name }}
+      <label>Course:</label>
+      <select name="course_id">
+        {% for c_id, c_name in courses %}
+            <option value="{{ c_id }}" {% if c_id == booking.course_id %}selected{% endif %}>
+                {{ c_name }}
             </option>
-          {% endfor %}
-        </select>
-      </p>
+        {% endfor %}
+      </select>
 
-      <button type="submit">Save changes</button>
+      <label>Extra Requests:</label>
+      <textarea name="extra">{{ booking.extra }}</textarea>
+
+      <button type="submit">Save Changes</button>
     </form>
 
     <a href="{{ url_for('admin_dashboard') }}">Back to dashboard</a>
