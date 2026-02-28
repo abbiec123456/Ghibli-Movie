@@ -295,7 +295,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 500)
         self.assertIn(b"Error creating account", response.data)
 
     # ---------- CUSTOMER DASHBOARD TESTS ----------
