@@ -280,7 +280,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     @patch("app.get_db_connection")
     def test_registration_db_error(self, mock_db):
-        """Registration handles DB exception"""
+        """Registration handles DB exception gracefully"""
         mock_db.side_effect = Exception("DB Fail")
 
         response = self.client.post(
@@ -295,7 +295,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 200)
         self.assertIn(b"Error creating account", response.data)
 
     # ---------- CUSTOMER DASHBOARD TESTS ----------

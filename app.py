@@ -233,10 +233,10 @@ def register():
         if password != confirm_password:
             flash("Passwords do not match.", "error")
             return render_template("register.html")
-        
+
         if len(password) < 8:
             flash("Password must be at least 8 characters long.", "error")
-            return render_template("register.html") # Stay on page to show error
+            return render_template("register.html")  # Stay on page to show error
 
         # ✅ Password complexity (skip in tests)
         if not app.config.get("TESTING"):
