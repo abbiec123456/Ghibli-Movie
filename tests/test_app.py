@@ -290,8 +290,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
                 "last_name": "User",
                 "email": "fail@example.com",
                 "phone": "N/A",
-                "password": "pass",
-                "confirm_password": "pass",
+                "password": "ValidPassword123!",
+                "confirm_password": "ValidPassword123!",
             },
         )
 
