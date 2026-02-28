@@ -17,17 +17,19 @@
   <div class="dashboard">
     <form method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-      <p>
-        <label><strong>Name</strong></label><br>
-        <input type="text" name="name" value="Lola">
-      </p>
+      <label>Course:</label>
+      <select name="course_id">
+        {% for c_id, c_name in courses %}
+            <option value="{{ c_id }}" {% if c_id == booking.course_id %}selected{% endif %}>
+                {{ c_name }}
+            </option>
+        {% endfor %}
+      </select>
 
-      <p>
-        <label><strong>Course</strong></label><br>
-        <input type="text" name="course" value="Character Design Basics">
-      </p>
+      <label>Extra Requests:</label>
+      <textarea name="extra">{{ booking.extra }}</textarea>
 
-      <button type="submit">Save changes</button>
+      <button type="submit">Save Changes</button>
     </form>
 
     <a href="/admin">Back to dashboard</a>

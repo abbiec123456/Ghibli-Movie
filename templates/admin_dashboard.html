@@ -3,32 +3,52 @@
 <head>
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .admin-nav { margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px; }
+    .admin-nav a { margin: 0 15px; text-decoration: none; font-weight: bold; color: #4a4a4a; }
+    .stats-container { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+    .stat-card { 
+      background: white; padding: 20px; border-radius: 15px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 150px; 
+      text-decoration: none; color: inherit; transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-number { display: block; font-size: 2.5em; font-weight: bold; color: #7db9b6; }
+    .stat-label { font-size: 1.1em; color: #666; }
+  </style>
 </head>
 <body>
-
   <div class="cloud small"></div>
   <div class="cloud large"></div>
 
   <div class="header">
-    <h1>Admin Dashboard</h1>
-    <p>Manage bookings</p>
+    <h1>Control Center</h1>
+    <nav class="admin-nav">
+        <a href="{{ url_for('admin_dashboard') }}">Home</a>
+        <a href="/admin/customers">Customers</a>
+        <a href="/admin/courses">Courses</a>
+        <a href="{{ url_for('manage_bookings') }}">Bookings</a>
+    </nav>
   </div>
 
   <div class="dashboard">
-    <h2>Bookings</h2>
-
-    {% for b in bookings %}
-      <div class="booking">
-        <p><strong>Email:</strong>
-	 {{ b.email }}</p>
-        <p><strong>Course:</strong> 
-	{{ b.course }}</p>      
-      	<a href="{{ url_for('edit_booking', booking_id=b["id"]) }}">Edit booking</a>
-      </div>
-    {% endfor %}
-
-    <a href="/">Back</a>
+    <h2>System Overview</h2>
+    <div class="stats-container">
+      <a href="/admin/customers" class="stat-card">
+        <span class="stat-number">{{ customer_count }}</span>
+        <span class="stat-label">Customers</span>
+      </a>
+      <a href="/admin/courses" class="stat-card">
+        <span class="stat-number">{{ course_count }}</span>
+        <span class="stat-label">Courses</span>
+      </a>
+      <a href="{{ url_for('manage_bookings') }}" class="stat-card">
+        <span class="stat-number">{{ booking_count }}</span>
+        <span class="stat-label">Bookings</span>
+      </a>
+    </div>
+    <br><br>
+    <a href="{{ url_for('logout') }}" style="color: #e63946;">Logout</a>
   </div>
-
 </body>
 </html>
