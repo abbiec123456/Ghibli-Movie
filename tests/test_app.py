@@ -241,7 +241,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post("/register", data={
             "first_name": "John",
             "last_name": "Doe",
-            "email": "", 
+            "email": "",
             "password": "Password123!",
             "confirm_password": "Password123!"
         })
@@ -254,7 +254,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "first_name": "John",
             "last_name": "Doe",
             "email": "test@example.com",
-            "password": "123", # Too short/simple
+            "password": "123",  # Too short/simple
             "confirm_password": "123"
         })
         # Update this string based on your actual error message (e.g., "Password must be...")
@@ -590,10 +590,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             sess["role"] = "admin"
             sess["user"] = "admin@example.com"
-        
+
         # Mock the DB counts the dashboard now expects
         self.mock_cursor.fetchone.side_effect = [(10,), (5,), (20,)]
-        
+
         response = self.client.get("/admin")
         self.assertEqual(response.status_code, 200)
 
@@ -605,23 +605,26 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Mock 1: The specific booking details
         # Mock 2: The list of all available courses for the dropdown
         self.mock_cursor.fetchone.return_value = (1, "Extra req", 101, "Howl's Moving Castle")
-        self.mock_cursor.fetchall.return_value = [(101, "Howl's Moving Castle"), (102, "Spirited Away")]
+        self.mock_cursor.fetchall.return_value = [
+            (101, "Howl's Moving Castle"),
+            (102, "Spirited Away")
+        ]
 
         response = self.client.get("/admin/bookings/1/edit")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Howl's Moving Castle", response.data)
+        self.assertIn(b"Howl&#39;s Moving Castle", response.data)
 
     def test_edit_booking_post_redirects(self):
         """Test that posting to edit booking redirects to the management page"""
         with self.client.session_transaction() as sess:
             sess["role"] = "admin"
-            
+
         response = self.client.post(
-            "/admin/bookings/1/edit", 
+            "/admin/bookings/1/edit",
             data={"course_id": "1", "extra": "Updated extra"},
             follow_redirects=False
         )
-        
+
         self.assertEqual(response.status_code, 302)
         # Check that it redirects to the bookings list, not the main dashboard
         self.assertTrue(response.location.endswith("/admin/bookings"))
@@ -683,15 +686,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             sess["role"] = "customer"
         response = self.client.get("/admin/bookings")
-        self.assertEqual(response.status_code, 302) # Should redirect to admin/login
+        self.assertEqual(response.status_code, 302)  # Should redirect to admin/login
 
     def test_delete_booking_execution(self):
         """Test that delete booking calls the correct DB deletes"""
         with self.client.session_transaction() as sess:
             sess["role"] = "admin"
-            
+
         response = self.client.post("/admin/bookings/1/delete", follow_redirects=True)
-        
+
         # Verify the DB delete was called (once for modules, once for booking)
         self.assertTrue(self.mock_cursor.execute.called)
         self.mock_conn.commit.assert_called()
