@@ -716,31 +716,33 @@ def admin_login():
 def admin_dashboard():
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
+
         cur.execute("SELECT COUNT(*) FROM customers")
         customer_count = cur.fetchone()[0]
-        
+
         cur.execute("SELECT COUNT(*) FROM courses")
         course_count = cur.fetchone()[0]
-        
+
         cur.execute("SELECT COUNT(*) FROM bookings")
         booking_count = cur.fetchone()[0]
-        
+
         return render_template(
-            "admin_dashboard.html", 
-            customer_count=customer_count, 
-            course_count=course_count, 
+            "admin_dashboard.html",
+            customer_count=customer_count,
+            course_count=course_count,
             booking_count=booking_count
         )
     except Exception as e:
         return f"Admin Stats Error: {e}", 500
     finally:
-        if conn: conn.close()
+        if conn: 
+            conn.close()
+
 
 @app.route("/admin/bookings")
 def manage_bookings():
@@ -761,6 +763,7 @@ def manage_bookings():
     conn.close()
     return render_template("manage_bookings.html", bookings=bookings)
 
+
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
     if not app.config.get("TESTING") and session.get("role") != "admin":
@@ -772,10 +775,10 @@ def edit_booking(booking_id):
     if request.method == "POST":
         new_course_id = request.form.get("course_id")
         new_extra = request.form.get("extra")
-        
+
         try:
             cur.execute("""
-                UPDATE bookings 
+                UPDATE bookings
                 SET course_id = %s, nice_to_have_requests = %s, updated_at = NOW()
                 WHERE booking_id = %s
             """, (new_course_id, new_extra, booking_id))
@@ -796,7 +799,7 @@ def edit_booking(booking_id):
         WHERE b.booking_id = %s
     """, (booking_id,))
     row = cur.fetchone()
-    
+
     # Also fetch all courses so the admin can change the course in a dropdown
     cur.execute("SELECT course_id, course_name FROM courses WHERE active = TRUE")
     all_courses = cur.fetchall()
@@ -813,6 +816,7 @@ def edit_booking(booking_id):
     }
 
     return render_template("edit_booking.html", booking=booking_data, courses=all_courses)
+
 
 @app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
 def delete_booking(booking_id):
