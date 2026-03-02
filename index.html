@@ -847,7 +847,7 @@ view their personal details and bookings, and update extra requests for courses.
         <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">            SELECT customer_id, name, last_name, email, phone, created_at</span>
 <span class="s2">            FROM customers</span>
-<span class="s2">            ORDER BY customer_id DESC&quot;</span>
+<span class="s2">            ORDER BY customer_id DESC</span>
 <span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
         <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">customers</span> <span class="o">=</span> <span class="p">[</span>
