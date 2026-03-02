@@ -838,7 +838,7 @@ def admin_customers():
         cur.execute("""
             SELECT customer_id, name, last_name, email, phone, created_at
             FROM customers
-            ORDER BY customer_id DESC"
+            ORDER BY customer_id DESC
         """)
         rows = cur.fetchall()
         customers = [
