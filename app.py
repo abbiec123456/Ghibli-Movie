@@ -822,6 +822,164 @@ def delete_booking(booking_id):
         conn.close()
     return redirect(url_for("manage_bookings"))
 
+
+@app.route("/admin/customers")
+def admin_customers():
+    """
+    admin list customers
+    """
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT customer_id, name, last_name, email, phone, created_at
+            FROM customers
+            ORDER BY customer_id DESC
+        """)
+        rows = cur.fetchall()
+        customers = [
+            {
+                "id": r[0],
+                "name": r[1],
+                "last_name": r[2],
+                "email": r[3],
+                "phone": r[4],
+                "created": r[5],
+            }
+            for r in rows
+        ]
+        return render_template("manage_customers.html", customerlist=customers)
+    except Exception as e:
+        return f"Admin Stats Error: {e}", 500
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route("/admin/customers/<int:customer_id>/delete", methods=["POST"])
+def delete_customer(customer_id):
+    """
+    Delete customer
+    """
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # 1. Delete booking_modules for all bookings belonging to this customer
+        cur.execute(
+            """
+            DELETE FROM booking_modules
+            WHERE booking_id IN (
+                SELECT booking_id FROM bookings WHERE customer_id = %s
+            )
+            """,
+            (customer_id,),
+        )
+
+        # 2. Delete the customer's bookings
+        cur.execute(
+            "DELETE FROM bookings WHERE customer_id = %s",
+            (customer_id,),
+        )
+
+        # 3. Delete the customer
+        cur.execute(
+            "DELETE FROM customers WHERE customer_id = %s",
+            (customer_id,),
+        )
+
+        conn.commit()
+        flash("Customer deleted successfully.", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error deleting Customer: {e}", "error")
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+    return redirect(url_for("admin_customers"))
+
+
+@app.route("/admin/customers/<int:customer_id>/edit", methods=["GET", "POST"])
+def edit_customer(customer_id):
+    """
+    Handle editing of customers from admin dash
+
+    GET: Display the edit customer form
+    POST: Process customrer update delete or edit
+
+    Args:
+        customer_id (int): The ID of the customer concerned
+
+    Returns:
+        str: Rendered edit template or redirect to admin dashboard
+    """
+    if not app.config.get("TESTING") and session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        if request.method == "POST":
+            new_name = request.form.get("name", "").strip()
+            new_last_name = request.form.get("last_name", "").strip()
+            new_email = request.form.get("email", "").strip()
+            new_phone = request.form.get("phone", "").strip()
+            if not all([new_name, new_last_name, new_email]):
+                flash("Name, last name and email are required.", "error")
+                return redirect(url_for("edit_customer", customer_id=customer_id))
+
+            cur.execute(
+                """
+                UPDATE customers
+                SET name = %s, last_name = %s, email = %s, phone = %s
+                WHERE customer_id = %s
+                """,
+                (new_name, new_last_name, new_email, new_phone, customer_id),
+            )
+            conn.commit()
+            flash("Customer updated successfully!", "success")
+            return redirect(url_for("admin_customers"))
+
+        # GET: fetch current customer data
+        cur.execute(
+            """
+            SELECT customer_id, name, last_name, email, phone
+            FROM customers
+            WHERE customer_id = %s
+            """,
+            (customer_id,),
+        )
+        row = cur.fetchone()
+
+        if not row:
+            return "Customer not found", 404
+
+        customer_data = {
+            "id": row[0],
+            "name": row[1],
+            "last_name": row[2],
+            "email": row[3],
+            "phone": row[4],
+        }
+        return render_template("edit_customer.html", customer=customer_data)
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error updating: {e}", "error")
+        return redirect(url_for("admin_customers"))
+    finally:
+        if conn:
+            conn.close()
 # ---------- TEMP DB DUMP ----------
 
 

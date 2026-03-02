@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Manage Customers</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .delete-btn { color: #e63946; background: none; border: 1px solid #e63946; border-radius: 4px; cursor: pointer; padding: 2px 8px; margin-left: 10px; }
+    .delete-btn:hover { background: #e63946; color: white; }
+    .actions { margin-top: 10px; display: flex; align-items: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Manage Customers</h1>
+    <a href="{{ url_for('admin_dashboard') }}">← Back to Dashboard</a>
+  </div>
+
+  <div class="dashboard">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}{% for msg in messages %}<p>{{ msg }}</p>{% endfor %}{% endif %}
+    {% endwith %}
+    {% for c in customerlist %}
+      <div class="customer">
+        <p><strong>ID:</strong> #{{ c.id }}</p>
+        <p><strong>Customer name:</strong> {{ c.name }} {{ c.last_name }}</p>
+        <p><strong>Customer email:</strong> {{ c.email }}</p>
+        <div class="actions">
+          <a href="{{ url_for('edit_customer', customer_id=c.id) }}">Edit</a>
+          <form action="{{ url_for('delete_customer', customer_id=c.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this customer and all their bookings?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="delete-btn">Delete</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

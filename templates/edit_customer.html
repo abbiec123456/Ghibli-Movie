@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Edit Customer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="cloud small"></div>
+  <div class="cloud large"></div>
+
+  <div class="header">
+    <h1>Edit Customer</h1>
+    <p>Update customer detail </p>
+  </div>
+
+  <div class="dashboard">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}{% for msg in messages %}<p>{{ msg }}</p>{% endfor %}{% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+      <label>First Name</label>
+      <input type="text" name="name" value="{{ customer.name }}" required>
+
+      <label>Last Name</label>
+      <input type="text" name="last_name" value="{{ customer.last_name }}" required>
+
+      <label>Email</label>
+      <input type="email" name="email" value="{{ customer.email }}" required>
+
+      <label>Phone</label>
+      <input type="text" name="phone" value="{{ customer.phone or '' }}">
+
+      <button type="submit">Save Changes</button>
+    </form>
+
+    <a href="{{ url_for('admin_customers') }}">← Back to Customers</a>
+  </div>
+
+</body>
+</html>
