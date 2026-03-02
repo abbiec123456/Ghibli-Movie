@@ -843,12 +843,12 @@ def admin_customers():
         rows = cur.fetchall()
         customers = [
             {
-                "id":       r[0],
-                "name":     r[1],
+                "id": r[0],
+                "name": r[1],
                 "last_name": r[2],
-                "email":    r[3],
-                "phone":    r[4],
-                "created":  r[5],
+                "email": r[3],
+                "phone": r[4],
+                "created": r[5],
             }
             for r in rows
         ]
@@ -965,11 +965,11 @@ def edit_customer(customer_id):
             return "Customer not found", 404
 
         customer_data = {
-            "id":        row[0],
-            "name":      row[1],
+            "id": row[0],
+            "name": row[1],
             "last_name": row[2],
-            "email":     row[3],
-            "phone":     row[4],
+            "email": row[3],
+            "phone": row[4],
         }
         return render_template("edit_customer.html", customer=customer_data)
 
