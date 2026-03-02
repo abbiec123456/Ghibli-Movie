@@ -852,12 +852,12 @@ view their personal details and bookings, and update extra requests for courses.
         <span class="n">rows</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
         <span class="n">customers</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span>
-                <span class="s2">&quot;id&quot;</span><span class="p">:</span>       <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span>     <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                 <span class="s2">&quot;last_name&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-                <span class="s2">&quot;email&quot;</span><span class="p">:</span>    <span class="n">r</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
-                <span class="s2">&quot;phone&quot;</span><span class="p">:</span>    <span class="n">r</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
-                <span class="s2">&quot;created&quot;</span><span class="p">:</span>  <span class="n">r</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s2">&quot;phone&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                <span class="s2">&quot;created&quot;</span><span class="p">:</span> <span class="n">r</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
             <span class="p">}</span>
             <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span>
         <span class="p">]</span>
@@ -2734,11 +2734,11 @@ POST: Process customrer update delete or edit</p>
             <span class="k">return</span> <span class="s2">&quot;Customer not found&quot;</span><span class="p">,</span> <span class="mi">404</span>
 
         <span class="n">customer_data</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;id&quot;</span><span class="p">:</span>        <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span>      <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
             <span class="s2">&quot;last_name&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
-            <span class="s2">&quot;email&quot;</span><span class="p">:</span>     <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
-            <span class="s2">&quot;phone&quot;</span><span class="p">:</span>     <span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+            <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+            <span class="s2">&quot;phone&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
         <span class="p">}</span>
         <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s2">&quot;edit_customer.html&quot;</span><span class="p">,</span> <span class="n">customer</span><span class="o">=</span><span class="n">customer_data</span><span class="p">)</span>
 
