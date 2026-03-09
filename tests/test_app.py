@@ -11,9 +11,9 @@ import unittest
 from unittest.mock import patch, MagicMock
 
 # Add the parent directory to the Python path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) # noqa: E402
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app
+from app import app  # noqa: E402
 
 
 class GhibliBookingSystemTests(unittest.TestCase):
@@ -42,7 +42,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "123-456-7890",
             "group1",
         )
-
 
     # ---------- LANDING PAGE TESTS ----------
     def test_index_page_loads(self):
@@ -87,7 +86,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["name"], "Abbie Smith")
             self.assertEqual(sess["email"], "abbie@example.com")
             self.assertEqual(sess["phone"], "123-456-7890")
-
 
     @patch("app.get_db_connection")
     def test_login_with_invalid_email(self, mock_db_connection):
@@ -135,7 +133,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
 
-
     @patch("app.get_db_connection")
     def test_login_db_exception(self, mock_db):
         """Login handles DB exception"""
@@ -182,29 +179,34 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called_once()
 
-
     def test_registration_missing_fields(self):
         """Test registration fails if required fields are missing"""
         # Sending empty data for a required field like email
-        response = self.client.post("/register", data={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "",
-            "password": "Password123!",
-            "confirm_password": "Password123!"
-        })
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
         # Assuming your app shows a flash message or error text
         self.assertIn(b"required", response.data.lower())
 
     def test_registration_password_complexity(self):
         """Test registration fails if password is too simple"""
-        response = self.client.post("/register", data={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "test@example.com",
-            "password": "123",  # Too short/simple
-            "confirm_password": "123"
-        })
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "test@example.com",
+                "password": "123",  # Too short/simple
+                "confirm_password": "123",
+            },
+        )
         # Update this string based on your actual error message (e.g., "Password must be...")
         self.assertIn(b"password", response.data.lower())
 
@@ -552,10 +554,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Mock 1: The specific booking details
         # Mock 2: The list of all available courses for the dropdown
-        self.mock_cursor.fetchone.return_value = (1, "Extra req", 101, "Howl's Moving Castle")
+        self.mock_cursor.fetchone.return_value = (
+            1,
+            "Extra req",
+            101,
+            "Howl's Moving Castle",
+        )
         self.mock_cursor.fetchall.return_value = [
             (101, "Howl's Moving Castle"),
-            (102, "Spirited Away")
+            (102, "Spirited Away"),
         ]
 
         response = self.client.get("/admin/bookings/1/edit")
@@ -570,7 +577,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/bookings/1/edit",
             data={"course_id": "1", "extra": "Updated extra"},
-            follow_redirects=False
+            follow_redirects=False,
         )
 
         self.assertEqual(response.status_code, 302)
@@ -727,7 +734,6 @@ class SessionManagementTests(unittest.TestCase):
             "000-000-0000",
             "testpass",
         )
-
 
     def test_session_persists_across_requests(self):
         """Test that session data persists across multiple requests"""
