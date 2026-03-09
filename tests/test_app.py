@@ -7,14 +7,13 @@ testing all routes, authentication, booking functionality, and edge cases.
 
 import sys
 import os
-
-# Add the parent directory to the Python path to allow imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import unittest
 from unittest.mock import patch, MagicMock
-from app import app
 
+# Add the parent directory to the Python path to allow imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) # noqa: E402
+
+from app import app
 
 
 class GhibliBookingSystemTests(unittest.TestCase):
@@ -46,7 +45,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
 
     # ---------- LANDING PAGE TESTS ----------
-
     def test_index_page_loads(self):
         """Test that the landing page loads successfully"""
         response = self.client.get("/")
