@@ -10,26 +10,10 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-
 # Add the parent directory to the Python path to allow imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-try:
-    from app import app
-except ImportError:
-    from main import app
-
-# try:
-#     from app import app
-# except ImportError:
-#     # Try alternative import paths
-#     try:
-#         from main import app
-#     except ImportError:
-#         # If running from tests directory
-#         sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-#         from app import app, CUSTOMERS, BOOKINGS
+from app import app  # noqa: E402
 
 
 class GhibliBookingSystemTests(unittest.TestCase):
@@ -59,42 +43,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "group1",
         )
 
-        # # Reset test data
-        # CUSTOMERS.clear()
-        # CUSTOMERS.update(
-        #     {
-        #         "abbie@example.com": {
-        #             "password": "group1",
-        #             "name": "Abbie Smith",
-        #             "email": "abbie@example.com",
-        #             "phone": "123-456-7890",
-        #         }
-        #     }
-        # )
-
-        # BOOKINGS.clear()
-        # BOOKINGS.extend(
-        #     [
-        #         {
-        #             "email": "abbie@example.com",
-        #             "course": "Moving Castle Creations – 3D Animation",
-        #             "extra": "Beginner friendly tools",
-        #         },
-        #         {
-        #             "email": "abbie@example.com",
-        #             "course": "Totoro Character Design",
-        #             "extra": "",
-        #         },
-        #     ]
-        # )
-
-    def tearDown(self):
-        """Clean up after each test"""
-        # CUSTOMERS.clear()
-        # BOOKINGS.clear()
-
     # ---------- LANDING PAGE TESTS ----------
-
     def test_index_page_loads(self):
         """Test that the landing page loads successfully"""
         response = self.client.get("/")
@@ -138,10 +87,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["email"], "abbie@example.com")
             self.assertEqual(sess["phone"], "123-456-7890")
 
-        # # inmemory CUSTOMERS was updated
-        # self.assertIn("abbie@example.com", CUSTOMERS)
-        # self.assertEqual(CUSTOMERS["abbie@example.com"]["name"], "Abbie Smith")
-
     @patch("app.get_db_connection")
     def test_login_with_invalid_email(self, mock_db_connection):
         """Test login with non-existent email"""
@@ -176,7 +121,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
             "123-456-7890",  # phone
             "group1",  # password (CORRECT password)
         )
-        # CUSTOMERS.clear()
 
         response = self.client.post(
             "/login", data={"email": "abbie@example.com", "password": "wrongpassword"}
@@ -188,8 +132,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertNotIn("user", sess)
             self.assertNotIn("role", sess)
-
-        # self.assertNotIn("abbie@example.com", CUSTOMERS)
 
     @patch("app.get_db_connection")
     def test_login_db_exception(self, mock_db):
@@ -236,33 +178,35 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # Verify database insert was called
         mock_cursor.execute.assert_called_once()
         mock_conn.commit.assert_called_once()
-        # self.assertIn("john@example.com", CUSTOMERS)
-        # self.assertEqual(CUSTOMERS["john@example.com"]["name"], "John Doe")
-        # self.assertEqual(CUSTOMERS["john@example.com"]["password"], "password123")
-        # self.assertEqual(CUSTOMERS["john@example.com"]["phone"], "N/A")
 
     def test_registration_missing_fields(self):
         """Test registration fails if required fields are missing"""
         # Sending empty data for a required field like email
-        response = self.client.post("/register", data={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "",
-            "password": "Password123!",
-            "confirm_password": "Password123!"
-        })
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
         # Assuming your app shows a flash message or error text
         self.assertIn(b"required", response.data.lower())
 
     def test_registration_password_complexity(self):
         """Test registration fails if password is too simple"""
-        response = self.client.post("/register", data={
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": "test@example.com",
-            "password": "123",  # Too short/simple
-            "confirm_password": "123"
-        })
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "test@example.com",
+                "password": "123",  # Too short/simple
+                "confirm_password": "123",
+            },
+        )
         # Update this string based on your actual error message (e.g., "Password must be...")
         self.assertIn(b"password", response.data.lower())
 
@@ -610,10 +554,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Mock 1: The specific booking details
         # Mock 2: The list of all available courses for the dropdown
-        self.mock_cursor.fetchone.return_value = (1, "Extra req", 101, "Howl's Moving Castle")
+        self.mock_cursor.fetchone.return_value = (
+            1,
+            "Extra req",
+            101,
+            "Howl's Moving Castle",
+        )
         self.mock_cursor.fetchall.return_value = [
             (101, "Howl's Moving Castle"),
-            (102, "Spirited Away")
+            (102, "Spirited Away"),
         ]
 
         response = self.client.get("/admin/bookings/1/edit")
@@ -628,7 +577,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/bookings/1/edit",
             data={"course_id": "1", "extra": "Updated extra"},
-            follow_redirects=False
+            follow_redirects=False,
         )
 
         self.assertEqual(response.status_code, 302)
@@ -786,19 +735,6 @@ class SessionManagementTests(unittest.TestCase):
             "testpass",
         )
 
-        # # Reset test data
-        # CUSTOMERS.clear()
-        # CUSTOMERS.update(
-        #     {
-        #         "test@example.com": {
-        #             "password": "testpass",
-        #             "name": "Test User",
-        #             "email": "test@example.com",
-        #             "phone": "000-000-0000",
-        #         }
-        #     }
-        # )
-
     def test_session_persists_across_requests(self):
         """Test that session data persists across multiple requests"""
         # Login
@@ -817,13 +753,6 @@ class SessionManagementTests(unittest.TestCase):
 
     def test_multiple_users_sessions_isolated(self):
         """Test that different users have isolated sessions"""
-        # # Add another user
-        # CUSTOMERS["user2@example.com"] = {
-        #     "password": "pass2",
-        #     "name": "User Two",
-        #     "email": "user2@example.com",
-        #     "phone": "111-111-1111",
-        # }
 
         def mock_fetchone_side_effect(*args, **kwargs):
             # Get the email from the last execute call
