@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Courses</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .courses-wrapper {
+            max-width: 900px;
+            margin: 40px auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .courses-card {
+            margin: 40px auto;
+            padding: 30px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .courses-card h1,
+        .courses-card h2 {
+            text-align: center;
+            color: #4a7c59;
+        }
+
+        .courses-card p {
+            text-align: center;
+            color: #5f7c6e;
+        }
+
+        .course-item {
+            background: #f1faee;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+        }
+
+        .course-item h3 {
+            margin-top: 0;
+            color: #4a7c59;
+        }
+
+        .course-actions {
+            margin-top: 15px;
+        }
+
+        .course-actions form {
+            margin: 0;
+        }
+
+        .delete-button {
+            background-color: #d97b7b;
+        }
+
+        .delete-button:hover {
+            background-color: #c76464;
+        }
+
+        .top-nav {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .top-nav a {
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .flash.success {
+            background-color: #dff6dd;
+            color: #2f6b2f;
+        }
+
+        .empty-message {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="cloud small"></div>
+    <div class="cloud large"></div>
+
+    <div class="header">
+        <h1>Manage Courses</h1>
+        <p>Create and remove Studio Ghibli themed courses</p>
+    </div>
+
+    <div class="courses-wrapper">
+        <div class="courses-card">
+            <div class="top-nav">
+                <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <h2>Create New Course</h2>
+
+            <form method="POST" action="{{ url_for('manage_courses') }}">
+                <input type="text" name="course_name" placeholder="Course name" required>
+                <textarea name="description" placeholder="Course description" required></textarea>
+                <button type="submit">Create Course</button>
+            </form>
+        </div>
+
+        <div class="courses-card">
+            <h2>Existing Courses</h2>
+
+            {% if courses %}
+                {% for course in courses %}
+                    <div class="course-item">
+                        <h3>{{ course.name }}</h3>
+                        <p>{{ course.description }}</p>
+
+                        <div class="course-actions">
+                            <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}">
+                                <button type="submit" class="delete-button">Delete Course</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-message">No courses available yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
