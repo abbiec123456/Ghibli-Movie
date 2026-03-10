@@ -54,7 +54,6 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="Lax",
 )
 
-
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
@@ -82,9 +81,8 @@ def customer_login():
     POST: Process login credentials and create session
 
     Returns:
-        str: login template or redirect to dashboard POST
+        str: login template or redirect to dashboard on POST
     """
-    print("DATABASE_URL:", os.environ.get("DATABASE_URL"))
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -122,39 +120,37 @@ def customer_login():
         # --- Check password ---
         valid = False
         if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
-            # hashed password → check directly
+            # Hashed password — verify directly
             valid = check_password_hash(stored_password, password)
         else:
-            # old plain-text password → compare, then rehash
+            # Legacy plain-text password — compare, then rehash in a fresh connection
             if stored_password == password:
                 valid = True
-                # automatically rehash and update DB
                 new_hashed = generate_password_hash(password)
-                conn = None
-                cur = None
+                rehash_conn = None
+                rehash_cur = None
                 try:
-                    conn = get_db_connection()
-                    cur = conn.cursor()
-                    cur.execute(
+                    rehash_conn = get_db_connection()
+                    rehash_cur = rehash_conn.cursor()
+                    rehash_cur.execute(
                         "UPDATE customers SET password = %s WHERE email = %s",
                         (new_hashed, email),
                     )
-                    conn.commit()
+                    rehash_conn.commit()
                 except Exception as e:
-                    print(f"Error rehashing old password: {e}")
+                    logger.error(f"Error rehashing customer password: {e}")
                 finally:
-                    if cur:
-                        cur.close()
-                    if conn:
-                        conn.close()
+                    if rehash_cur:
+                        rehash_cur.close()
+                    if rehash_conn:
+                        rehash_conn.close()
 
         if not valid:
             flash("Invalid login credentials", "error")
             return render_template("customer_login.html"), 200
 
-        # Successful login → set session
+        # Successful login — set session
         full_name = f"{first_name} {last_name}"
-
         session["user"] = email_db
         session["role"] = "customer"
         session["name"] = full_name
@@ -187,30 +183,29 @@ def register():
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
-        # ✅ Missing fields
+        # Missing fields
         if not all([first_name, last_name, email, password, confirm_password]):
             flash("Please fill in all required fields.", "error")
             return render_template("register.html")
 
-        # ✅ Email validation
+        # Email validation
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             flash("Please enter a valid email address.", "error")
             return render_template("register.html")
 
-        # ✅ Password mismatch
+        # Password mismatch
         if password != confirm_password:
             flash("Passwords do not match.", "error")
             return render_template("register.html")
 
         if len(password) < 8:
             flash("Password must be at least 8 characters long.", "error")
-            return render_template("register.html")  # Stay on page to show error
+            return render_template("register.html")
 
-        # ✅ Password complexity (skip in tests)
+        # Password complexity (skip in tests)
         if not app.config.get("TESTING"):
             if (
-                len(password) < 8
-                or not re.search(r"[A-Z]", password)
+                not re.search(r"[A-Z]", password)
                 or not re.search(r"[a-z]", password)
                 or not re.search(r"[0-9]", password)
             ):
@@ -243,7 +238,6 @@ def register():
             )
 
             conn.commit()
-
             cursor.close()
             conn.close()
 
@@ -256,7 +250,7 @@ def register():
 
             error_message = str(e).lower()
 
-            # ✅ Duplicate email
+            # Duplicate email
             if "duplicate" in error_message or "unique" in error_message:
                 flash(
                     "An account with this email already exists. "
@@ -265,7 +259,6 @@ def register():
                 )
                 return render_template("register.html")
 
-            # For DB error test
             return "Error creating account", 500
 
     return render_template("register.html")
@@ -283,7 +276,6 @@ def customer_dashboard():
     user_email = session.get("email")
 
     if request.method == "POST":
-        # 1. Validate Form Data
         course_id_to_update = request.form.get("course")
         new_extra = request.form.get("extra")
 
@@ -296,7 +288,6 @@ def customer_dashboard():
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # 2. Perform Update
             update_query = """
             UPDATE bookings
             SET nice_to_have_requests = %s, updated_at = NOW()
@@ -311,20 +302,18 @@ def customer_dashboard():
         except Exception as e:
             if conn:
                 conn.rollback()
-            print(f"Update Error: {e}")
+            logger.error(f"Update Error: {e}")
             return f"Error updating booking: {e}", 500
         finally:
-            # 3. Safe Cleanup
             if cursor:
                 cursor.close()
             if conn:
                 conn.close()
 
-        # Redirect to GET after POST (PRG Pattern) to prevent resubmission
+        # Redirect-after-POST to prevent resubmission
         return redirect(url_for("customer_dashboard"))
 
-    # --- GET Request Handling ---
-
+    # --- GET ---
     personal_details = {
         "name": session.get("name"),
         "email": session.get("email"),
@@ -369,7 +358,7 @@ def customer_dashboard():
             )
 
     except Exception as e:
-        print(f"Dashboard Fetch Error: {e}")
+        logger.error(f"Dashboard Fetch Error: {e}")
         return f"Error fetching dashboard: {e}", 500
     finally:
         if cursor:
@@ -409,7 +398,7 @@ def booking():
 
     user_email = session.get("email")
 
-    # --- POST REQUEST: Handle Form Submission ---
+    # --- POST: Handle Form Submission ---
     if request.method == "POST":
         selected_course_ids = request.form.getlist("courses")
         extra_request = request.form.get("extra", "")
@@ -417,7 +406,7 @@ def booking():
         if not selected_course_ids:
             return redirect(url_for("booking"))
 
-        new_booking_ids = []  # Track IDs of successfully created bookings
+        new_booking_ids = []
 
         conn = None
         try:
@@ -433,7 +422,7 @@ def booking():
             customer_id = customer_row[0]
 
             for course_id in selected_course_ids:
-                # Check duplicate
+                # Check for duplicate booking
                 cur.execute(
                     "SELECT booking_id FROM bookings WHERE customer_id = %s AND course_id = %s",
                     (customer_id, course_id),
@@ -441,7 +430,7 @@ def booking():
                 if cur.fetchone():
                     continue
 
-                # Insert Booking
+                # Insert booking
                 cur.execute(
                     """
                     INSERT INTO bookings
@@ -451,10 +440,10 @@ def booking():
                     """,
                     (customer_id, course_id, extra_request),
                 )
-                new_booking_id = cur.fetchone()[0]  # note a single item
-                new_booking_ids.append(new_booking_id)  # Add to a list
+                new_booking_id = cur.fetchone()[0]
+                new_booking_ids.append(new_booking_id)
 
-                # Insert Modules
+                # Insert selected modules
                 selected_module_ids = request.form.getlist(f"modules_{course_id}")
                 if selected_module_ids:
                     module_insert_data = [
@@ -466,27 +455,24 @@ def booking():
                     )
 
             conn.commit()
-            # send ids to submitted status page
             session["last_booking_ids"] = new_booking_ids
             return redirect(url_for("booking_submitted"))
 
         except Exception as e:
             if conn:
                 conn.rollback()
-                print(f"Booking POST Error: {e}")
+            logger.error(f"Booking POST Error: {e}")
             return f"Error processing booking: {e}", 500
         finally:
             if conn:
                 conn.close()
 
-    # --- GET REQUEST: Render Form ---
+    # --- GET: Render Form ---
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # 1. Fetch Active Courses
-        print("DEBUG: Fetching active courses...")
         cur.execute("""
             SELECT course_id, course_name, description
             FROM courses
@@ -494,9 +480,7 @@ def booking():
             ORDER BY course_name
         """)
         courses_data = cur.fetchall()
-        print(f"DEBUG: Found {len(courses_data)} active courses.")
 
-        # 2. Fetch Active Modules
         cur.execute("""
             SELECT module_id, course_id, module_name, module_description
             FROM course_modules
@@ -508,7 +492,6 @@ def booking():
         cur.close()
         conn.close()
 
-        # 3. Organize Data
         modules_by_course = {}
         for m in modules_data:
             m_id, m_course_id, m_name, m_desc = m
@@ -537,11 +520,11 @@ def booking():
                 "email": session.get("email"),
                 "phone": session.get("phone"),
             },
-            courses=courses_payload,  # <--- CRITICAL: Passing data to template
+            courses=courses_payload,
         )
 
     except Exception as e:
-        print(f"Booking GET Error: {e}")
+        logger.error(f"Booking GET Error: {e}")
         return f"Error loading booking page: {e}", 500
     finally:
         if conn:
@@ -563,7 +546,6 @@ def booking_submitted():
     if session.get("role") != "customer":
         return redirect(url_for("customer_login"))
 
-    # Get IDs from Session
     booking_ids = session.get("last_booking_ids")
     if not booking_ids:
         return redirect(url_for("booking"))
@@ -575,15 +557,13 @@ def booking_submitted():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Fetch Course & Extra Info for bookings
-        # use ANY(%s) to match any ID in the list
         cur.execute(
             """
             SELECT b.booking_id, c.course_name, b.nice_to_have_requests
             FROM bookings b
             JOIN courses c ON b.course_id = c.course_id
             WHERE b.booking_id = ANY(%s)
-        """,
+            """,
             (booking_ids,),
         )
 
@@ -592,14 +572,13 @@ def booking_submitted():
         for row in rows:
             b_id, c_name, extra = row
 
-            # Fetch Modules for this specific booking
             cur.execute(
                 """
                 SELECT m.module_name
                 FROM booking_modules bm
                 JOIN course_modules m ON bm.module_id = m.module_id
                 WHERE bm.booking_id = %s
-            """,
+                """,
                 (b_id,),
             )
 
@@ -613,7 +592,7 @@ def booking_submitted():
         conn.close()
 
     except Exception as e:
-        print(f"Error fetching confirmation: {e}")
+        logger.error(f"Error fetching confirmation: {e}")
         return "Error loading confirmation", 500
     finally:
         if conn:
@@ -621,7 +600,7 @@ def booking_submitted():
 
     return render_template(
         "booking_submitted.html",
-        bookings=booking_details,  # Pass list of booking objects
+        bookings=booking_details,
     )
 
 
@@ -630,25 +609,25 @@ def booking_submitted():
 def admin_login():
     """
     Handle administrator login.
+    Supports both hashed and legacy plain-text passwords, auto-rehashing on login.
     """
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
 
         conn = None
+        row = None
         try:
             conn = get_db_connection()
             cur = conn.cursor()
-
             cur.execute(
                 """
                 SELECT admin_id, name, email, password
                 FROM admins
                 WHERE email = %s
-            """,
+                """,
                 (email,),
             )
-
             row = cur.fetchone()
             cur.close()
             conn.close()
@@ -657,28 +636,58 @@ def admin_login():
             flash("Database error occurred.", "error")
             return render_template("admin_login.html"), 500
 
-        if row and row[3] == password:
-            admin_id, name, email_db, stored_password = row
-            # Create session
+        if not row:
+            flash("Invalid admin credentials", "error")
+            return render_template("admin_login.html"), 401
+
+        admin_id, name, email_db, stored_password = row
+
+        # Check password — support hashed and legacy plain-text
+        valid = False
+        if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
+            valid = check_password_hash(stored_password, password)
+        else:
+            # Legacy plain-text — compare, then rehash in a fresh connection
+            if stored_password == password:
+                valid = True
+                new_hashed = generate_password_hash(password)
+                rehash_conn = None
+                rehash_cur = None
+                try:
+                    rehash_conn = get_db_connection()
+                    rehash_cur = rehash_conn.cursor()
+                    rehash_cur.execute(
+                        "UPDATE admins SET password = %s WHERE email = %s",
+                        (new_hashed, email),
+                    )
+                    rehash_conn.commit()
+                except Exception as e:
+                    logger.error(f"Error rehashing admin password: {e}")
+                finally:
+                    if rehash_cur:
+                        rehash_cur.close()
+                    if rehash_conn:
+                        rehash_conn.close()
+
+        # FIX: session assignment is strictly inside the `if valid:` block
+        if valid:
             session.clear()
             session["user"] = email_db
             session["role"] = "admin"
             session["name"] = name
             return redirect(url_for("admin_dashboard"))
-        else:
-            flash("Invalid admin credentials", "error")
-            return render_template("admin_login.html"), 401
+
+        flash("Invalid admin credentials", "error")
+        return render_template("admin_login.html"), 401
 
     return render_template("admin_login.html")
 
 
-# ---------- ADMIN ----------
-
-
+# ---------- ADMIN DASHBOARD ----------
 @app.route("/admin")
 def admin_dashboard():
     """
-    admin dashboard
+    Admin dashboard showing summary counts.
     """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
@@ -701,7 +710,7 @@ def admin_dashboard():
             "admin_dashboard.html",
             customer_count=customer_count,
             course_count=course_count,
-            booking_count=booking_count
+            booking_count=booking_count,
         )
     except Exception as e:
         return f"Admin Stats Error: {e}", 500
@@ -710,29 +719,37 @@ def admin_dashboard():
             conn.close()
 
 
+# ---------- ADMIN MANAGE BOOKINGS ----------
 @app.route("/admin/bookings")
 def manage_bookings():
     """
-    admin manage booking
+    List all bookings for admin review.
     """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT b.booking_id, c.email, co.course_name, b.nice_to_have_requests
-        FROM bookings b
-        JOIN customers c ON b.customer_id = c.customer_id
-        JOIN courses co ON b.course_id = co.course_id
-        ORDER BY b.booking_id DESC
-    """)
-    rows = cur.fetchall()
-    bookings = [{"id": r[0], "email": r[1], "course": r[2], "extra": r[3]} for r in rows]
-    conn.close()
-    return render_template("manage_bookings.html", bookings=bookings)
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT b.booking_id, c.email, co.course_name, b.nice_to_have_requests
+            FROM bookings b
+            JOIN customers c ON b.customer_id = c.customer_id
+            JOIN courses co ON b.course_id = co.course_id
+            ORDER BY b.booking_id DESC
+        """)
+        rows = cur.fetchall()
+        bookings = [{"id": r[0], "email": r[1], "course": r[2], "extra": r[3]} for r in rows]
+        return render_template("manage_bookings.html", bookings=bookings)
+    except Exception as e:
+        return f"Error loading bookings: {e}", 500
+    finally:
+        if conn:
+            conn.close()
 
 
+# ---------- ADMIN EDIT BOOKING ----------
 @app.route("/admin/bookings/<int:booking_id>/edit", methods=["GET", "POST"])
 def edit_booking(booking_id):
     """
@@ -745,19 +762,20 @@ def edit_booking(booking_id):
         booking_id (int): The ID of the booking to edit
 
     Returns:
-        str: Rendered edit template or redirect to admin dashboard
+        str: Rendered edit template or redirect to bookings list
     """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-    if request.method == "POST":
-        new_course_id = request.form.get("course_id")
-        new_extra = request.form.get("extra")
+        if request.method == "POST":
+            new_course_id = request.form.get("course_id")
+            new_extra = request.form.get("extra")
 
-        try:
             cur.execute("""
                 UPDATE bookings
                 SET course_id = %s, nice_to_have_requests = %s, updated_at = NOW()
@@ -766,67 +784,73 @@ def edit_booking(booking_id):
             conn.commit()
             flash("Booking updated successfully!", "success")
             return redirect(url_for("manage_bookings"))
-        except Exception as e:
+
+        # GET: Fetch current booking and all courses for the dropdown
+        cur.execute("""
+            SELECT b.booking_id, b.nice_to_have_requests, b.course_id, c.course_name
+            FROM bookings b
+            JOIN courses c ON b.course_id = c.course_id
+            WHERE b.booking_id = %s
+        """, (booking_id,))
+        row = cur.fetchone()
+
+        if not row:
+            return "Booking not found", 404
+
+        cur.execute("SELECT course_id, course_name FROM courses WHERE active = TRUE")
+        all_courses = cur.fetchall()
+
+        booking_data = {
+            "id": row[0],
+            "extra": row[1],
+            "course_id": row[2],
+            "course_name": row[3],
+        }
+
+        return render_template("edit_booking.html", booking=booking_data, courses=all_courses)
+
+    except Exception as e:
+        if conn:
             conn.rollback()
-            flash(f"Error updating: {e}", "error")
-        finally:
+        flash(f"Error updating booking: {e}", "error")
+        return redirect(url_for("manage_bookings"))
+    finally:
+        if conn:
             conn.close()
 
-    # GET Request: Fetch current data to populate form
-    cur.execute("""
-        SELECT b.booking_id, b.nice_to_have_requests, b.course_id, c.course_name
-        FROM bookings b
-        JOIN courses c ON b.course_id = c.course_id
-        WHERE b.booking_id = %s
-    """, (booking_id,))
-    row = cur.fetchone()
 
-    # Also fetch all courses so the admin can change the course in a dropdown
-    cur.execute("SELECT course_id, course_name FROM courses WHERE active = TRUE")
-    all_courses = cur.fetchall()
-    conn.close()
-
-    if not row:
-        return "Booking not found", 404
-
-    booking_data = {
-        "id": row[0],
-        "extra": row[1],
-        "course_id": row[2],
-        "course_name": row[3]
-    }
-
-    return render_template("edit_booking.html", booking=booking_data, courses=all_courses)
-
-
+# ---------- ADMIN DELETE BOOKING ----------
 @app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
 def delete_booking(booking_id):
     """
-    Delete booking
+    Delete a booking and its associated modules.
     """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    conn = None
     try:
-        # Delete dependencies first
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("DELETE FROM booking_modules WHERE booking_id = %s", (booking_id,))
         cur.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
         conn.commit()
         flash("Booking deleted successfully.", "success")
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         flash(f"Error deleting booking: {e}", "error")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
     return redirect(url_for("manage_bookings"))
 
 
+# ---------- ADMIN LIST CUSTOMERS ----------
 @app.route("/admin/customers")
 def admin_customers():
     """
-    admin list customers
+    List all customers for admin review.
     """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
@@ -854,24 +878,27 @@ def admin_customers():
         ]
         return render_template("manage_customers.html", customerlist=customers)
     except Exception as e:
-        return f"Admin Stats Error: {e}", 500
+        return f"Error loading customers: {e}", 500
     finally:
         if conn:
             conn.close()
 
 
+# ---------- ADMIN DELETE CUSTOMER ----------
 @app.route("/admin/customers/<int:customer_id>/delete", methods=["POST"])
 def delete_customer(customer_id):
     """
-    Delete customer
+    Delete a customer and all their associated bookings and modules.
     """
     if session.get("role") != "admin":
         return redirect(url_for("admin_login"))
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    conn = None
     try:
-        # 1. Delete booking_modules for all bookings belonging to this customer
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Delete booking_modules for all of this customer's bookings
         cur.execute(
             """
             DELETE FROM booking_modules
@@ -882,44 +909,35 @@ def delete_customer(customer_id):
             (customer_id,),
         )
 
-        # 2. Delete the customer's bookings
-        cur.execute(
-            "DELETE FROM bookings WHERE customer_id = %s",
-            (customer_id,),
-        )
-
-        # 3. Delete the customer
-        cur.execute(
-            "DELETE FROM customers WHERE customer_id = %s",
-            (customer_id,),
-        )
+        cur.execute("DELETE FROM bookings WHERE customer_id = %s", (customer_id,))
+        cur.execute("DELETE FROM customers WHERE customer_id = %s", (customer_id,))
 
         conn.commit()
         flash("Customer deleted successfully.", "success")
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         flash(f"Error deleting Customer: {e}", "error")
     finally:
-        if cur:
-            cur.close()
         if conn:
             conn.close()
     return redirect(url_for("admin_customers"))
 
 
+# ---------- ADMIN EDIT CUSTOMER ----------
 @app.route("/admin/customers/<int:customer_id>/edit", methods=["GET", "POST"])
 def edit_customer(customer_id):
     """
-    Handle editing of customers from admin dash
+    Handle editing of a customer from admin dashboard.
 
     GET: Display the edit customer form
-    POST: Process customrer update delete or edit
+    POST: Process customer update
 
     Args:
-        customer_id (int): The ID of the customer concerned
+        customer_id (int): The ID of the customer to edit
 
     Returns:
-        str: Rendered edit template or redirect to admin dashboard
+        str: Rendered edit template or redirect to customers list
     """
     if not app.config.get("TESTING") and session.get("role") != "admin":
         return redirect(url_for("admin_login"))
@@ -934,6 +952,7 @@ def edit_customer(customer_id):
             new_last_name = request.form.get("last_name", "").strip()
             new_email = request.form.get("email", "").strip()
             new_phone = request.form.get("phone", "").strip()
+
             if not all([new_name, new_last_name, new_email]):
                 flash("Name, last name and email are required.", "error")
                 return redirect(url_for("edit_customer", customer_id=customer_id))
@@ -974,20 +993,30 @@ def edit_customer(customer_id):
         return render_template("edit_customer.html", customer=customer_data)
 
     except Exception as e:
-        conn.rollback()
-        flash(f"Error updating: {e}", "error")
+        if conn:
+            conn.rollback()
+        flash(f"Error updating customer: {e}", "error")
         return redirect(url_for("admin_customers"))
     finally:
         if conn:
             conn.close()
-# ---------- TEMP DB DUMP ----------
+
+
+# ---------- DEBUG DB DUMP (admin-only) ----------
+_ALLOWED_TABLES = {
+    "customers", "admins", "bookings", "courses",
+    "course_modules", "booking_modules",
+}
 
 
 @app.route("/debug/db-dump")
 def db_dump():
     """
-    Temp db dump
+    Dump all database tables for debugging — admin only.
     """
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
     conn = None
     db_content = {}
 
@@ -1003,19 +1032,21 @@ def db_dump():
         tables = [row[0] for row in cur.fetchall()]
 
         for table in tables:
+            # whitelist table names to prevent SQL injection
+            if table not in _ALLOWED_TABLES:
+                continue
 
-            query = "SELECT column_name FROM information_schema.columns WHERE table_name = %s"
-            cur.execute(query, (table,))
-
+            cur.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+                (table,),
+            )
             columns = [col[0] for col in cur.fetchall()]
 
-            cur.execute(f"SELECT * FROM {table}")
+            # Safe: table name is validated against whitelist above
+            cur.execute(f"SELECT * FROM {table}")  # noqa: S608
             rows = cur.fetchall()
 
-            db_content[table] = {
-                "columns": columns,
-                "rows": rows
-            }
+            db_content[table] = {"columns": columns, "rows": rows}
 
         cur.close()
     except Exception as e:
