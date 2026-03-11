@@ -807,28 +807,6 @@ def delete_course(course_id):
     finally:
         if conn:
             conn.close()
-#----------------- ADMIN ----------
-        cur.execute("SELECT COUNT(*) FROM customers")
-        customer_count = cur.fetchone()[0]
-
-        cur.execute("SELECT COUNT(*) FROM courses")
-        course_count = cur.fetchone()[0]
-
-        cur.execute("SELECT COUNT(*) FROM bookings")
-        booking_count = cur.fetchone()[0]
-
-        return render_template(
-            "admin_dashboard.html",
-            customer_count=customer_count,
-            course_count=course_count,
-            booking_count=booking_count,
-        )
-    except Exception as e:
-        return f"Admin Stats Error: {e}", 500
-    finally:
-        if conn:
-            conn.close()
-
 
 # ---------- ADMIN MANAGE BOOKINGS ----------
 @app.route("/admin/bookings")
