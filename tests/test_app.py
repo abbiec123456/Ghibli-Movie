@@ -175,6 +175,30 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn(b"Invalid login credentials", response.data)
 
+    @patch("app.get_db_connection")
+    def test_login_plain_text_rehash_db_error(self, mock_db):
+        """Login still succeeds even when the rehash DB update fails"""
+        # First call: main SELECT succeeds; second call: rehash connection fails
+        mock_conn_main = MagicMock()
+        mock_cursor_main = MagicMock()
+        mock_cursor_main.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+        mock_conn_main.cursor.return_value = mock_cursor_main
+
+        mock_db.side_effect = [mock_conn_main, Exception("Rehash DB fail")]
+
+        response = self.client.post(
+            "/login",
+            data={"email": "abbie@example.com", "password": "group1"},
+            follow_redirects=True,
+        )
+
+        # Login should still succeed — rehash failure is non-fatal
+        self.assertEqual(response.status_code, 200)
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["role"], "customer")
+
     # =========================================================================
     # REGISTRATION
     # =========================================================================
@@ -222,6 +246,21 @@ class GhibliBookingSystemTests(unittest.TestCase):
             },
         )
         self.assertIn(b"required", response.data.lower())
+
+    def test_register_invalid_email_format(self):
+        """Registration fails when email format is invalid"""
+        response = self.client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "notanemail",
+                "password": "password123",
+                "confirm_password": "password123",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"valid email", response.data.lower())
 
     def test_register_password_mismatch(self):
         """Registration fails when passwords do not match"""
@@ -349,7 +388,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        # Find the UPDATE bookings call and verify its parameters
         update_call = None
         for c in mock_cursor.execute.call_args_list:
             if "UPDATE bookings" in c[0][0]:
@@ -358,11 +396,55 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         self.assertIsNotNone(update_call, "UPDATE query was not executed")
         _, params = update_call[0]
-        self.assertEqual(params[0], "Updated extra request")  # new_extra
-        self.assertEqual(params[1], "abbie@example.com")       # user_email
-        self.assertEqual(params[2], "5")                       # course_id
+        self.assertEqual(params[0], "Updated extra request")
+        self.assertEqual(params[1], "abbie@example.com")
+        self.assertEqual(params[2], "5")
 
         mock_conn.commit.assert_called()
+
+    @patch("app.get_db_connection")
+    def test_dashboard_post_db_exception(self, mock_db):
+        """Dashboard POST returns 500 when the UPDATE query fails"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
+        # Login succeeds, then make the next DB call fail for the POST
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+        mock_db.side_effect = Exception("DB Update Error")
+
+        response = self.client.post(
+            "/dashboard",
+            data={"course": "5", "extra": "Will fail"},
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error updating booking", response.data)
+
+    @patch("app.get_db_connection")
+    def test_dashboard_get_db_exception(self, mock_db):
+        """Dashboard GET returns 500 when the SELECT query fails"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+        mock_db.side_effect = Exception("DB Fetch Error")
+
+        response = self.client.get("/dashboard")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error fetching dashboard", response.data)
 
     # =========================================================================
     # LOGOUT
@@ -418,7 +500,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
         """Booking POST creates a booking and sets session IDs"""
         self._login_as_customer()
 
-        # Sequence: customer_id lookup → duplicate check → insert RETURNING id
         self.mock_cursor.fetchone.side_effect = [
             (4,),    # customer_id
             None,    # no duplicate
@@ -454,6 +535,85 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["last_booking_ids"], [888])
 
+    def test_booking_post_customer_not_found(self):
+        """Booking POST redirects to login when customer record is not in DB"""
+        self._login_as_customer()
+
+        # fetchone returns None — customer lookup finds nothing
+        self.mock_cursor.fetchone.side_effect = [None]
+
+        response = self.client.post(
+            "/book",
+            data={"courses": ["1"], "extra": "test"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response.location)
+
+    def test_booking_post_duplicate_skipped(self):
+        """Booking POST silently skips a course the customer already booked"""
+        self._login_as_customer()
+
+        # customer_id found, then duplicate check returns an existing booking_id
+        self.mock_cursor.fetchone.side_effect = [
+            (4,),   # customer_id
+            (55,),  # duplicate found — should continue (skip)
+        ]
+
+        response = self.client.post(
+            "/book",
+            data={"courses": ["1"], "extra": "Duplicate"},
+            follow_redirects=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # No new booking inserted, so last_booking_ids should be an empty list
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["last_booking_ids"], [])
+
+    @patch("app.get_db_connection")
+    def test_booking_post_db_exception(self, mock_db):
+        """Booking POST returns 500 when DB raises during insert"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+        mock_db.side_effect = Exception("DB Insert Error")
+
+        response = self.client.post(
+            "/book",
+            data={"courses": ["1"], "extra": "Will fail"},
+        )
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error processing booking", response.data)
+
+    @patch("app.get_db_connection")
+    def test_booking_get_db_exception(self, mock_db):
+        """Booking GET returns 500 when DB raises during course fetch"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.fetchone.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+        )
+
+        self.client.post(
+            "/login", data={"email": "abbie@example.com", "password": "group1"}
+        )
+        mock_db.side_effect = Exception("DB Fetch Error")
+
+        response = self.client.get("/book")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error loading booking page", response.data)
+
     # =========================================================================
     # BOOKING SUBMITTED
     # =========================================================================
@@ -478,8 +638,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
             sess["last_booking_ids"] = [101]
 
         self.mock_cursor.fetchall.side_effect = [
-            [(101, "Test Course Name", "Test Extra")],  # booking row
-            [("Module A",), ("Module B",)],              # modules for 101
+            [(101, "Test Course Name", "Test Extra")],
+            [("Module A",), ("Module B",)],
         ]
 
         response = self.client.get("/booking-submitted")
@@ -560,7 +720,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     @patch("app.get_db_connection")
     def test_admin_login_wrong_password_rejected(self, mock_db):
-        """Admin login is rejected when password is wrong (hashed)"""
+        """Admin login is rejected when password is wrong"""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
         mock_db.return_value = mock_conn
@@ -598,6 +758,43 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn(b"Invalid admin credentials", response.data)
 
+    @patch("app.get_db_connection")
+    def test_admin_login_db_exception(self, mock_db):
+        """Admin login returns 500 when DB raises during SELECT"""
+        mock_db.side_effect = Exception("DB Error")
+
+        response = self.client.post(
+            "/admin/login",
+            data={"email": "admin@example.com", "password": "adminpass"},
+        )
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Database error occurred", response.data)
+
+    @patch("app.get_db_connection")
+    def test_admin_login_plain_text_rehash_db_error(self, mock_db):
+        """Admin login still succeeds even when the rehash DB update fails"""
+        mock_conn_main = MagicMock()
+        mock_cursor_main = MagicMock()
+        mock_cursor_main.fetchone.return_value = (
+            1, "Admin User", "admin@example.com", "adminpass"
+        )
+        mock_conn_main.cursor.return_value = mock_cursor_main
+
+        # First call: main SELECT succeeds; second call: rehash UPDATE fails
+        mock_db.side_effect = [mock_conn_main, Exception("Rehash DB fail")]
+
+        response = self.client.post(
+            "/admin/login",
+            data={"email": "admin@example.com", "password": "adminpass"},
+            follow_redirects=True,
+        )
+
+        # Login should still succeed — rehash failure is non-fatal
+        self.assertEqual(response.status_code, 200)
+        with self.client.session_transaction() as sess:
+            self.assertEqual(sess["role"], "admin")
+
     # =========================================================================
     # ADMIN DASHBOARD
     # =========================================================================
@@ -614,6 +811,16 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/admin")
         self.assertEqual(response.status_code, 200)
 
+    @patch("app.get_db_connection")
+    def test_admin_dashboard_db_exception(self, mock_db):
+        """Admin dashboard returns 500 when DB raises"""
+        self._set_admin_session()
+        mock_db.side_effect = Exception("DB Error")
+
+        response = self.client.get("/admin")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Admin Stats Error", response.data)
+
     # =========================================================================
     # ADMIN BOOKINGS
     # =========================================================================
@@ -624,6 +831,25 @@ class GhibliBookingSystemTests(unittest.TestCase):
             sess["role"] = "customer"
         response = self.client.get("/admin/bookings")
         self.assertEqual(response.status_code, 302)
+
+    def test_manage_bookings_loads(self):
+        """Manage bookings page loads for admin"""
+        self._set_admin_session()
+        self.mock_cursor.fetchall.return_value = [
+            (1, "customer@example.com", "Test Course", "Some extra")
+        ]
+        response = self.client.get("/admin/bookings")
+        self.assertEqual(response.status_code, 200)
+
+    @patch("app.get_db_connection")
+    def test_manage_bookings_db_exception(self, mock_db):
+        """Manage bookings returns 500 when DB raises"""
+        self._set_admin_session()
+        mock_db.side_effect = Exception("DB Error")
+
+        response = self.client.get("/admin/bookings")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error loading bookings", response.data)
 
     def test_edit_booking_get_loads(self):
         """Edit booking form loads with current data"""
@@ -637,6 +863,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Howl&#39;s Moving Castle", response.data)
 
+    def test_edit_booking_get_not_found(self):
+        """Edit booking GET returns 404 when booking ID does not exist"""
+        self._set_admin_session()
+        self.mock_cursor.fetchone.return_value = None
+
+        response = self.client.get("/admin/bookings/9999/edit")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b"Booking not found", response.data)
+
     def test_edit_booking_post_redirects(self):
         """Editing a booking redirects to bookings list"""
         self._set_admin_session()
@@ -647,6 +882,24 @@ class GhibliBookingSystemTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/admin/bookings"))
+
+    @patch("app.get_db_connection")
+    def test_edit_booking_db_exception(self, mock_db):
+        """Edit booking handles DB exception with rollback and redirect"""
+        self._set_admin_session()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("DB Error")
+
+        response = self.client.post(
+            "/admin/bookings/1/edit",
+            data={"course_id": "1", "extra": "Will fail"},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_conn.rollback.assert_called()
 
     def test_delete_booking_calls_db_and_commits(self):
         """Deleting a booking executes both DELETE statements and commits"""
@@ -674,6 +927,22 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIsNotNone(booking_call_index)
         self.assertLess(module_call_index, booking_call_index)
 
+    @patch("app.get_db_connection")
+    def test_delete_booking_db_exception(self, mock_db):
+        """Delete booking handles DB exception with rollback"""
+        self._set_admin_session()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("DB Delete Error")
+
+        response = self.client.post(
+            "/admin/bookings/1/delete", follow_redirects=True
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_conn.rollback.assert_called()
+
     # =========================================================================
     # ADMIN CUSTOMERS
     # =========================================================================
@@ -687,6 +956,16 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/admin/customers")
         self.assertEqual(response.status_code, 200)
 
+    @patch("app.get_db_connection")
+    def test_admin_customers_db_exception(self, mock_db):
+        """Admin customers list returns 500 when DB raises"""
+        self._set_admin_session()
+        mock_db.side_effect = Exception("DB Error")
+
+        response = self.client.get("/admin/customers")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error loading customers", response.data)
+
     def test_edit_customer_get_loads(self):
         """Edit customer form loads with current customer data"""
         self._set_admin_session()
@@ -695,6 +974,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
         )
         response = self.client.get("/admin/customers/1/edit")
         self.assertEqual(response.status_code, 200)
+
+    def test_edit_customer_get_not_found(self):
+        """Edit customer GET returns 404 when customer ID does not exist"""
+        self._set_admin_session()
+        self.mock_cursor.fetchone.return_value = None
+
+        response = self.client.get("/admin/customers/9999/edit")
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b"Customer not found", response.data)
 
     def test_edit_customer_post_updates_and_redirects(self):
         """Editing a customer commits and redirects to customers list"""
@@ -711,6 +999,46 @@ class GhibliBookingSystemTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.mock_conn.commit.assert_called()
+
+    def test_edit_customer_post_missing_required_fields(self):
+        """Edit customer POST redirects back when required fields are empty"""
+        self._set_admin_session()
+        response = self.client.post(
+            "/admin/customers/1/edit",
+            data={
+                "name": "",       # required — empty
+                "last_name": "",  # required — empty
+                "email": "",      # required — empty
+                "phone": "555",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        # Validation failed before any DB write
+        self.mock_conn.commit.assert_not_called()
+
+    @patch("app.get_db_connection")
+    def test_edit_customer_db_exception(self, mock_db):
+        """Edit customer handles DB exception with rollback and redirect"""
+        self._set_admin_session()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("DB Error")
+
+        response = self.client.post(
+            "/admin/customers/1/edit",
+            data={
+                "name": "Jane",
+                "last_name": "Smith",
+                "email": "jane@example.com",
+                "phone": "555",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_conn.rollback.assert_called()
 
     def test_delete_customer_calls_db_and_commits(self):
         """Deleting a customer executes all DELETE statements and commits"""
@@ -742,6 +1070,63 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIsNotNone(customers_idx)
         self.assertLess(modules_idx, bookings_idx)
         self.assertLess(bookings_idx, customers_idx)
+
+    @patch("app.get_db_connection")
+    def test_delete_customer_db_exception(self, mock_db):
+        """Delete customer handles DB exception with rollback"""
+        self._set_admin_session()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("DB Delete Error")
+
+        response = self.client.post(
+            "/admin/customers/1/delete", follow_redirects=True
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_conn.rollback.assert_called()
+
+    # =========================================================================
+    # DB DUMP
+    # =========================================================================
+
+    def test_db_dump_requires_admin(self):
+        """DB dump redirects unauthenticated users to admin login"""
+        response = self.client.get("/debug/db-dump")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login", response.location)
+
+    def test_db_dump_loads_for_admin(self):
+        """DB dump returns 200 for authenticated admin"""
+        self._set_admin_session()
+        self.mock_cursor.fetchall.side_effect = [
+            [("customers",)],                      # table_name query
+            [("customer_id",), ("name",)],          # column_name query
+            [(1, "Abbie", "Smith")],                # SELECT * FROM customers
+        ]
+        response = self.client.get("/debug/db-dump")
+        self.assertEqual(response.status_code, 200)
+
+    def test_db_dump_skips_non_whitelisted_tables(self):
+        """DB dump ignores tables not in the allowed whitelist"""
+        self._set_admin_session()
+        # Return only a table that is NOT in _ALLOWED_TABLES
+        self.mock_cursor.fetchall.side_effect = [
+            [("pg_secret_table",)],
+        ]
+        response = self.client.get("/debug/db-dump")
+        self.assertEqual(response.status_code, 200)
+
+    @patch("app.get_db_connection")
+    def test_db_dump_db_exception(self, mock_db):
+        """DB dump returns 500 when DB raises"""
+        self._set_admin_session()
+        mock_db.side_effect = Exception("DB Error")
+
+        response = self.client.get("/debug/db-dump")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Error dumping database", response.data)
 
     # =========================================================================
     # INTEGRATION TEST
@@ -860,23 +1245,19 @@ class SessionManagementTests(unittest.TestCase):
 
         self.mock_cursor.fetchone.side_effect = mock_fetchone_by_email
 
-        # User 1 logs in
         self.client.post(
             "/login", data={"email": "test@example.com", "password": "testpass"}
         )
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "test@example.com")
 
-        # User 1 logs out
         self.client.get("/logout")
 
-        # User 2 logs in
         self.client.post(
             "/login", data={"email": "user2@example.com", "password": "pass2"}
         )
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["email"], "user2@example.com")
-            # User 1's data must not bleed into User 2's session
             self.assertNotEqual(sess.get("email"), "test@example.com")
 
 
