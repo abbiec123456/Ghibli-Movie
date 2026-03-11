@@ -719,8 +719,10 @@ def admin_dashboard():
     finally:
         if conn:
             conn.close()
-    
-#---------------------ADMIN COURSE -----------
+
+# --------------------- ADMIN COURSE -----------
+
+
 @app.route("/admin/courses", methods=["GET", "POST"])
 def manage_courses():
     if session.get("role") != "admin":
@@ -809,6 +811,8 @@ def delete_course(course_id):
             conn.close()
 
 # ---------- ADMIN MANAGE BOOKINGS ----------
+
+
 @app.route("/admin/bookings")
 def manage_bookings():
     """
