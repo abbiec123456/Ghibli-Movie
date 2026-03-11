@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Manage Courses</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .admin-nav {
+      margin-bottom: 20px;
+      padding: 10px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .admin-nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #4a4a4a;
+    }
+
+    .course-card {
+      background: #f1faee;
+      padding: 15px;
+      border-radius: 14px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .flash.success {
+      background-color: #dff6dd;
+      color: #2f6b2f;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .flash.error {
+      background-color: #ffdddd;
+      color: #a10000;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .small-button {
+      width: auto;
+      padding: 10px 20px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cloud small"></div>
+  <div class="cloud large"></div>
+
+  <div class="header">
+    <h1>Manage Courses</h1>
+    <p>Create and delete courses</p>
+  </div>
+
+  <div class="dashboard">
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">Home</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h2>Add New Course</h2>
+
+    <form method="POST" action="{{ url_for('manage_courses') }}">
+      <input type="text" name="course_name" placeholder="Course name" required>
+      <textarea name="description" placeholder="Course description" required></textarea>
+      <button type="submit">Create Course</button>
+    </form>
+
+    <h2>Existing Courses</h2>
+
+    {% if courses %}
+      {% for course in courses %}
+        <div class="course-card">
+          <p><strong>{{ course.name }}</strong></p>
+          <p>{{ course.description }}</p>
+
+          <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}">
+            <button type="submit" class="small-button">Delete Course</button>
+          </form>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p>No courses available.</p>
+    {% endif %}
+
+    <a href="{{ url_for('admin_dashboard') }}">Back to Admin Dashboard</a>
+  </div>
+
+</body>
+</html>

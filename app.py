@@ -697,6 +697,98 @@ def admin_dashboard():
         conn = get_db_connection()
         cur = conn.cursor()
 
+
+    
+#---------------------ADMIN COURSE -----------
+@app.route("/admin/courses", methods=["GET", "POST"])
+def manage_courses():
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        if request.method == "POST":
+            course_name = request.form.get("course_name", "").strip()
+            description = request.form.get("description", "").strip()
+
+            if not course_name or not description:
+                flash("Course name and description are required.", "error")
+                return redirect(url_for("manage_courses"))
+
+            cur.execute(
+                """
+                INSERT INTO courses (course_name, description, active, created_at)
+                VALUES (%s, %s, TRUE, NOW())
+                """,
+                (course_name, description),
+            )
+            conn.commit()
+            flash("Course created successfully.", "success")
+            return redirect(url_for("manage_courses"))
+
+        cur.execute(
+            """
+            SELECT course_id, course_name, description
+            FROM courses
+            WHERE active = TRUE
+            ORDER BY course_id ASC
+            """
+        )
+        rows = cur.fetchall()
+
+        courses = [
+            {
+                "id": row[0],
+                "name": row[1],
+                "description": row[2],
+            }
+            for row in rows
+        ]
+
+        cur.close()
+        
+        
+        ("admin_courses.html", courses=courses)
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return f"Manage Courses Error: {e}", 500
+
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route("/admin/courses/<int:course_id>/delete", methods=["POST"])
+def delete_course(course_id):
+    if session.get("role") != "admin":
+        return redirect(url_for("admin_login"))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("DELETE FROM courses WHERE course_id = %s", (course_id,))
+        conn.commit()
+
+        flash("Course deleted successfully.", "success")
+        return redirect(url_for("manage_courses"))
+
+    except Exception:
+        if conn:
+            conn.rollback()
+        flash("Unable to delete course.", "error")
+        return redirect(url_for("manage_courses"))
+
+    finally:
+        if conn:
+            conn.close()
+#----------------- ADMIN ----------
         cur.execute("SELECT COUNT(*) FROM customers")
         customer_count = cur.fetchone()[0]
 
