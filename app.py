@@ -640,7 +640,8 @@ def admin_login():
         return redirect(url_for("admin_dashboard"))
 
     return render_template("admin_login.html")
-# ------------ ADMIN COURSE -----------
+    
+#---------------------ADMIN COURSE -----------
 @app.route("/admin/courses", methods=["GET", "POST"])
 def manage_courses():
     if session.get("role") != "admin":
@@ -664,115 +665,13 @@ def manage_courses():
                 INSERT INTO courses (course_name, description, active, created_at)
                 VALUES (%s, %s, TRUE, NOW())
                 """,
-        for row in rows:
-            b_id, c_name, extra = row
-
-            # Fetch Modules for this specific booking
-            cur.execute(
-                """
-                SELECT m.module_name
-                FROM booking_modules bm
-                JOIN course_modules m ON bm.module_id = m.module_id
-                WHERE bm.booking_id = %s
-            """,
-                (b_id,),
-            )
-
-            modules = [m_row[0] for m_row in cur.fetchall()]
-
-            booking_details.append(
-                {"course": c_name, "modules": modules, "extra": extra}
-            )
-
-        cur.close()
-        conn.close()
-
-    except Exception as e:
-        print(f"Error fetching confirmation: {e}")
-        return "Error loading confirmation", 500
-    finally:
-        if conn:
-            conn.close()
-
-    return render_template(
-        "booking_submitted.html",
-        bookings=booking_details,  # Pass list of booking objects
-    )
-
-
-# ---------- ADMIN LOGIN ----------
-@app.route("/admin/login", methods=["GET", "POST"])
-def admin_login():
-    """
-    Handle administrator login.
-    """
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-
-        conn = None
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-
-            cur.execute(
-                """
-                SELECT admin_id, first_name, last_name, email, password
-                FROM admins
-                WHERE email = %s
-            """,
-                (email,),
-            )
-
-            row = cur.fetchone()
-            cur.close()
-            conn.close()
-
-        except Exception:
-            return "Invalid admin credentials", 401
-
-        if not row:
-            return "Invalid admin credentials", 401
-
-        admin_id, first_name, last_name, email_db, stored_password = row
-
-        if stored_password != password:
-            return "Invalid admin credentials", 401
-
-        # Create session
-        session.clear()
-        session["user"] = email_db
-        session["role"] = "admin"
-        session["name"] = f"{first_name} {last_name}"
-
-        return redirect(url_for("admin_dashboard"))
-
-    return render_template("admin_login.html")
-# ------------ ADMIN COURSE -----------
-@app.route("/admin/courses", methods=["GET", "POST"])
-def manage_courses():
-    if session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
-
-    conn = None
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        if request.method == "POST":
-            course_name = request.form.get("course_name", "").strip()
-            description = request.form.get("description", "").strip()
-
-            if not course_name or not description:
-                flash("Course name and description are required.", "error")
-                return redirect(url_for("manage_courses"))
                 (course_name, description),
             )
             conn.commit()
             flash("Course created successfully.", "success")
             return redirect(url_for("manage_courses"))
 
-	 cur.execute(
+        cur.execute(
             """
             SELECT course_id, course_name, description
             FROM courses
@@ -791,7 +690,8 @@ def manage_courses():
             for row in rows
         ]
 
-        return render_template("manage_courses.html", courses=courses)
+        cur.close()
+        return render_template("admin_courses.html", courses=courses)
 
     except Exception as e:
         if conn:
@@ -819,7 +719,7 @@ def delete_course(course_id):
         flash("Course deleted successfully.", "success")
         return redirect(url_for("manage_courses"))
 
-    except Exception as e:
+    except Exception:
         if conn:
             conn.rollback()
         flash("Unable to delete course.", "error")
@@ -828,8 +728,7 @@ def delete_course(course_id):
     finally:
         if conn:
             conn.close()
-
-# ---------- ADMIN ----------
+#----------------- ADMIN ----------
 
 
 @app.route("/admin")
