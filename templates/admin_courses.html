@@ -84,10 +84,11 @@
     <h2>Add New Course</h2>
 
     <form method="POST" action="{{ url_for('manage_courses') }}">
-      <input type="text" name="course_name" placeholder="Course name" required>
-      <textarea name="description" placeholder="Course description" required></textarea>
-      <button type="submit">Create Course</button>
-    </form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="text" name="course_name" placeholder="Course name" required>
+  <textarea name="description" placeholder="Course description" required></textarea>
+  <button type="submit">Create Course</button>
+</form>
 
     <h2>Existing Courses</h2>
 
@@ -97,9 +98,10 @@
           <p><strong>{{ course.name }}</strong></p>
           <p>{{ course.description }}</p>
 
-          <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}">
-            <button type="submit" class="small-button">Delete Course</button>
-          </form>
+ <form method="POST" action="{{ url_for('delete_course', course_id=course.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="small-button">Delete Course</button>
+</form>
         </div>
       {% endfor %}
     {% else %}
