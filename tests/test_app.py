@@ -188,14 +188,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         mock_db.side_effect = [mock_conn_main, Exception("Rehash DB fail")]
 
+        # Don't follow redirects: the dashboard GET would need a third DB call
         response = self.client.post(
             "/login",
             data={"email": "abbie@example.com", "password": "group1"},
-            follow_redirects=True,
+            follow_redirects=False,
         )
 
         # Login should still succeed — rehash failure is non-fatal
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["role"], "customer")
 
@@ -784,14 +785,15 @@ class GhibliBookingSystemTests(unittest.TestCase):
         # First call: main SELECT succeeds; second call: rehash UPDATE fails
         mock_db.side_effect = [mock_conn_main, Exception("Rehash DB fail")]
 
+        # Don't follow redirects: the admin dashboard GET would need a third DB call
         response = self.client.post(
             "/admin/login",
             data={"email": "admin@example.com", "password": "adminpass"},
-            follow_redirects=True,
+            follow_redirects=False,
         )
 
         # Login should still succeed — rehash failure is non-fatal
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["role"], "admin")
 
@@ -896,9 +898,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/bookings/1/edit",
             data={"course_id": "1", "extra": "Will fail"},
-            follow_redirects=True,
+            follow_redirects=False,
         )
-        self.assertEqual(response.status_code, 200)
+        # Route catches the exception and redirects away
+        self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
     def test_delete_booking_calls_db_and_commits(self):
@@ -938,9 +941,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor.execute.side_effect = Exception("DB Delete Error")
 
         response = self.client.post(
-            "/admin/bookings/1/delete", follow_redirects=True
+            "/admin/bookings/1/delete", follow_redirects=False
         )
-        self.assertEqual(response.status_code, 200)
+        # Route catches the exception, flashes, and always redirects
+        self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
     # =========================================================================
@@ -1035,9 +1039,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
                 "email": "jane@example.com",
                 "phone": "555",
             },
-            follow_redirects=True,
+            follow_redirects=False,
         )
-        self.assertEqual(response.status_code, 200)
+        # Route catches the exception and redirects away
+        self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
     def test_delete_customer_calls_db_and_commits(self):
@@ -1082,9 +1087,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_cursor.execute.side_effect = Exception("DB Delete Error")
 
         response = self.client.post(
-            "/admin/customers/1/delete", follow_redirects=True
+            "/admin/customers/1/delete", follow_redirects=False
         )
-        self.assertEqual(response.status_code, 200)
+        # Route catches the exception, flashes, and always redirects
+        self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
     # =========================================================================
