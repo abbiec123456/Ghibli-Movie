@@ -4,7 +4,6 @@ Ghibli Movie Booking System
 This Flask application provides a simple web interface for customers to log in,
 view their personal details and bookings, and update extra requests for courses.
 
-Note: This is a basic implementation with temporary in-memory data.
 """
 
 import os
@@ -21,6 +20,10 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
 env = os.environ.get("FLASK_ENV", "development").lower()
 if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
+
+LOGIN_TEMPLATE = "customer_login.html"
+REGISTER_TEMPLATE = "register.html"
+INVALID_CRED_MSG = "Invalid login credentials"
 
 # Initialize Logging
 logging.basicConfig(
@@ -71,6 +74,86 @@ def index():
     return render_template("index.html")
 
 
+# ---------- PASSWORD VERIFICATION ----------
+def verify_customer_password(stored_password, provided_password, email):
+    """Handles both modern hashes and legacy plain-text migration.
+
+    Returns:
+        bool: True if password is valid, False otherwise
+    """
+    if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
+        return check_password_hash(stored_password, provided_password)
+
+    # Legacy check
+    if stored_password == provided_password:
+        rehash_customer_password(email, provided_password)
+        return True
+    return False
+
+
+# ---------- GET CUSTOMER HELPER ----------
+def get_customer_by_email(email):
+    """
+    Retrieve a customer record from the database based on their email address.
+
+    This helper isolates the database connection and query logic to streamline
+    the authentication flow and reduce cognitive complexity in route handlers.
+
+    Args:
+        email (str): The email address of the customer to look up.
+
+    Returns:
+        tuple: A tuple containing (customer_id, name, last_name, email, phone, password)
+                if found; otherwise, None.
+    """
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT customer_id, name, last_name, email, phone, password
+            FROM customers
+            WHERE email = %s
+            """,
+            (email,),
+        )
+        return cur.fetchone()
+    finally:
+        conn.close()
+
+
+def rehash_customer_password(email, password):
+    """
+    Update a customer's plain-text password to a secure hash in the database.
+
+    This function is triggered during a successful login for accounts still
+    using legacy plain-text passwords. It ensures seamless migration to
+    Werkzeug-compatible secure hashing without disrupting the user experience.
+
+    Args:
+        email (str): The unique email identifier for the customer.
+        password (str): The plain-text password to be hashed and stored.
+
+    Returns:
+        None
+    """
+    new_hashed = generate_password_hash(password)
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE customers SET password = %s WHERE email = %s",
+                (new_hashed, email),
+            )
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Error rehashing customer password: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
 # ---------- CUSTOMER LOGIN ----------
 @app.route("/login", methods=["GET", "POST"])
 def customer_login():
@@ -83,83 +166,69 @@ def customer_login():
     Returns:
         str: login template or redirect to dashboard on POST
     """
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+    if request.method == "GET":
+        return render_template(LOGIN_TEMPLATE)
 
-        conn = None
-        cur = None
-        row = None
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor()
-            cur.execute(
-                """
-                SELECT customer_id, name, last_name, email, phone, password
-                FROM customers
-                WHERE email = %s
-                """,
-                (email,),
-            )
-            row = cur.fetchone()
-        except Exception:
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 401
-        finally:
-            if cur:
-                cur.close()
-            if conn:
-                conn.close()
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-        if not row:
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+    row = None
+    try:
+        row = get_customer_by_email(email)
 
-        customer_id, first_name, last_name, email_db, phone, stored_password = row
+    except Exception:
+        flash(INVALID_CRED_MSG, "error")
+        return render_template(LOGIN_TEMPLATE), 401
 
-        # --- Check password ---
-        valid = False
-        if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
-            # Hashed password — verify directly
-            valid = check_password_hash(stored_password, password)
-        else:
-            # Legacy plain-text password — compare, then rehash in a fresh connection
-            if stored_password == password:
-                valid = True
-                new_hashed = generate_password_hash(password)
-                rehash_conn = None
-                rehash_cur = None
-                try:
-                    rehash_conn = get_db_connection()
-                    rehash_cur = rehash_conn.cursor()
-                    rehash_cur.execute(
-                        "UPDATE customers SET password = %s WHERE email = %s",
-                        (new_hashed, email),
-                    )
-                    rehash_conn.commit()
-                except Exception as e:
-                    logger.error(f"Error rehashing customer password: {e}")
-                finally:
-                    if rehash_cur:
-                        rehash_cur.close()
-                    if rehash_conn:
-                        rehash_conn.close()
+    if not row or not verify_customer_password(row[5], password, email):
+        flash(INVALID_CRED_MSG, "error")
+        return render_template(LOGIN_TEMPLATE), 200
 
-        if not valid:
-            flash("Invalid login credentials", "error")
-            return render_template("customer_login.html"), 200
+    customer_id, first_name, last_name, email_db, phone, stored_password = row
 
-        # Successful login — set session
-        full_name = f"{first_name} {last_name}"
-        session["user"] = email_db
-        session["role"] = "customer"
-        session["name"] = full_name
-        session["email"] = email_db
-        session["phone"] = phone
+    # Successful login — set session
+    full_name = f"{first_name} {last_name}"
+    session["user"] = email_db
+    session["role"] = "customer"
+    session["name"] = full_name
+    session["email"] = email_db
+    session["phone"] = phone
 
-        return redirect(url_for("customer_dashboard"))
+    return redirect(url_for("customer_dashboard"))
 
-    return render_template("customer_login.html")
+
+def validate_registration(form, testing_mode):
+    """
+    Validate customer registration input data against business rules.
+
+    Checks for presence of required fields, email format validity,
+    password matching, and password complexity (if not in testing mode).
+
+    Args:
+        form_data (dict): The request.form dictionary containing user input.
+        testing_mode (bool): Flag to bypass strict password complexity
+                             requirements during automated tests.
+
+    Returns:
+        str: An error message if validation fails; otherwise, None.
+    """
+    password = form.get("password")
+    email = form.get("email")
+
+    if not all([form.get("first_name"), form.get("last_name"), email, password]):
+        return "Please fill in all required fields."
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return "Please enter a valid email address."
+    if password != form.get("confirm_password"):
+        return "Passwords do not match."
+    if len(password) < 8:
+        return "Password must be at least 8 characters long."
+
+    if not testing_mode:
+        if not all([re.search(r"[A-Z]", password),
+                    re.search(r"[a-z]", password), re.search(r"[0-9]", password)]):
+            return "Password must include uppercase, lowercase and a number."
+    return None
 
 
 # ---------- REGISTER ----------
@@ -174,94 +243,46 @@ def register():
     Returns:
         str: Rendered registration template or redirect to login
     """
-    if request.method == "POST":
+    if request.method == "GET":
+        return render_template(REGISTER_TEMPLATE)
 
-        first_name = request.form.get("first_name")
-        last_name = request.form.get("last_name")
-        email = request.form.get("email")
-        phone = request.form.get("phone")
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
+    error = validate_registration(request.form, app.config.get("TESTING"))
+    if error:
+        flash(error, "error")
+        return render_template(REGISTER_TEMPLATE)
 
-        # Missing fields
-        if not all([first_name, last_name, email, password, confirm_password]):
-            flash("Please fill in all required fields.", "error")
-            return render_template("register.html")
-
-        # Email validation
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            flash("Please enter a valid email address.", "error")
-            return render_template("register.html")
-
-        # Password mismatch
-        if password != confirm_password:
-            flash("Passwords do not match.", "error")
-            return render_template("register.html")
-
-        if len(password) < 8:
-            flash("Password must be at least 8 characters long.", "error")
-            return render_template("register.html")
-
-        # Password complexity (skip in tests)
-        if not app.config.get("TESTING"):
-            if (
-                not re.search(r"[A-Z]", password)
-                or not re.search(r"[a-z]", password)
-                or not re.search(r"[0-9]", password)
-            ):
-                msg = (
-                    "Password must be at least 8 characters and include "
-                    "uppercase, lowercase and a number."
-                )
-                flash(msg, "error")
-                return render_template("register.html")
-
-        # Hash the password for live/new users
-        hashed_password = (
-            generate_password_hash(password)
-            if not app.config.get("TESTING")
-            else password
+    # Hash the password for live/new users
+    hashed_pw = (
+        generate_password_hash(request.form.get("password"))
+        if not app.config.get("TESTING")
+        else request.form.get("password")
         )
 
-        conn = None
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-
-            cursor.execute(
-                """
-                INSERT INTO customers
-                (name, last_name, email, phone, created_at, password)
-                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-                """,
-                (first_name, last_name, email, phone, hashed_password),
-            )
-
-            conn.commit()
-            cursor.close()
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO customers
+            (name, last_name, email, phone, created_at, password)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
+            """,
+            (request.form.get("first_name"), request.form.get("last_name"),
+                request.form.get("email"), request.form.get("phone"), hashed_pw)
+        )
+        conn.commit()
+        flash("Account created successfully. Please log in.", "success")
+        return redirect(url_for("customer_login"))
+    except Exception as e:
+        msg = str(e).lower()
+        if "duplicate" in msg or "unique" in msg:
+            flash("An account with this email already exists.", "error")
+            return render_template(REGISTER_TEMPLATE)
+        return "Error creating account", 500
+    finally:
+        if conn:
             conn.close()
-
-            flash("Account created successfully. Please log in.", "success")
-            return redirect(url_for("customer_login"))
-
-        except Exception as e:
-            if conn:
-                conn.rollback()
-
-            error_message = str(e).lower()
-
-            # Duplicate email
-            if "duplicate" in error_message or "unique" in error_message:
-                flash(
-                    "An account with this email already exists. "
-                    "Please log in or reset your password.",
-                    "error",
-                )
-                return render_template("register.html")
-
-            return "Error creating account", 500
-
-    return render_template("register.html")
 
 
 # ---------- CUSTOMER DASHBOARD ----------
@@ -532,7 +553,7 @@ def booking():
 
 
 # ---------- BOOKING SUBMITTED ----------
-@app.route("/booking-submitted")
+@app.route("/booking_submitted")
 def booking_submitted():
     """
     Display booking confirmation page.
