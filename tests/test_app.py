@@ -52,8 +52,8 @@ class GhibliBookingSystemTests(unittest.TestCase):
             data={
                 "email": "abbie@example.com",
                 "password": "group1"
-        },
-        follow_redirects=True)
+            },
+            follow_redirects=True)
 
     def _set_admin_session(self):
         """Helper: directly inject an admin session."""
