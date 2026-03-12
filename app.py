@@ -22,7 +22,7 @@ if env == "production" and app.config["SECRET_KEY"] == "ghibli_secret_key":
     raise ValueError("No SECRET_KEY set !")
 
 LOGIN_TEMPLATE = "customer_login.html"
-REGISTER_TEMPLATE = "REGISTER_TEMPLATE"
+REGISTER_TEMPLATE = "register.html"
 INVALID_CRED_MSG = "Invalid login credentials"
 
 # Initialize Logging
