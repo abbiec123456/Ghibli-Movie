@@ -73,16 +73,17 @@ def index():
     """
     return render_template("index.html")
 
+
 # ---------- PASSWORD VERIFICATION ----------
 def verify_customer_password(stored_password, provided_password, email):
     """Handles both modern hashes and legacy plain-text migration.
-    
+
     Returns:
         bool: True if password is valid, False otherwise
     """
     if stored_password.startswith(("pbkdf2:", "sha256:", "scrypt:")):
         return check_password_hash(stored_password, provided_password)
-    
+
     # Legacy check
     if stored_password == provided_password:
         rehash_customer_password(email, provided_password)
@@ -95,7 +96,7 @@ def get_customer_by_email(email):
     """
     Retrieve a customer record from the database based on their email address.
 
-    This helper isolates the database connection and query logic to streamline 
+    This helper isolates the database connection and query logic to streamline
     the authentication flow and reduce cognitive complexity in route handlers.
 
     Args:
@@ -120,11 +121,12 @@ def get_customer_by_email(email):
     finally:
         conn.close()
 
+
 def rehash_customer_password(email, password):
     """
     Update a customer's plain-text password to a secure hash in the database.
 
-    This function is triggered during a successful login for accounts still 
+    This function is triggered during a successful login for accounts still
     using legacy plain-text passwords. It ensures seamless migration to 
     Werkzeug-compatible secure hashing without disrupting the user experience.
 
@@ -164,11 +166,10 @@ def customer_login():
     """
     if request.method == "GET":
         return render_template(LOGIN_TEMPLATE)
-    
+
     email = request.form.get("email")
     password = request.form.get("password")
 
-    cur = None
     row = None
     try:
         row = get_customer_by_email(email)
@@ -193,16 +194,17 @@ def customer_login():
 
     return redirect(url_for("customer_dashboard"))
 
+
 def validate_registration(form, testing_mode):
     """
     Validate customer registration input data against business rules.
 
-    Checks for presence of required fields, email format validity, 
+    Checks for presence of required fields, email format validity,
     password matching, and password complexity (if not in testing mode).
 
     Args:
         form_data (dict): The request.form dictionary containing user input.
-        testing_mode (bool): Flag to bypass strict password complexity 
+        testing_mode (bool): Flag to bypass strict password complexity
                              requirements during automated tests.
 
     Returns:
@@ -210,7 +212,7 @@ def validate_registration(form, testing_mode):
     """
     password = form.get("password")
     email = form.get("email")
-    
+
     if not all([form.get("first_name"), form.get("last_name"), email, password]):
         return "Please fill in all required fields."
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
@@ -219,9 +221,10 @@ def validate_registration(form, testing_mode):
         return "Passwords do not match."
     if len(password) < 8:
         return "Password must be at least 8 characters long."
-    
+
     if not testing_mode:
-        if not all([re.search(r"[A-Z]", password), re.search(r"[a-z]", password), re.search(r"[0-9]", password)]):
+        if not all([re.search(r"[A-Z]", password), 
+                    re.search(r"[a-z]", password), re.search(r"[0-9]", password)]):
             return "Password must include uppercase, lowercase and a number."
     return None
 
@@ -240,7 +243,7 @@ def register():
     """
     if request.method == "GET":
         return render_template(REGISTER_TEMPLATE)
-    
+
     error = validate_registration(request.form, app.config.get("TESTING"))
     if error:
         flash(error, "error")
@@ -263,8 +266,8 @@ def register():
                 (name, last_name, email, phone, created_at, password)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
                 """,
-                (request.form.get("first_name"), request.form.get("last_name"), 
-                request.form.get("email"), request.form.get("phone"), hashed_pw)
+                (request.form.get("first_name"), request.form.get("last_name"),
+                 request.form.get("email"), request.form.get("phone"), hashed_pw)
             )
             conn.commit()
         flash("Account created successfully. Please log in.", "success")
@@ -276,7 +279,8 @@ def register():
             return render_template(REGISTER_TEMPLATE)
         return "Error creating account", 500
     finally:
-        if 'conn' in locals(): conn.close()    
+        if 'conn' in locals():
+            conn.close()
 
 
 # ---------- CUSTOMER DASHBOARD ----------
