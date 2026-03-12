@@ -637,7 +637,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
     def test_booking_submitted_requires_authentication(self):
         """Booking submitted page redirects unauthenticated users"""
-        response = self.client.get("/booking-submitted")
+        response = self.client.get("/booking_submitted")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/login"))
 
@@ -645,7 +645,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def test_booking_submitted_redirects_without_session_ids(self, mock_get_customer):
         """Booking submitted redirects to /book when no booking IDs in session"""
         self._login_as_customer()
-        response = self.client.get("/booking-submitted")
+        response = self.client.get("/booking_submitted")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/book"))
 
@@ -661,7 +661,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             [("Module A",), ("Module B",)],
         ]
 
-        response = self.client.get("/booking-submitted")
+        response = self.client.get("/booking_submitted")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Test Course Name", response.data)
         self.assertIn(b"Module A", response.data)
@@ -678,7 +678,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             sess["email"] = "abbie@example.com"
             sess["last_booking_ids"] = [101]
 
-        response = self.client.get("/booking-submitted")
+        response = self.client.get("/booking_submitted")
         self.assertEqual(response.status_code, 500)
         self.assertIn(b"Error loading confirmation", response.data)
 

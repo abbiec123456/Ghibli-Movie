@@ -108,16 +108,16 @@ def get_customer_by_email(email):
     """
     conn = get_db_connection()
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT customer_id, name, last_name, email, phone, password
-                FROM customers
-                WHERE email = %s
-                """,
-                (email,),
-            )
-            return cur.fetchone()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT customer_id, name, last_name, email, phone, password
+            FROM customers
+            WHERE email = %s
+            """,
+            (email,),
+        )
+        return cur.fetchone()
     finally:
         conn.close()
 
@@ -259,17 +259,17 @@ def register():
     conn = None
     try:
         conn = get_db_connection()
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO customers
-                (name, last_name, email, phone, created_at, password)
-                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
-                """,
-                (request.form.get("first_name"), request.form.get("last_name"),
-                 request.form.get("email"), request.form.get("phone"), hashed_pw)
-            )
-            conn.commit()
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO customers
+            (name, last_name, email, phone, created_at, password)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
+            """,
+            (request.form.get("first_name"), request.form.get("last_name"),
+            request.form.get("email"), request.form.get("phone"), hashed_pw)
+        )
+        conn.commit()
         flash("Account created successfully. Please log in.", "success")
         return redirect(url_for("customer_login"))
     except Exception as e:
