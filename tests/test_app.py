@@ -47,10 +47,13 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_get_customer.return_value = (
             4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
         )
-        return self.client.post("/login", data={
-           "email": "abbie@example.com",
-           "password": "group1"
-        }, follow_redirects=True)
+        return self.client.post(
+            "/login",
+            data={
+                "email": "abbie@example.com",
+                "password": "group1"
+        },
+        follow_redirects=True)
 
     def _set_admin_session(self):
         """Helper: directly inject an admin session."""
