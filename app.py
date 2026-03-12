@@ -175,11 +175,11 @@ def customer_login():
         row = get_customer_by_email(email)
 
     except Exception:
-        flash("INVALID_CRED_MSG", "error")
+        flash(INVALID_CRED_MSG, "error")
         return render_template(LOGIN_TEMPLATE), 401
 
     if not row or not verify_customer_password(row[5], password, email):
-        flash("INVALID_CRED_MSG", "error")
+        flash(INVALID_CRED_MSG, "error")
         return render_template(LOGIN_TEMPLATE), 200
 
     customer_id, first_name, last_name, email_db, phone, stored_password = row
@@ -279,7 +279,7 @@ def register():
             return render_template(REGISTER_TEMPLATE)
         return "Error creating account", 500
     finally:
-        if 'conn' in locals():
+        if conn:
             conn.close()
 
 

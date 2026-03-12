@@ -41,12 +41,16 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.mock_cursor.fetchone.return_value = (
             4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
         )
-
-    def _login_as_customer(self, email="abbie@example.com", password="group1"):
-        """Helper: log in as a customer."""
-        return self.client.post(
-            "/login", data={"email": email, "password": password}
+    
+    @patch('app.get_customer_by_email')
+    def _login_as_customer(self, mock_get_customer):
+        mock_get_customer.return_value = (
+            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
         )
+        return self.client.post("/login", data={
+           "email": "abbie@example.com", 
+           "password": "group1"
+        }, follow_redirects=True)
 
     def _set_admin_session(self):
         """Helper: directly inject an admin session."""
