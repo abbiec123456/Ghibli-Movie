@@ -269,7 +269,7 @@ def register():
             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             """,
             (request.form.get("first_name"), request.form.get("last_name"),
-            request.form.get("email"), request.form.get("phone"), hashed_pw)
+                request.form.get("email"), request.form.get("phone"), hashed_pw)
         )
         conn.commit()
         flash("Account created successfully. Please log in.", "success")
