@@ -1111,6 +1111,104 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
+# =========================================================================
+    # MANAGE COURSES
+    # =========================================================================
+ 
+    def test_manage_courses_requires_admin(self):
+        """Manage courses redirects unauthenticated users"""
+        response = self.client.get("/admin/courses")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login", response.location)
+ 
+    def test_manage_courses_get_loads(self):
+        """Manage courses GET returns 200 and lists courses for admin"""
+        self._set_admin_session()
+        self.mock_cursor.fetchall.return_value = [
+            (1, "Spirited Away Studio", "Learn animation"),
+            (2, "Moving Castle Creations", "Advanced techniques"),
+        ]
+        response = self.client.get("/admin/courses")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Spirited Away Studio", response.data)
+ 
+    def test_manage_courses_post_creates_course(self):
+        """Manage courses POST inserts a new course and redirects"""
+        self._set_admin_session()
+        response = self.client.post(
+            "/admin/courses",
+            data={"course_name": "New Course", "description": "A description"},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/courses", response.location)
+        self.mock_cursor.execute.assert_called()
+ 
+    def test_manage_courses_post_missing_fields(self):
+        """Manage courses POST redirects when course name or description is blank"""
+        self._set_admin_session()
+        response = self.client.post(
+            "/admin/courses",
+            data={"course_name": "", "description": ""},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/courses", response.location)
+        # No INSERT should have been attempted
+        for call in self.mock_cursor.execute.call_args_list:
+            self.assertNotIn("INSERT", call[0][0])
+ 
+    @patch("app.get_db_connection")
+    def test_manage_courses_db_exception(self, mock_db):
+        """Manage courses GET returns 500 when DB raises"""
+        self._set_admin_session()
+        mock_db.side_effect = Exception("DB Error")
+        response = self.client.get("/admin/courses")
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Manage Courses Error", response.data)
+ 
+    # =========================================================================
+    # DELETE COURSE
+    # =========================================================================
+ 
+    def test_delete_course_requires_admin(self):
+        """Delete course redirects unauthenticated users"""
+        response = self.client.post("/admin/courses/1/delete")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login", response.location)
+ 
+    def test_delete_course_calls_db_and_commits(self):
+        """Deleting a course executes DELETE and commits, then redirects"""
+        self._set_admin_session()
+        response = self.client.post(
+            "/admin/courses/1/delete", follow_redirects=False
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/courses", response.location)
+        delete_calls = [
+            c for c in self.mock_cursor.execute.call_args_list
+            if "DELETE" in c[0][0]
+        ]
+        self.assertTrue(len(delete_calls) > 0, "DELETE query was not executed")
+        self.mock_conn.commit.assert_called()
+ 
+    @patch("app.get_db_connection")
+    def test_delete_course_db_exception(self, mock_db):
+        """Delete course handles DB exception with rollback and redirects"""
+        self._set_admin_session()
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_db.return_value = mock_conn
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("DB Error")
+ 
+        response = self.client.post(
+            "/admin/courses/1/delete", follow_redirects=False
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/courses", response.location)
+        mock_conn.rollback.assert_called()
+
     # =========================================================================
     # DB DUMP
     # =========================================================================
