@@ -356,7 +356,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertTrue(response.location.endswith("/login"))
 
     @patch('app.get_customer_by_email')
-    def test_dashboard_loads_for_authenticated_user(self):
+    def test_dashboard_loads_for_authenticated_user(self, mock_get_customer):
         """Dashboard returns 200 for logged-in customer"""
         self._login_as_customer()
         self.mock_cursor.fetchall.return_value = []
@@ -364,7 +364,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     @patch('app.get_customer_by_email')
-    def test_dashboard_update_missing_course_id(self):
+    def test_dashboard_update_missing_course_id(self, mock_get_customer):
         """POST to dashboard without course ID returns 400"""
         self._login_as_customer()
         response = self.client.post("/dashboard", data={"extra": "No course id"})
@@ -460,7 +460,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     # LOGOUT
     # =========================================================================
     @patch('app.get_customer_by_email')
-    def test_logout_clears_session(self):
+    def test_logout_clears_session(self, mock_get_customer):
         """Logout clears all session data"""
         self._login_as_customer()
         response = self.client.get("/logout", follow_redirects=True)
@@ -480,7 +480,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertTrue(response.location.endswith("/login"))
 
     @patch('app.get_customer_by_email')
-    def test_booking_page_loads_for_authenticated_user(self):
+    def test_booking_page_loads_for_authenticated_user(self, mock_get_customer):
         """Booking page returns 200 for logged-in customer"""
         self._login_as_customer()
         self.mock_cursor.fetchall.side_effect = [
@@ -491,7 +491,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
     @patch('app.get_customer_by_email')
-    def test_booking_page_renders_course_content(self):
+    def test_booking_page_renders_course_content(self, mock_get_customer):
         """Booking page actually renders course data from DB"""
         self._login_as_customer()
         self.mock_cursor.fetchall.side_effect = [
@@ -503,14 +503,14 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn(b"Spirited Away Workshop", response.data)
 
     @patch('app.get_customer_by_email')
-    def test_booking_without_courses_redirects(self):
+    def test_booking_without_courses_redirects(self, mock_get_customer):
         """Booking POST with no courses selected redirects back to booking"""
         self._login_as_customer()
         response = self.client.post("/book", data={"courses": []})
         self.assertEqual(response.status_code, 302)
 
     @patch('app.get_customer_by_email')
-    def test_create_new_booking(self):
+    def test_create_new_booking(self, mock_get_customer):
         """Booking POST creates a booking and sets session IDs"""
         self._login_as_customer()
 
@@ -535,7 +535,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["last_booking_ids"], [999])
 
     @patch('app.get_customer_by_email')
-    def test_create_booking_without_modules(self):
+    def test_create_booking_without_modules(self, mock_get_customer):
         """Booking POST without modules still succeeds"""
         self._login_as_customer()
         self.mock_cursor.fetchone.side_effect = [(4,), None, (888,)]
@@ -551,7 +551,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
             self.assertEqual(sess["last_booking_ids"], [888])
 
     @patch('app.get_customer_by_email')
-    def test_booking_post_customer_not_found(self):
+    def test_booking_post_customer_not_found(self, mock_get_customer):
         """Booking POST redirects to login when customer record is not in DB"""
         self._login_as_customer()
 
@@ -567,7 +567,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertIn("/login", response.location)
 
     @patch('app.get_customer_by_email')
-    def test_booking_post_duplicate_skipped(self):
+    def test_booking_post_duplicate_skipped(self, mock_get_customer):
         """Booking POST silently skips a course the customer already booked"""
         self._login_as_customer()
 
@@ -642,7 +642,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertTrue(response.location.endswith("/login"))
 
     @patch('app.get_customer_by_email')
-    def test_booking_submitted_redirects_without_session_ids(self):
+    def test_booking_submitted_redirects_without_session_ids(self, mock_get_customer):
         """Booking submitted redirects to /book when no booking IDs in session"""
         self._login_as_customer()
         response = self.client.get("/booking-submitted")
@@ -650,7 +650,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertTrue(response.location.endswith("/book"))
 
     @patch('app.get_customer_by_email')
-    def test_booking_submitted_shows_booking_details(self):
+    def test_booking_submitted_shows_booking_details(self, mock_get_customer):
         """Booking submitted page renders course name and module names"""
         self._login_as_customer()
         with self.client.session_transaction() as sess:
