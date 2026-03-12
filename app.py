@@ -127,7 +127,7 @@ def rehash_customer_password(email, password):
     Update a customer's plain-text password to a secure hash in the database.
 
     This function is triggered during a successful login for accounts still
-    using legacy plain-text passwords. It ensures seamless migration to 
+    using legacy plain-text passwords. It ensures seamless migration to
     Werkzeug-compatible secure hashing without disrupting the user experience.
 
     Args:
@@ -223,7 +223,7 @@ def validate_registration(form, testing_mode):
         return "Password must be at least 8 characters long."
 
     if not testing_mode:
-        if not all([re.search(r"[A-Z]", password), 
+        if not all([re.search(r"[A-Z]", password),
                     re.search(r"[a-z]", password), re.search(r"[0-9]", password)]):
             return "Password must include uppercase, lowercase and a number."
     return None
