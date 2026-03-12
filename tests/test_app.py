@@ -362,7 +362,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.mock_cursor.fetchall.return_value = []
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-    
+
     @patch('app.get_customer_by_email')
     def test_dashboard_update_missing_course_id(self):
         """POST to dashboard without course ID returns 400"""
@@ -478,6 +478,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/book")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/login"))
+
     @patch('app.get_customer_by_email')
     def test_booking_page_loads_for_authenticated_user(self):
         """Booking page returns 200 for logged-in customer"""
@@ -532,7 +533,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["last_booking_ids"], [999])
- 
+
     @patch('app.get_customer_by_email')
     def test_create_booking_without_modules(self):
         """Booking POST without modules still succeeds"""
