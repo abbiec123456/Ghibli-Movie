@@ -551,7 +551,7 @@ def booking():
 
 
 # ---------- BOOKING SUBMITTED ----------
-@app.route("/booking-submitted")
+@app.route("/booking_submitted")
 def booking_submitted():
     """
     Display booking confirmation page.
