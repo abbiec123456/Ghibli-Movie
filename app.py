@@ -138,8 +138,9 @@ def rehash_customer_password(email, password):
         None
     """
     new_hashed = generate_password_hash(password)
-    conn = get_db_connection()
+    conn = None
     try:
+        conn = get_db_connection()
         with conn.cursor() as cur:
             cur.execute(
                 "UPDATE customers SET password = %s WHERE email = %s",
@@ -149,7 +150,8 @@ def rehash_customer_password(email, password):
     except Exception as e:
         logger.error(f"Error rehashing customer password: {e}")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 
 # ---------- CUSTOMER LOGIN ----------
