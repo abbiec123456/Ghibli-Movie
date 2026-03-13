@@ -41,25 +41,15 @@
                    placeholder="Email"
                    required>
 
-            <div style="position: relative;">
+            <div class="password-wrapper">
                 <input
                     type="password"
                     name="password"
                     id="password"
                     placeholder="Password"
                     required
-                    style="padding-right:40px;"
                 >
-
-                <span onclick="togglePassword()"
-                      style="
-                        position:absolute;
-                        right:10px;
-                        top:50%;
-                        transform:translateY(-50%);
-                        cursor:pointer;">
-                    👁️
-                </span>
+                <span onclick="togglePassword()" class="toggle-password">👁️</span>
             </div>
 
             <button type="submit">Enter the Studio</button>
@@ -72,17 +62,7 @@
         <a href="{{ url_for('register') }}">Register</a>
     </p>
 
-    <script>
-        function togglePassword() {
-            const password =
-                document.getElementById("password");
-
-            password.type =
-                password.type === "password"
-                    ? "text"
-                    : "password";
-        }
-    </script>
+    <script src="{{ url_for('static', filename='login.js') }}"></script>
 
 </body>
 </html>

@@ -14,6 +14,7 @@ import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "ghibli_secret_key")
@@ -60,6 +61,31 @@ app.config.update(
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "1") == "0"
 
 csrf = CSRFProtect(app)
+
+CSP_POLICY = {
+    "default-src": "'self'",
+    "script-src": ["'self'", "https://js-agent.newrelic.com"],
+    "style-src": "'self'",
+    "img-src": ["'self'", "data:"],
+    "font-src": "'self'",
+    "connect-src": ["'self'", "https://bam.nr-data.net"],
+    "form-action": "'self'",
+    "frame-ancestors": "'none'",
+    "object-src": "'none'",
+    "base-uri": "'self'",
+}
+
+talisman = Talisman(
+    app,
+    content_security_policy=CSP_POLICY,
+    force_https=env == "production",
+    strict_transport_security=env == "production",
+    strict_transport_security_max_age=31536000,
+    strict_transport_security_include_subdomains=True,
+    x_content_type_options=True,
+    referrer_policy="strict-origin-when-cross-origin",
+    frame_options="DENY",
+)
 
 
 # ---------- LANDING PAGE ----------
