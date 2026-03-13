@@ -6,3 +6,6 @@ Flask-WTF
 newrelic
 psycopg2-binary
 flask-talisman
+
+Jinja2>=3.1.6
+cryptography>=46.0.5
