@@ -87,6 +87,7 @@ talisman = Talisman(
     frame_options="DENY",
 )
 
+
 @app.after_request
 def set_security_headers(response):
     # Prevents loading cross-origin resources without explicit permission
@@ -96,6 +97,7 @@ def set_security_headers(response):
     # Restricts cross-origin resource sharing to same origin
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
     return response
+
 
 # ---------- LANDING PAGE ----------
 @app.route("/")
