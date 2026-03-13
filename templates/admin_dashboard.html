@@ -3,19 +3,6 @@
 <head>
   <title>Admin Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <style>
-    .admin-nav { margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px; }
-    .admin-nav a { margin: 0 15px; text-decoration: none; font-weight: bold; color: #4a4a4a; }
-    .stats-container { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
-    .stat-card { 
-      background: white; padding: 20px; border-radius: 15px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 150px; 
-      text-decoration: none; color: inherit; transition: transform 0.2s;
-    }
-    .stat-card:hover { transform: translateY(-5px); }
-    .stat-number { display: block; font-size: 2.5em; font-weight: bold; color: #7db9b6; }
-    .stat-label { font-size: 1.1em; color: #666; }
-  </style>
 </head>
 <body>
   <div class="cloud small"></div>
@@ -49,7 +36,7 @@
       </a>
     </div>
     <br><br>
-    <a href="{{ url_for('logout') }}" style="color: #e63946;">Logout</a>
+    <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
   </div>
 </body>
 </html>

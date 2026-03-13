@@ -32,19 +32,9 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="email" name="email" placeholder="Admin Email" required>
 
-            <div style="position: relative;">
-                <input 
-                    type="password" 
-                    name="password" 
-                    id="admin_password" 
-                    placeholder="Password" 
-                    required 
-                    style="padding-right:40px;"
-                >
-                <span onclick="toggleAdminPassword()" 
-                      style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer;">
-                    👁️
-                </span>
+            <div class="password-wrapper">
+                <input type="password" name="password" id="admin_password" placeholder="Password" required>
+                <span onclick="toggleAdminPassword()" class="toggle-password">👁️</span>
             </div>
             
             <button type="submit">Enter Admin Panel</button>
@@ -56,12 +46,7 @@
         <a href="{{ url_for('customer_login') }}">Customer Login</a>
     </p>
 
-    <script>
-        function toggleAdminPassword() {
-            const passwordField = document.getElementById("admin_password");
-            passwordField.type = passwordField.type === "password" ? "text" : "password";
-        }
-    </script>
+    <script src="{{ url_for('static', filename='admin.js') }}"></script>
 
 </body>
 </html>

@@ -114,6 +114,11 @@ textarea {
     text-align: center;
 }
 
+.booking-item {
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
 /* =====================================================
    BUTTONS
 ===================================================== */
@@ -279,6 +284,8 @@ body.landing {
     position: relative;
 }
 
+.password-wrapper input  { padding-right: 40px; }
+
 .toggle-password {
     position: absolute;
     right: 10px;
@@ -385,3 +392,38 @@ button:hover {
 .cloud {
     filter: blur(1px);
 }
+
+/* =====================================================
+   ADMNIN DASHBOARD
+===================================================== */
+
+
+.admin-nav { margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px; }
+.admin-nav a { margin: 0 15px; text-decoration: none; font-weight: bold; color: #4a4a4a; }
+.stats-container { display: flex; gap: 20px; justify-content: center; margin-top: 20px; }
+.stat-card {
+    background: white; padding: 20px; border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 150px;
+    text-decoration: none; color: inherit; transition: transform 0.2s;
+}
+.stat-card:hover { transform: translateY(-5px); }
+.stat-number { display: block; font-size: 2.5em; font-weight: bold; color: #7db9b6; }
+.stat-label { font-size: 1.1em; color: #666; }
+.logout-link { color: #e63946; }
+
+/* =====================================================
+   CUSTOMER DASHBOARD
+===================================================== */
+
+.booking-form          { margin-top: 10px; }
+.booking-form input[type="text"] { width: 90%; padding: 5px; margin-top: 5px; }
+.booking-form button   { margin-top: 5px; }
+
+/* =====================================================
+   MANAGE BOOKINGS
+===================================================== */
+
+.delete-btn { color: #e63946; background: none; border: 1px solid #e63946; border-radius: 4px; cursor: pointer; padding: 2px 8px; margin-left: 10px; }
+.delete-btn:hover { background: #e63946; color: white; }
+.actions { margin-top: 10px; display: flex; align-items: center; }
+.delete-form { display: inline; }

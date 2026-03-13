@@ -18,7 +18,7 @@
         <h2>Your New Bookings</h2>
         
         {% for booking in bookings %}
-        <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; padding-bottom: 10px;">
+        <div class="booking-item">
             <h3>Course: {{ booking.course }}</h3>
             
             {% if booking.modules %}

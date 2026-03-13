@@ -5,3 +5,4 @@ gunicorn
 Flask-WTF
 newrelic
 psycopg2-binary
+flask-talisman
