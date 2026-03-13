@@ -88,6 +88,17 @@ talisman = Talisman(
 )
 
 
+@app.after_request
+def set_security_headers(response):
+    # Prevents loading cross-origin resources without explicit permission
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    # Prevents other sites sharing the same browsing context
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    # Restricts cross-origin resource sharing to same origin
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    return response
+
+
 # ---------- LANDING PAGE ----------
 @app.route("/")
 def index():
