@@ -11,4 +11,4 @@
 40018	FAIL	# SQL Injection
 40019	FAIL	# SQL Injection (MySQL)
 40020	FAIL	# SQL Injection (PostgreSQL)
-10099	IGNORE	# (Source Code Disclosure - Java)
+10099	FALSE-POSITIVE	# (Source Code Disclosure - Java)
