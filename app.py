@@ -82,7 +82,7 @@ talisman = Talisman(
     strict_transport_security=env == "production",
     strict_transport_security_max_age=31536000,
     strict_transport_security_include_subdomains=True,
-    content_type_options=True,
+    x_content_type_options=True,
     referrer_policy="strict-origin-when-cross-origin",
     frame_options="DENY",
 )
