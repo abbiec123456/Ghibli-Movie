@@ -6,6 +6,9 @@ on:
     push:
         branches: ["main"]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
     Linting:
         name: Code Linting
@@ -209,7 +212,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Deploy via SSH
-          uses: appleboy/ssh-action@master
+          uses: appleboy/ssh-action@v1.2.0
           with:
             host: ${{ secrets.VPS_HOST }}
             username: ${{ secrets.VPS_USER }}
@@ -291,7 +294,7 @@ jobs:
 
       steps:
         - name: Checkout repository
-          uses: actions/checkout@v4
+          uses: actions/checkout@v4.2.2
 
         - name: Prepare workspace for ZAP
           run: chmod -R 777  ${{ github.workspace }}
@@ -341,7 +344,7 @@ jobs:
         - name: Set up Node.js
           uses: actions/setup-node@v4
           with:
-            node-version: '20'
+            node-version: '24'
 
         - name: Install cdxgen
           run: npm install -g @cyclonedx/cdxgen
@@ -383,7 +386,7 @@ jobs:
 
         # --- TRIVY SCAN ---
         - name: Scan SBOM with Trivy table output
-          uses: aquasecurity/trivy-action@master
+          uses: aquasecurity/trivy-action@0.30.0
           with:
             scan-type: 'sbom'
             scan-ref: 'sbom.json'
@@ -392,7 +395,7 @@ jobs:
 
         # --- step to confirm Trivy works ---
         - name: Scan Repo with Trivy table output
-          uses: aquasecurity/trivy-action@master
+          uses: aquasecurity/trivy-action@0.30.0
           with:
             scan-type: 'fs'
             scan-ref: 'requirements.txt'
@@ -402,7 +405,7 @@ jobs:
             TRIVY_SKIP_DB_UPDATE: true 
 
         - name: Scan SBOM with Trivy sarif format for upload
-          uses: aquasecurity/trivy-action@master
+          uses: aquasecurity/trivy-action@0.30.0
           with:
             scan-type: 'sbom'
             scan-ref: 'sbom.json'
@@ -411,7 +414,7 @@ jobs:
             exit-code: '0'   
 
         - name: Upload Trivy results to GitHub Security
-          uses: github/codeql-action/upload-sarif@v4
+          uses: github/codeql-action/upload-sarif@v3
           if: always()
           with:
             sarif_file: 'trivy-results.sarif'
@@ -428,7 +431,7 @@ jobs:
             output-format: sarif
 
         - name: Upload SBOM results
-          uses: github/codeql-action/upload-sarif@v4
+          uses: github/codeql-action/upload-sarif@v3
           if: always()
           with:
             sarif_file: ${{ steps.grype-scan.outputs.sarif }}
@@ -446,7 +449,7 @@ jobs:
             sed 's|"uri": ""|"uri": "obom.json"|g' raw-obom.sarif > fixed-obom.sarif
           
         - name: Upload Fixed OBOM results
-          uses: github/codeql-action/upload-sarif@v4
+          uses: github/codeql-action/upload-sarif@v3
           if: always()
           with:
             sarif_file: 'fixed-obom.sarif'
