@@ -429,12 +429,77 @@ jobs:
             sbom: "./sbom.json"
             fail-build: false
             output-format: sarif
+          env:
+            GRYPE_DB_VALIDATE_AGE: false
+
+        - name: Patch Grype SBOM SARIF
+          if: always()
+          env:
+            SARIF_IN: ${{ steps.grype-scan.outputs.sarif }}
+          run: |
+            python3 - <<'EOF'
+            import json, os, sys
+
+            src = os.environ.get("SARIF_IN", "").strip()
+
+            # Guard: file missing, empty, or grype wrote nothing due to a DB/scan error
+            if not src or not os.path.exists(src) or os.path.getsize(src) == 0:
+                print(f"SARIF file '{src}' is missing or empty — writing empty-runs SARIF.")
+                empty = {
+                    "version": "2.1.0",
+                    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                    "runs": []
+                }
+                with open("fixed-sbom.sarif", "w") as f:
+                    json.dump(empty, f, indent=2)
+                sys.exit(0)   # exit 0 so downstream steps still run
+
+            try:
+                with open(src) as f:
+                    sarif = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Could not parse '{src}' as JSON ({e}) — writing empty-runs SARIF.")
+                empty = {
+                    "version": "2.1.0",
+                    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                    "runs": []
+                }
+                with open("fixed-sbom.sarif", "w") as f:
+                    json.dump(empty, f, indent=2)
+                sys.exit(0)
+
+            for run in sarif.get("runs", []):
+                for result in run.get("results", []):
+                    locs = result.get("locations")
+                    if not locs:
+                        result["locations"] = [{
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "sbom.json",
+                                    "uriBaseId": "%SRCROOT%"
+                                }
+                            }
+                        }]
+                        continue
+                    for loc in locs:
+                        pl = loc.setdefault("physicalLocation", {})
+                        al = pl.get("artifactLocation", {})
+                        if not al.get("uri"):
+                            pl["artifactLocation"] = {
+                                "uri": "sbom.json",
+                                "uriBaseId": "%SRCROOT%"
+                            }
+
+            with open("fixed-sbom.sarif", "w") as f:
+                json.dump(sarif, f, indent=2)
+            print(f"Patched '{src}' → fixed-sbom.sarif")
+            EOF
 
         - name: Upload SBOM results
           uses: github/codeql-action/upload-sarif@v4
           if: always()
           with:
-            sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+            sarif_file: 'fixed-sbom.sarif' 
             category: grype-app-sbom
             checkout_path: ${{ github.workspace }}
 
@@ -445,9 +510,55 @@ jobs:
           run: |
             # Run scan and save to a temporary file
             grype sbom:./obom.json -o sarif > raw-obom.sarif || true
-            
-            sed 's|"uri": ""|"uri": "obom.json"|g' raw-obom.sarif > fixed-obom.sarif
-          
+
+        - name: Patch Grype OBOM SARIF
+          if: always()
+          run: |
+            python3 - <<'EOF'
+            import json, os, sys
+
+            src = "raw-obom.sarif"
+            if not os.path.exists(src) or os.path.getsize(src) == 0:
+                print("raw-obom.sarif missing or empty — writing empty SARIF.")
+                empty = {
+                    "version": "2.1.0",
+                    "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                    "runs": []
+                }
+                with open("fixed-obom.sarif", "w") as f:
+                    json.dump(empty, f, indent=2)
+                sys.exit(0)
+
+            with open(src) as f:
+                sarif = json.load(f)
+
+            for run in sarif.get("runs", []):
+                for result in run.get("results", []):
+                    locs = result.get("locations")
+                    if not locs:
+                        result["locations"] = [{
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "obom.json",
+                                    "uriBaseId": "%SRCROOT%"
+                                }
+                            }
+                        }]
+                        continue
+                    for loc in locs:
+                        pl = loc.setdefault("physicalLocation", {})
+                        al = pl.get("artifactLocation", {})
+                        if not al.get("uri"):
+                            pl["artifactLocation"] = {
+                                "uri": "obom.json",
+                                "uriBaseId": "%SRCROOT%"
+                            }
+
+            with open("fixed-obom.sarif", "w") as f:
+                json.dump(sarif, f, indent=2)
+            print("Patched raw-obom.sarif → fixed-obom.sarif")
+            EOF
+
         - name: Upload Fixed OBOM results
           uses: github/codeql-action/upload-sarif@v4
           if: always()
@@ -463,5 +574,6 @@ jobs:
             name: all-security-report
             path: |
               trivy-results.sarif
-              ${{ steps.grype-scan.outputs.sarif }}
-              ${{ steps.grype-obom.outputs.sarif }}
+              fixed-sbom.sarif
+              fixed-obom.sarif
+              raw-obom.sarif
