@@ -421,9 +421,6 @@ jobs:
             category: trivy-sbom-scanner
 
         # --- GRYPE SCAN ---
-        - name: Update Grype DB
-          run: grype db update
-          
         - name: Scan SBOM with Grype
           uses: anchore/scan-action@v3
           id: grype-scan
