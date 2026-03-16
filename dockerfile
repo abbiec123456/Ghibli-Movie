@@ -25,6 +25,17 @@ USER myuser
 COPY --chown=myuser:myuser --chmod=440 requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
+RUN pip install --no-cache-dir \
+    "Jinja2>=3.1.6" \
+    "cryptography>=46.0.5" \
+    "urllib3>=2.6.3" \
+    "setuptools>=78.1.1" \
+    "wheel>=0.46.2" \
+    "certifi>=2024.7.4" \
+    "idna>=3.7" \
+    "requests>=2.32.4" \
+    && pip install --upgrade pip
+
 COPY --chown=myuser:myuser --chmod=440 app.py .
 
 COPY --chown=myuser:myuser templates/ ./templates/

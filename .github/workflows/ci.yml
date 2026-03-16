@@ -336,7 +336,7 @@ jobs:
 
     generate-and-upload-bom:
       runs-on: ubuntu-latest
-      needs: docs
+      needs: [docs, buildimage]
       steps:
         - name: Checkout code
           uses: actions/checkout@v4.2.2
@@ -357,7 +357,9 @@ jobs:
         - name: Generate OBOM (Operational)
           run: |
             # Creates the Operations Bill of Materials
-            cdxgen --spec-version 1.5 -t os -o obom.json
+            cdxgen --spec-version 1.5 -t docker \
+              -o obom.json \
+              ${{ needs.buildimage.outputs.image_tag }}
 
         - name: Upload BOMs as Artifacts
           uses: actions/upload-artifact@v4.6.0
@@ -371,7 +373,7 @@ jobs:
     scan-bom:
       name: Scan SBOM & OBOM (Trivy & Grype)
       runs-on: ubuntu-latest
-      needs: generate-and-upload-bom
+      needs: [generate-and-upload-bom, buildimage]
       permissions:
         security-events: write
         contents: read
