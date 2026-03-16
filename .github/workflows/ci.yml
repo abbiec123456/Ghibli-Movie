@@ -347,7 +347,7 @@ jobs:
             node-version: '24'
 
         - name: Install cdxgen
-          run: npm install -g @cyclonedx/cdxgen
+          run: npm install -g @cyclonedx/cdxgen@10.9.8
 
         - name: Generate SBOM (Application)
           run: |
@@ -358,6 +358,7 @@ jobs:
           run: |
             # Creates the Operations Bill of Materials
             cdxgen --spec-version 1.5 -t docker \
+              --no-recurse \
               -o obom.json \
               ${{ needs.buildimage.outputs.image_tag }}
 
