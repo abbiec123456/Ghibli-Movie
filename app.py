@@ -664,12 +664,12 @@ def booking_submitted():
 
 # ---------- ADMIN LOGIN ----------
 @app.route("/admin/login", methods=["GET", "POST"])
-@csrf.exempt
 def admin_login():
     """
     Handle administrator login.
     Supports both hashed and legacy plain-text passwords, auto-rehashing on login.
     """
+    print("ADMIN LOGIN HIT", request.method)
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
