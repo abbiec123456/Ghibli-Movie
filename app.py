@@ -664,6 +664,7 @@ def booking_submitted():
 
 # ---------- ADMIN LOGIN ----------
 @app.route("/admin/login", methods=["GET", "POST"])
+@csrf.exempt
 def admin_login():
     """
     Handle administrator login.
