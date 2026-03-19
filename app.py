@@ -1166,7 +1166,7 @@ def db_dump():
     Dump all database tables for debugging — admin only.
     """
     if session.get("role") != "admin":
-       return redirect(url_for("admin_login"))
+        return redirect(url_for("admin_login"))
 
     conn = None
     db_content = {}
