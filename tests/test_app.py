@@ -1012,7 +1012,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "Jane",
+                "first_name": "Jane",
                 "last_name": "Smith",
                 "email": "jane@example.com",
                 "phone": "555-5678",
@@ -1028,7 +1028,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "",       # required — empty
+                "first_name": "",       # required — empty
                 "last_name": "",  # required — empty
                 "email": "",      # required — empty
                 "phone": "555",
@@ -1052,7 +1052,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "Jane",
+                "first_name": "Jane",
                 "last_name": "Smith",
                 "email": "jane@example.com",
                 "phone": "555",
@@ -1208,47 +1208,6 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/admin/courses", response.location)
         mock_conn.rollback.assert_called()
-
-    # =========================================================================
-    # DB DUMP
-    # =========================================================================
-
-    def test_db_dump_requires_admin(self):
-        """DB dump redirects unauthenticated users to admin login"""
-        response = self.client.get("/debug/db-dump")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/admin/login", response.location)
-
-    def test_db_dump_loads_for_admin(self):
-        """DB dump returns 200 for authenticated admin"""
-        self._set_admin_session()
-        self.mock_cursor.fetchall.side_effect = [
-            [("customers",)],                      # table_name query
-            [("customer_id",), ("name",)],          # column_name query
-            [(1, "Abbie", "Smith")],                # SELECT * FROM customers
-        ]
-        response = self.client.get("/debug/db-dump")
-        self.assertEqual(response.status_code, 200)
-
-    def test_db_dump_skips_non_whitelisted_tables(self):
-        """DB dump ignores tables not in the allowed whitelist"""
-        self._set_admin_session()
-        # Return only a table that is NOT in _ALLOWED_TABLES
-        self.mock_cursor.fetchall.side_effect = [
-            [("pg_secret_table",)],
-        ]
-        response = self.client.get("/debug/db-dump")
-        self.assertEqual(response.status_code, 200)
-
-    @patch("app.get_db_connection")
-    def test_db_dump_db_exception(self, mock_db):
-        """DB dump returns 500 when DB raises"""
-        self._set_admin_session()
-        mock_db.side_effect = Exception("DB Error")
-
-        response = self.client.get("/debug/db-dump")
-        self.assertEqual(response.status_code, 500)
-        self.assertIn(b"Error dumping database", response.data)
 
     # =========================================================================
     # INTEGRATION TEST

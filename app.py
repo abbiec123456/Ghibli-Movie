@@ -1011,7 +1011,7 @@ def admin_customers():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT customer_id, name, last_name, email, phone, created_at
+            SELECT customer_id, first_name, last_name, email, phone, created_at
             FROM customers
             ORDER BY customer_id DESC
         """)
@@ -1019,7 +1019,7 @@ def admin_customers():
         customers = [
             {
                 "id": r[0],
-                "name": r[1],
+                "first_name": r[1],
                 "last_name": r[2],
                 "email": r[3],
                 "phone": r[4],
@@ -1099,7 +1099,7 @@ def edit_customer(customer_id):
         cur = conn.cursor()
 
         if request.method == "POST":
-            new_name = request.form.get("name", "").strip()
+            new_name = request.form.get("first_name", "").strip()
             new_last_name = request.form.get("last_name", "").strip()
             new_email = request.form.get("email", "").strip()
             new_phone = request.form.get("phone", "").strip()
@@ -1111,7 +1111,7 @@ def edit_customer(customer_id):
             cur.execute(
                 """
                 UPDATE customers
-                SET name = %s, last_name = %s, email = %s, phone = %s
+                SET first_name = %s, last_name = %s, email = %s, phone = %s
                 WHERE customer_id = %s
                 """,
                 (new_name, new_last_name, new_email, new_phone, customer_id),
@@ -1123,7 +1123,7 @@ def edit_customer(customer_id):
         # GET: fetch current customer data
         cur.execute(
             """
-            SELECT customer_id, name, last_name, email, phone
+            SELECT customer_id, first_name, last_name, email, phone
             FROM customers
             WHERE customer_id = %s
             """,
@@ -1136,7 +1136,7 @@ def edit_customer(customer_id):
 
         customer_data = {
             "id": row[0],
-            "name": row[1],
+            "first_name": row[1],
             "last_name": row[2],
             "email": row[3],
             "phone": row[4],
@@ -1151,62 +1151,6 @@ def edit_customer(customer_id):
     finally:
         if conn:
             conn.close()
-
-
-# ---------- DEBUG DB DUMP (admin-only) ----------
-_ALLOWED_TABLES = {
-    "customers", "admins", "bookings", "courses",
-    "course_modules", "booking_modules",
-}
-
-
-@app.route("/debug/db-dump")
-def db_dump():
-    """
-    Dump all database tables for debugging — admin only.
-    """
-    if session.get("role") != "admin":
-        return redirect(url_for("admin_login"))
-
-    conn = None
-    db_content = {}
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-            SELECT table_name
-            FROM information_schema.tables
-            WHERE table_schema = 'public'
-        """)
-        tables = [row[0] for row in cur.fetchall()]
-
-        for table in tables:
-            # whitelist table names to prevent SQL injection
-            if table not in _ALLOWED_TABLES:
-                continue
-
-            cur.execute(
-                "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
-                (table,),
-            )
-            columns = [col[0] for col in cur.fetchall()]
-
-            # Safe: table name is validated against whitelist above
-            cur.execute(f"SELECT * FROM {table}")  # noqa: S608
-            rows = cur.fetchall()
-
-            db_content[table] = {"columns": columns, "rows": rows}
-
-        cur.close()
-    except Exception as e:
-        return f"Error dumping database: {str(e)}", 500
-    finally:
-        if conn:
-            conn.close()
-
-    return render_template("db_dump.html", db_content=db_content)
 
 
 if __name__ == "__main__":
