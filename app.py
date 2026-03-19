@@ -669,7 +669,6 @@ def admin_login():
     Handle administrator login.
     Supports both hashed and legacy plain-text passwords, auto-rehashing on login.
     """
-    print("ADMIN LOGIN HIT", request.method)
     if request.method == "POST":
         email = request.form["email"]
         password = request.form["password"]
@@ -1166,8 +1165,8 @@ def db_dump():
     """
     Dump all database tables for debugging — admin only.
     """
-    # if session.get("role") != "admin":
-    #    return redirect(url_for("admin_login"))
+    if session.get("role") != "admin":
+       return redirect(url_for("admin_login"))
 
     conn = None
     db_content = {}
