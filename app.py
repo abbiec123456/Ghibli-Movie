@@ -1152,5 +1152,6 @@ def edit_customer(customer_id):
         if conn:
             conn.close()
 
+
 if __name__ == "__main__":
     app.run(debug=True)
