@@ -1214,10 +1214,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
     # =========================================================================
 
     def test_db_dump_requires_admin(self):
-       """DB dump redirects unauthenticated users to admin login"""
-       response = self.client.get("/debug/db-dump")
-       self.assertEqual(response.status_code, 302)
-       self.assertIn("/admin/login", response.location)
+        """DB dump redirects unauthenticated users to admin login"""
+        response = self.client.get("/debug/db-dump")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login", response.location)
 
     def test_db_dump_loads_for_admin(self):
         """DB dump returns 200 for authenticated admin"""
