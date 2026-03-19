@@ -1011,7 +1011,7 @@ def admin_customers():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT customer_id, name, last_name, email, phone, created_at
+            SELECT customer_id, first_name, last_name, email, phone, created_at
             FROM customers
             ORDER BY customer_id DESC
         """)
@@ -1019,7 +1019,7 @@ def admin_customers():
         customers = [
             {
                 "id": r[0],
-                "name": r[1],
+                "first_name": r[1],
                 "last_name": r[2],
                 "email": r[3],
                 "phone": r[4],

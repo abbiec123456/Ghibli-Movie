@@ -1012,7 +1012,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "Jane",
+                "first_name": "Jane",
                 "last_name": "Smith",
                 "email": "jane@example.com",
                 "phone": "555-5678",
@@ -1028,7 +1028,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "",       # required — empty
+                "first_name": "",       # required — empty
                 "last_name": "",  # required — empty
                 "email": "",      # required — empty
                 "phone": "555",
@@ -1052,7 +1052,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "name": "Jane",
+                "first_name": "Jane",
                 "last_name": "Smith",
                 "email": "jane@example.com",
                 "phone": "555",
