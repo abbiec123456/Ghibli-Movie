@@ -1099,7 +1099,7 @@ def edit_customer(customer_id):
         cur = conn.cursor()
 
         if request.method == "POST":
-            new_name = request.form.get("name", "").strip()
+            new_name = request.form.get("first_name", "").strip()
             new_last_name = request.form.get("last_name", "").strip()
             new_email = request.form.get("email", "").strip()
             new_phone = request.form.get("phone", "").strip()
@@ -1111,7 +1111,7 @@ def edit_customer(customer_id):
             cur.execute(
                 """
                 UPDATE customers
-                SET name = %s, last_name = %s, email = %s, phone = %s
+                SET first_name = %s, last_name = %s, email = %s, phone = %s
                 WHERE customer_id = %s
                 """,
                 (new_name, new_last_name, new_email, new_phone, customer_id),
@@ -1123,7 +1123,7 @@ def edit_customer(customer_id):
         # GET: fetch current customer data
         cur.execute(
             """
-            SELECT customer_id, name, last_name, email, phone
+            SELECT customer_id, first_name, last_name, email, phone
             FROM customers
             WHERE customer_id = %s
             """,
@@ -1136,7 +1136,7 @@ def edit_customer(customer_id):
 
         customer_data = {
             "id": row[0],
-            "name": row[1],
+            "first_name": row[1],
             "last_name": row[2],
             "email": row[3],
             "phone": row[4],
