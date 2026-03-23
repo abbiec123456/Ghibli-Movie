@@ -228,6 +228,8 @@ jobs:
               echo "Deploying version: $IMAGE_NAME"
               docker stop ghibli-app || true
               docker rm ghibli-app || true
+              docker stop ghibli-db || true
+              docker rm ghibli-db || true
 
               # 3. Create / Overwrite docker-compose.yml on staging server each time and pull latest image
               cat > docker-compose.yml << EOF            
