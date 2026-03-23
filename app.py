@@ -302,7 +302,7 @@ def register():
         cur.execute(
             """
             INSERT INTO customers
-            (name, last_name, email, phone, created_at, password)
+            (first_name, last_name, email, phone, created_at, password)
             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             """,
             (request.form.get("first_name"), request.form.get("last_name"),
