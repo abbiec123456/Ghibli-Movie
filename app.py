@@ -302,7 +302,7 @@ def register():
         cur.execute(
             """
             INSERT INTO customers
-            (first_name, last_name, email, phone, created_at, password)
+            (name, last_name, email, phone, created_at, password)
             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             """,
             (request.form.get("first_name"), request.form.get("last_name"),
@@ -1011,7 +1011,7 @@ def admin_customers():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT customer_id, first_name, last_name, email, phone, created_at
+            SELECT customer_id, name, last_name, email, phone, created_at
             FROM customers
             ORDER BY customer_id DESC
         """)
@@ -1111,7 +1111,7 @@ def edit_customer(customer_id):
             cur.execute(
                 """
                 UPDATE customers
-                SET first_name = %s, last_name = %s, email = %s, phone = %s
+                SET name = %s, last_name = %s, email = %s, phone = %s
                 WHERE customer_id = %s
                 """,
                 (new_name, new_last_name, new_email, new_phone, customer_id),
@@ -1123,7 +1123,7 @@ def edit_customer(customer_id):
         # GET: fetch current customer data
         cur.execute(
             """
-            SELECT customer_id, first_name, last_name, email, phone
+            SELECT customer_id, name, last_name, email, phone
             FROM customers
             WHERE customer_id = %s
             """,
