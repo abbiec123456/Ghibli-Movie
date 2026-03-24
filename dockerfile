@@ -47,4 +47,4 @@ HEALTHCHECK --interval=1m --timeout=3s \
 
 EXPOSE 80
 
-CMD ["newrelic-admin", "run-program", "gunicorn", "--bind", "0.0.0.0:80", "--workers", "4", "--log-level", "warning", "app:app"]
+CMD ["newrelic-admin", "run-program", "gunicorn", "--bind", "0.0.0.0:80", "--workers", "1", "--log-level", "warning", "app:app"]
