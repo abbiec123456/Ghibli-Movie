@@ -105,7 +105,7 @@ Carried out unit testing in Jira where each team member works on a feature to im
     integrated and automated pipeline (commit -> test -> deploy)
 
 # Github version control:
-    branches used - 24 currently.
+    branches used - 22 currently.
     version/release management
 
 # Agile project management methods/principles (jira)
