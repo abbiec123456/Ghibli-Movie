@@ -67,8 +67,7 @@ We will be using PostgreSQL for our database
  - Project Slack: https://atudevops.slack.com
  - GitHub: https://github.com/abbiec123456/Ghibli-Movie
  - Server http://77.42.71.196/
-# More Information
-For more information, visit our other sections
+
 
 # Section	Description
 Process	Describes the company process
@@ -96,6 +95,7 @@ The code framework to be used will be Flask with Python code.
 - <<>>.
 
 # Testing:
+Carried out unit testing in Jira where each team member works on a feature to improve it.
     
     
 # Environments:
