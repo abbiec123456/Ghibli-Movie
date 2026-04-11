@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../databasetables/">
       
       
         
@@ -19,7 +23,7 @@
     
     
       
-        <title>Routes - Flask App Documentation</title>
+        <title>Routes Reference - Flask App Documentation</title>
       
     
     
@@ -98,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Routes
+              Routes Reference
             
           </span>
         </div>
@@ -218,10 +222,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../routes.md" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Routes Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -237,6 +268,257 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.admin_customers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        admin_customers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.admin_dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        admin_dashboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.admin_login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        admin_login
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.booking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        booking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.booking_submitted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        booking_submitted
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.customer_dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        customer_dashboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.customer_login" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        customer_login
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.delete_booking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete_booking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.delete_customer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        delete_customer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.edit_booking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edit_booking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.edit_customer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        edit_customer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.get_customer_by_email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_customer_by_email
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.get_db_connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_db_connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        index
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.logout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        logout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.manage_bookings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        manage_bookings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.register" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        register
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.rehash_customer_password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rehash_customer_password
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.validate_registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate_registration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app.verify_customer_password" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verify_customer_password
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
