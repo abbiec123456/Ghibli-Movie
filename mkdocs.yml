@@ -13,3 +13,5 @@ plugins:
 
 nav:
   - Home: index.md
+  - Routes Reference: routes.md
+  - Database Tables: databasetables.md
