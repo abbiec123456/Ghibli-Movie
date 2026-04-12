@@ -39,21 +39,29 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # Default: a valid plain-text-password customer row
         self.mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def _login_as_customer(self, mock_get_customer):
         mock_get_customer.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
         return self.client.post(
             "/login",
-            data={
-                "email": "abbie@example.com",
-                "password": "group1"
-            },
-            follow_redirects=True)
+            data={"email": "abbie@example.com", "password": "group1"},
+            follow_redirects=True,
+        )
 
     def _set_admin_session(self):
         """Helper: directly inject an admin session."""
@@ -88,7 +96,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         response = self.client.post(
@@ -115,7 +128,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         hashed = generate_password_hash("mypassword")
         mock_cursor.fetchone.return_value = (
-            5, "John", "Doe", "john@example.com", "555-1234", hashed
+            5,
+            "John",
+            "Doe",
+            "john@example.com",
+            "555-1234",
+            hashed,
         )
 
         response = self.client.post(
@@ -156,7 +174,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "correctpwd"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "correctpwd",
         )
 
         response = self.client.post(
@@ -189,7 +212,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn_main = MagicMock()
         mock_cursor_main = MagicMock()
         mock_cursor_main.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
         mock_conn_main.cursor.return_value = mock_cursor_main
 
@@ -355,7 +383,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/login"))
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_dashboard_loads_for_authenticated_user(self, mock_get_customer):
         """Dashboard returns 200 for logged-in customer"""
         self._login_as_customer()
@@ -363,7 +391,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_dashboard_update_missing_course_id(self, mock_get_customer):
         """POST to dashboard without course ID returns 400"""
         self._login_as_customer()
@@ -380,7 +408,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = (
-            1, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            1,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
         mock_cursor.fetchall.return_value = [
             (1, 5, "", "confirmed", "Moving Castle Creations", "Learn animation")
@@ -420,7 +453,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         # Login succeeds, then make the next DB call fail for the POST
@@ -444,7 +482,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         self.client.post(
@@ -459,7 +502,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     # =========================================================================
     # LOGOUT
     # =========================================================================
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_logout_clears_session(self, mock_get_customer):
         """Logout clears all session data"""
         self._login_as_customer()
@@ -479,7 +522,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/login"))
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_page_loads_for_authenticated_user(self, mock_get_customer):
         """Booking page returns 200 for logged-in customer"""
         self._login_as_customer()
@@ -490,7 +533,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.get("/book")
         self.assertEqual(response.status_code, 200)
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_page_renders_course_content(self, mock_get_customer):
         """Booking page actually renders course data from DB"""
         self._login_as_customer()
@@ -502,22 +545,24 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Spirited Away Workshop", response.data)
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_without_courses_redirects(self, mock_get_customer):
         """Booking POST with no courses selected redirects back to booking"""
         self._login_as_customer()
         response = self.client.post("/book", data={"courses": []})
         self.assertEqual(response.status_code, 302)
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_create_new_booking(self, mock_get_customer):
         """Booking POST creates a booking and sets session IDs"""
         self._login_as_customer()
 
         self.mock_cursor.fetchone.side_effect = [
-            (4,),    # customer_id
-            None,    # no duplicate
+            (4,),  # customer_id
+            None,  # no duplicate
             (999,),  # new booking_id
+            None,  # module 10 exists? -> no
+            None,  # module 11 exists? -> no
         ]
 
         response = self.client.post(
@@ -534,7 +579,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["last_booking_ids"], [999])
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_create_booking_without_modules(self, mock_get_customer):
         """Booking POST without modules still succeeds"""
         self._login_as_customer()
@@ -550,7 +595,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["last_booking_ids"], [888])
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_post_customer_not_found(self, mock_get_customer):
         """Booking POST redirects to login when customer record is not in DB"""
         self._login_as_customer()
@@ -566,27 +611,29 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login", response.location)
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_post_duplicate_skipped(self, mock_get_customer):
         """Booking POST silently skips a course the customer already booked"""
         self._login_as_customer()
 
         # customer_id found, then duplicate check returns an existing booking_id
         self.mock_cursor.fetchone.side_effect = [
-            (4,),   # customer_id
+            (4,),  # customer_id
             (55,),  # duplicate found — should continue (skip)
+            None,
+            None,
         ]
 
         response = self.client.post(
             "/book",
-            data={"courses": ["1"], "extra": "Duplicate"},
+            data={"courses": ["1"], "modules_1": ["10"], "extra": "Duplicate"},
             follow_redirects=True,
         )
 
         self.assertEqual(response.status_code, 200)
         # No new booking inserted, so last_booking_ids should be an empty list
         with self.client.session_transaction() as sess:
-            self.assertEqual(sess["last_booking_ids"], [])
+            self.assertEqual(sess["last_booking_ids"], [55])
 
     @patch("app.get_db_connection")
     def test_booking_post_db_exception(self, mock_db):
@@ -596,7 +643,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         self.client.post(
@@ -619,7 +671,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            4, "Abbie", "Smith", "abbie@example.com", "123-456-7890", "group1"
+            4,
+            "Abbie",
+            "Smith",
+            "abbie@example.com",
+            "123-456-7890",
+            "group1",
         )
 
         self.client.post(
@@ -641,7 +698,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/login"))
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_submitted_redirects_without_session_ids(self, mock_get_customer):
         """Booking submitted redirects to /book when no booking IDs in session"""
         self._login_as_customer()
@@ -649,7 +706,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.location.endswith("/book"))
 
-    @patch('app.get_customer_by_email')
+    @patch("app.get_customer_by_email")
     def test_booking_submitted_shows_booking_details(self, mock_get_customer):
         """Booking submitted page renders course name and module names"""
         self._login_as_customer()
@@ -699,7 +756,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_db.return_value = mock_conn
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.fetchone.return_value = (
-            1, "Admin User", "admin@example.com", "adminpass"
+            1,
+            "Admin User",
+            "admin@example.com",
+            "adminpass",
         )
 
         response = self.client.post(
@@ -724,7 +784,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         hashed = generate_password_hash("adminpass")
         mock_cursor.fetchone.return_value = (
-            1, "Admin User", "admin@example.com", hashed
+            1,
+            "Admin User",
+            "admin@example.com",
+            hashed,
         )
 
         response = self.client.post(
@@ -747,7 +810,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         hashed = generate_password_hash("correctpass")
         mock_cursor.fetchone.return_value = (
-            1, "Admin User", "admin@example.com", hashed
+            1,
+            "Admin User",
+            "admin@example.com",
+            hashed,
         )
 
         response = self.client.post(
@@ -796,7 +862,10 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn_main = MagicMock()
         mock_cursor_main = MagicMock()
         mock_cursor_main.fetchone.return_value = (
-            1, "Admin User", "admin@example.com", "adminpass"
+            1,
+            "Admin User",
+            "admin@example.com",
+            "adminpass",
         )
         mock_conn_main.cursor.return_value = mock_cursor_main
 
@@ -874,7 +943,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def test_edit_booking_get_loads(self):
         """Edit booking form loads with current data"""
         self._set_admin_session()
-        self.mock_cursor.fetchone.return_value = (1, "Extra req", 101, "Howl's Moving Castle")
+        self.mock_cursor.fetchone.return_value = (
+            1,
+            "Extra req",
+            101,
+            "Howl's Moving Castle",
+        )
         self.mock_cursor.fetchall.return_value = [
             (101, "Howl's Moving Castle"),
             (102, "Spirited Away"),
@@ -925,9 +999,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def test_delete_booking_calls_db_and_commits(self):
         """Deleting a booking executes both DELETE statements and commits"""
         self._set_admin_session()
-        response = self.client.post(
-            "/admin/bookings/1/delete", follow_redirects=True
-        )
+        response = self.client.post("/admin/bookings/1/delete", follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(self.mock_cursor.execute.called)
         self.mock_conn.commit.assert_called()
@@ -958,9 +1030,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.execute.side_effect = Exception("DB Delete Error")
 
-        response = self.client.post(
-            "/admin/bookings/1/delete", follow_redirects=False
-        )
+        response = self.client.post("/admin/bookings/1/delete", follow_redirects=False)
         # Route catches the exception, flashes, and always redirects
         self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
@@ -992,7 +1062,11 @@ class GhibliBookingSystemTests(unittest.TestCase):
         """Edit customer form loads with current customer data"""
         self._set_admin_session()
         self.mock_cursor.fetchone.return_value = (
-            1, "John", "Doe", "john@example.com", "555-1234"
+            1,
+            "John",
+            "Doe",
+            "john@example.com",
+            "555-1234",
         )
         response = self.client.get("/admin/customers/1/edit")
         self.assertEqual(response.status_code, 200)
@@ -1028,9 +1102,9 @@ class GhibliBookingSystemTests(unittest.TestCase):
         response = self.client.post(
             "/admin/customers/1/edit",
             data={
-                "first_name": "",       # required — empty
+                "first_name": "",  # required — empty
                 "last_name": "",  # required — empty
-                "email": "",      # required — empty
+                "email": "",  # required — empty
                 "phone": "555",
             },
             follow_redirects=True,
@@ -1066,9 +1140,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def test_delete_customer_calls_db_and_commits(self):
         """Deleting a customer executes all DELETE statements and commits"""
         self._set_admin_session()
-        response = self.client.post(
-            "/admin/customers/1/delete", follow_redirects=True
-        )
+        response = self.client.post("/admin/customers/1/delete", follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(self.mock_cursor.execute.called)
         self.mock_conn.commit.assert_called()
@@ -1104,14 +1176,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.execute.side_effect = Exception("DB Delete Error")
 
-        response = self.client.post(
-            "/admin/customers/1/delete", follow_redirects=False
-        )
+        response = self.client.post("/admin/customers/1/delete", follow_redirects=False)
         # Route catches the exception, flashes, and always redirects
         self.assertEqual(response.status_code, 302)
         mock_conn.rollback.assert_called()
 
-# =========================================================================
+    # =========================================================================
     # MANAGE COURSES
     # =========================================================================
 
@@ -1180,14 +1250,11 @@ class GhibliBookingSystemTests(unittest.TestCase):
     def test_delete_course_calls_db_and_commits(self):
         """Deleting a course executes DELETE and commits, then redirects"""
         self._set_admin_session()
-        response = self.client.post(
-            "/admin/courses/1/delete", follow_redirects=False
-        )
+        response = self.client.post("/admin/courses/1/delete", follow_redirects=False)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/admin/courses", response.location)
         delete_calls = [
-            c for c in self.mock_cursor.execute.call_args_list
-            if "DELETE" in c[0][0]
+            c for c in self.mock_cursor.execute.call_args_list if "DELETE" in c[0][0]
         ]
         self.assertTrue(len(delete_calls) > 0, "DELETE query was not executed")
         self.mock_conn.commit.assert_called()
@@ -1202,9 +1269,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
         mock_conn.cursor.return_value = mock_cursor
         mock_cursor.execute.side_effect = Exception("DB Error")
 
-        response = self.client.post(
-            "/admin/courses/1/delete", follow_redirects=False
-        )
+        response = self.client.post("/admin/courses/1/delete", follow_redirects=False)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/admin/courses", response.location)
         mock_conn.rollback.assert_called()
@@ -1237,7 +1302,12 @@ class GhibliBookingSystemTests(unittest.TestCase):
 
         # 2. LOGIN
         mock_cursor.fetchone.return_value = (
-            99, "Journey", "Tester", "journey@test.com", "555-9999", "testpass"
+            99,
+            "Journey",
+            "Tester",
+            "journey@test.com",
+            "555-9999",
+            "testpass",
         )
         response = self.client.post(
             "/login",
@@ -1274,6 +1344,7 @@ class GhibliBookingSystemTests(unittest.TestCase):
 # SESSION MANAGEMENT TESTS
 # =============================================================================
 
+
 class SessionManagementTests(unittest.TestCase):
     """Test session persistence and isolation between users"""
 
@@ -1291,7 +1362,12 @@ class SessionManagementTests(unittest.TestCase):
         self.mock_db.return_value = self.mock_conn
         self.mock_conn.cursor.return_value = self.mock_cursor
         self.mock_cursor.fetchone.return_value = (
-            1, "Test", "User", "test@example.com", "000-000-0000", "testpass"
+            1,
+            "Test",
+            "User",
+            "test@example.com",
+            "000-000-0000",
+            "testpass",
         )
 
     def test_session_persists_across_requests(self):
@@ -1319,9 +1395,23 @@ class SessionManagementTests(unittest.TestCase):
                 if isinstance(params, tuple) and params:
                     email = params[0]
                     if email == "test@example.com":
-                        return (1, "Test", "User", "test@example.com", "000-0000", "testpass")
+                        return (
+                            1,
+                            "Test",
+                            "User",
+                            "test@example.com",
+                            "000-0000",
+                            "testpass",
+                        )
                     elif email == "user2@example.com":
-                        return (2, "User", "Two", "user2@example.com", "111-1111", "pass2")
+                        return (
+                            2,
+                            "User",
+                            "Two",
+                            "user2@example.com",
+                            "111-1111",
+                            "pass2",
+                        )
             return None
 
         self.mock_cursor.fetchone.side_effect = mock_fetchone_by_email

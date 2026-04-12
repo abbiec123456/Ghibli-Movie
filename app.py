@@ -27,10 +27,7 @@ REGISTER_TEMPLATE = "register.html"
 INVALID_CRED_MSG = "Invalid login credentials"
 
 # Initialize Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s: %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -262,8 +259,13 @@ def validate_registration(form, testing_mode):
         return "Password must be at least 8 characters long."
 
     if not testing_mode:
-        if not all([re.search(r"[A-Z]", password),
-                    re.search(r"[a-z]", password), re.search(r"[0-9]", password)]):
+        if not all(
+            [
+                re.search(r"[A-Z]", password),
+                re.search(r"[a-z]", password),
+                re.search(r"[0-9]", password),
+            ]
+        ):
             return "Password must include uppercase, lowercase and a number."
     return None
 
@@ -293,7 +295,7 @@ def register():
         generate_password_hash(request.form.get("password"))
         if not app.config.get("TESTING")
         else request.form.get("password")
-        )
+    )
 
     conn = None
     try:
@@ -305,8 +307,13 @@ def register():
             (name, last_name, email, phone, created_at, password)
             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
             """,
-            (request.form.get("first_name"), request.form.get("last_name"),
-                request.form.get("email"), request.form.get("phone"), hashed_pw)
+            (
+                request.form.get("first_name"),
+                request.form.get("last_name"),
+                request.form.get("email"),
+                request.form.get("phone"),
+                hashed_pw,
+            ),
         )
         conn.commit()
         flash("Account created successfully. Please log in.", "success")
@@ -462,15 +469,19 @@ def booking():
         extra_request = request.form.get("extra", "")
 
         if not selected_course_ids:
+            flash("please select at least one course.", "error")
             return redirect(url_for("booking"))
 
         new_booking_ids = []
+        modules_added = 0
+        modules_skipped = 0
 
         conn = None
         try:
             conn = get_db_connection()
             cur = conn.cursor()
 
+            # Get customer
             cur.execute(
                 "SELECT customer_id FROM customers WHERE email = %s", (user_email,)
             )
@@ -480,40 +491,73 @@ def booking():
             customer_id = customer_row[0]
 
             for course_id in selected_course_ids:
-                # Check for duplicate booking
-                cur.execute(
-                    "SELECT booking_id FROM bookings WHERE customer_id = %s AND course_id = %s",
-                    (customer_id, course_id),
-                )
-                if cur.fetchone():
-                    continue
+                # selected_module_ids = request.form.getlist(f"modules_{course_id}")
 
-                # Insert booking
+                # Check if booking exists
                 cur.execute(
                     """
-                    INSERT INTO bookings
-                    (customer_id, course_id, status, nice_to_have_requests, updated_at)
-                    VALUES (%s, %s, 'Pending', %s, NOW())
-                    RETURNING booking_id
+                    SELECT booking_id FROM bookings
+                    WHERE customer_id = %s AND course_id = %s
                     """,
-                    (customer_id, course_id, extra_request),
+                    (customer_id, course_id),
                 )
-                new_booking_id = cur.fetchone()[0]
-                new_booking_ids.append(new_booking_id)
+                existing = cur.fetchone()
+
+                if existing:
+                    booking_id = existing[0]
+                else:
+                    # Create new booking
+                    cur.execute(
+                        """
+                        INSERT INTO bookings
+                        (customer_id, course_id, status, nice_to_have_requests, updated_at)
+                        VALUES (%s, %s, 'Pending', %s, NOW())
+                        RETURNING booking_id
+                        """,
+                        (customer_id, course_id, extra_request),
+                    )
+                    booking_id = cur.fetchone()[0]
+                new_booking_ids.append(booking_id)
 
                 # Insert selected modules
                 selected_module_ids = request.form.getlist(f"modules_{course_id}")
-                if selected_module_ids:
-                    module_insert_data = [
-                        (new_booking_id, m_id) for m_id in selected_module_ids
-                    ]
-                    cur.executemany(
-                        "INSERT INTO booking_modules (booking_id, module_id) VALUES (%s, %s)",
-                        module_insert_data,
+
+                for m_id in selected_module_ids:
+                    # Check if module already exists
+                    cur.execute(
+                        """
+                        SELECT 1 from booking_modules
+                        WHERE booking_id = %s AND module_id = %s
+                        """,
+                        (booking_id, m_id),
                     )
 
+                    if cur.fetchone():
+                        modules_skipped += 1
+                        continue
+
+                    # Insert new module
+                    cur.execute(
+                        """
+                        INSERT INTO booking_modules (booking_id, module_id)
+                        VALUES (%s, %s)
+                        """,
+                        (booking_id, m_id),
+                    )
+                    modules_added += 1
+
             conn.commit()
+
             session["last_booking_ids"] = new_booking_ids
+
+            if modules_added > 0:
+                flash(f"{modules_added} module(s) successfully added.", "success")
+
+            if modules_skipped > 0:
+                flash(
+                    f"{modules_skipped} modules were already added and skipped.", "info"
+                )
+
             return redirect(url_for("booking_submitted"))
 
         except Exception as e:
@@ -778,6 +822,7 @@ def admin_dashboard():
         if conn:
             conn.close()
 
+
 # --------------------- ADMIN COURSE -----------
 
 
@@ -810,14 +855,12 @@ def manage_courses():
             flash("Course created successfully.", "success")
             return redirect(url_for("manage_courses"))
 
-        cur.execute(
-            """
+        cur.execute("""
             SELECT course_id, course_name, description
             FROM courses
             WHERE active = TRUE
             ORDER BY course_id ASC
-            """
-        )
+            """)
         rows = cur.fetchall()
 
         courses = [
@@ -868,6 +911,7 @@ def delete_course(course_id):
         if conn:
             conn.close()
 
+
 # ---------- ADMIN MANAGE BOOKINGS ----------
 
 
@@ -891,7 +935,9 @@ def manage_bookings():
             ORDER BY b.booking_id DESC
         """)
         rows = cur.fetchall()
-        bookings = [{"id": r[0], "email": r[1], "course": r[2], "extra": r[3]} for r in rows]
+        bookings = [
+            {"id": r[0], "email": r[1], "course": r[2], "extra": r[3]} for r in rows
+        ]
         return render_template("manage_bookings.html", bookings=bookings)
     except Exception as e:
         return f"Error loading bookings: {e}", 500
@@ -927,22 +973,28 @@ def edit_booking(booking_id):
             new_course_id = request.form.get("course_id")
             new_extra = request.form.get("extra")
 
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE bookings
                 SET course_id = %s, nice_to_have_requests = %s, updated_at = NOW()
                 WHERE booking_id = %s
-            """, (new_course_id, new_extra, booking_id))
+            """,
+                (new_course_id, new_extra, booking_id),
+            )
             conn.commit()
             flash("Booking updated successfully!", "success")
             return redirect(url_for("manage_bookings"))
 
         # GET: Fetch current booking and all courses for the dropdown
-        cur.execute("""
+        cur.execute(
+            """
             SELECT b.booking_id, b.nice_to_have_requests, b.course_id, c.course_name
             FROM bookings b
             JOIN courses c ON b.course_id = c.course_id
             WHERE b.booking_id = %s
-        """, (booking_id,))
+        """,
+            (booking_id,),
+        )
         row = cur.fetchone()
 
         if not row:
@@ -958,7 +1010,9 @@ def edit_booking(booking_id):
             "course_name": row[3],
         }
 
-        return render_template("edit_booking.html", booking=booking_data, courses=all_courses)
+        return render_template(
+            "edit_booking.html", booking=booking_data, courses=all_courses
+        )
 
     except Exception as e:
         if conn:
