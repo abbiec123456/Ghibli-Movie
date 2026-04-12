@@ -27,7 +27,7 @@
         {% if bookings %}
             {% for booking in bookings %}
                 <div class="booking">
-                    <strong>{{ booking.course_id }}</strong><strong>{{ booking.course }}</strong><br>
+                    <strong>{{ booking.course }}</strong><br>
                     <strong>{{ booking.description }}</strong>
                     <form method="POST" class="booking-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
