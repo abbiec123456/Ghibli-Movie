@@ -104,7 +104,9 @@ textarea {
 }
 
 .container { width: 420px; }
-.dashboard { width: 600px; }
+.dashboard { 
+    max-width: 900px;
+    width: 90%; }
 
 .booking {
     background: #f1faee;
@@ -119,6 +121,100 @@ textarea {
     margin-bottom: 20px;
     padding-bottom: 10px;
 }
+
+.course-block {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #eee;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transition: all 0.15s ease;
+}
+
+.course-block:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Course title row */
+.course-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-start;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.course-title {
+    display: inline;
+}
+/* Description */
+.course-block em {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+}
+
+.course-block input[type="checkbox"]:checked + span {
+    color: #1d3557;
+    font-weight: bold;
+}
+
+input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* =====================================================
+   MODULE LIST
+===================================================== */
+.module-list {
+    margin-top: 15px;
+    padding-left: 15px;
+    border-left: 3px solid #e0e0e0;
+}
+
+.module-list strong {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.module-list label {
+    display: block;
+    margin-bottom: 6px;
+    cursor: pointer;
+}
+
+/* =====================================================
+   FORM CLEANUP
+===================================================== */
+form h3{
+    margin-top: 30px;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+    color: #2c3e50
+}
+
+form p {
+    margin-bottom: 15px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+}
+
+
 /* =====================================================
    BUTTONS
 ===================================================== */

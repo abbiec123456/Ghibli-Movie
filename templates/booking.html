@@ -3,26 +3,7 @@
 <head>
     <title>Course Booking</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        .course-block {
-            border: 1px solid #ccc;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            background-color: rgba(255, 255, 255, 0.8);
-        }
-        .module-list {
-            margin-left: 25px;
-            margin-top: 10px;
-            padding-left: 10px;
-            border-left: 2px solid #ddd;
-        }
-        .course-header {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-    </style>
+
 </head>
 <body>
 
@@ -69,20 +50,20 @@
                     <!-- Course Selection -->
                     <label class="course-header">
                         <input type="checkbox" name="courses" value="{{ course.id }}">
-                        {{ course.name }}
+                        <span class="course-title">{{ course.name }}</span>
                     </label>
                     <p><em>{{ course.description }}</em></p>
 
                     <!-- Modules for this specific course -->
                     {% if course.modules %}
                     <div class="module-list">
-                        <strong>Available Modules:</strong><br>
+                        <p><strong>Available Modules:</strong></p>
                         {% for module in course.modules %}
-                        <label>
+                        <label class="module-item">
                             <!-- Name modules dynamically: modules_1, modules_2 etc -->
                             <input type="checkbox" name="modules_{{ course.id }}" value="{{ module.id }}">
                             {{ module.name }}
-                        </label><br>
+                        </label>
                         {% endfor %}
                     </div>
                     {% else %}
